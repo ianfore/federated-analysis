@@ -3,7 +3,7 @@
 	"fileName": "/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/MyShuffleData.csv",
 	"fileHeader": "True",
 	"fieldDelimiter": ",",
-	"fieldFilter": [
+	"fieldFilters": [
 		{"fieldName": "ER", "fieldType": "categorical", "fieldValues": ["Positive", "Negative", "NA"]},
 		{"fieldName": "PgR", "fieldType": "categorical", "fieldValues": ["Positive", "Negative", "NA"]},
 		{"fieldName": "HER2", "fieldType": "categorical", "fieldValues": ["0", "1+", "2+", "3+", "NA"]},

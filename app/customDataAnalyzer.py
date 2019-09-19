@@ -29,7 +29,9 @@ def run(myFDA):
 
 
 def isTripleNegative(myRow):
-    if myRow['ER'] == 'Negative' and myRow['PgR'] == 'Negative' and myRow['HER2'] == 0:
+    # HER2 = 0, 1, or 2 => 'negative'; =3 => 'positive'
+    if myRow['ER'] == 'Negative' and myRow['PgR'] == 'Negative' and (myRow['HER2'] == 0 or myRow['HER2'] == 1):
+
         return True
     else:
         return False
@@ -39,3 +41,9 @@ def isTripleValue(myRow):
         return True
     else:
         return False
+
+#def partitionByAgeOfOnset(myRow):
+
+#def partitionByCarrierGene(myRow):
+
+#

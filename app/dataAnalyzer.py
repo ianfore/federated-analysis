@@ -15,15 +15,15 @@ class ConfigFile:
         fileName:       string name of data file
         fileHeader:     boolean header present in file
         fieldDelimiter: char that separates field in data file
-        fieldFilter:    json object encapsulating field definitions
+        fieldFilters:    json object encapsulating field filters
         outputFile:     name of file to write results
     """
 
-    def __init__(self, fileName, fileHeader, fieldDelimiter, fieldFilter, outputFile):
+    def __init__(self, fileName, fileHeader, fieldDelimiter, fieldFilters, outputFile):
         self.fileName = fileName
         self.fileHeader = fileHeader
         self.fieldDelimiter = fieldDelimiter
-        self.fieldFilter = fieldFilter
+        self.fieldFilters = fieldFilters
         self.outputFile = outputFile
 
 class FieldCounter:
@@ -49,8 +49,6 @@ class FieldCounter:
     def print(self):
         # print count of each value in field
         print(json.dumps(self.__dict__, sort_keys=True))
-        '''for field in sorted(self.fieldCount.keys()):
-            print(str(field) + ': ' + str(self.fieldCount[field]), file=file_object)'''
 
 class FederatedDataAnalyzer:
     """
@@ -69,11 +67,11 @@ class FederatedDataAnalyzer:
     """
     def __init__(self, configFileName):
         self.configFileName = configFileName
-        self.configFile, self.fieldFilter = self.readConfigFile()
+        self.configFile, self.fieldFilters = self.readConfigFile()
         self.dataFile = self.readDataFile()
-        self.fieldFilters = dict()
-        for field in self.fieldFilter:
-            self.fieldFilters[self.fieldFilter[field]['fieldName']] = self.fieldFilter[field]
+        self.fieldFilter = dict()
+        for field in self.fieldFilters:
+            self.fieldFilter[self.fieldFilters[field]['fieldName']] = self.fieldFilters[field]
         self.valueFrequency = dict()
         self.badValues = dict() #
         self.missingValues = dict()
@@ -92,12 +90,12 @@ class FederatedDataAnalyzer:
             jsonData = myFile.read()
         data = json.loads(jsonData)
 
-        configFile = ConfigFile(data['fileName'], data['fileHeader'], data['fieldDelimiter'], data['fieldFilter'],
+        configFile = ConfigFile(data['fileName'], data['fileHeader'], data['fieldDelimiter'], data['fieldFilters'],
                                 data['outputFile'])
-        fieldFilter = dict()
-        for f in configFile.fieldFilter:
-            fieldFilter[f['fieldName']] = f
-        return configFile, fieldFilter
+        fieldFilters = dict()
+        for f in configFile.fieldFilters:
+            fieldFilters[f['fieldName']] = f
+        return configFile, fieldFilters
 
     def readDataFile(self):
         """
@@ -108,9 +106,9 @@ class FederatedDataAnalyzer:
         Returns:
             data frame containing filtered data from data file
         """
-        fieldFilter = self.configFile.fieldFilter
+        fieldFilters = self.configFile.fieldFilters
         fieldNames = list()
-        for f in fieldFilter:
+        for f in fieldFilters:
             fieldNames.append(f['fieldName'])
         if self.configFile.fileHeader:
             header = 0
@@ -203,9 +201,6 @@ class FederatedDataAnalyzer:
 
         print("============================================", file=fileObject)
         print('config file info: ' + str(json.dumps(self.configFile.__dict__)), file=fileObject)
-        print('data file name: ' + self.configFile.fileName, file=fileObject)
-        print('data file header present?: ' + self.configFile.fileHeader, file=fileObject)
-        print('data file field delimiter: ' + self.configFile.fieldDelimiter, file=fileObject)
         print("============================================", file=fileObject)
         print('total records read from data file: ' + str(len(self.dataFile)), file=fileObject)
         print("============================================", file=fileObject)
@@ -266,11 +261,8 @@ def main():
     # instantiate analyzer object
     myFederatedDataAnalyzer = FederatedDataAnalyzer(configFileName)
 
-    # run analyzer
-    myFederatedDataAnalyzer.run()
-
-    # run any custom code
-    app.customDataAnalyzer.run(myFederatedDataAnalyzer)
+    # run analyzer and any custom code
+    return myFederatedDataAnalyzer.run() and app.customDataAnalyzer.run(myFederatedDataAnalyzer)
 
 if __name__ == "__main__":
     main()
