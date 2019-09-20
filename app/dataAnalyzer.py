@@ -251,7 +251,7 @@ class FederatedDataAnalyzer:
             return True
 
         except Exception as e:
-            print(str(e))
+            print('exception in dataAnalyzer.run() method: ' + str(e))
             return False
 
 def main():

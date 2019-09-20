@@ -7,40 +7,52 @@ class ReceptorCounts:
         Encapsulate count data for each of the receptors ER, PgR, and HER2.
 
     data members:
-        counts: dictionary of counts for each (receptor, status) tuple
+        counts: dictionary of counts for each "(receptor, status)" tuple string
     """
 
     def __init__(self):
         self.counts = dict()
-        self.counts["('ER', 'Positive')"] = 0
-        self.counts["('ER', 'Negative')"] = 0
-        self.counts["('PgR', 'Positive')"] = 0
-        self.counts["('PgR', 'Negative')"] = 0
-        self.counts["('HER2', '0')"] = 0
-        self.counts["('HER2', '1+')"] = 0
-        self.counts["('HER2', '2+')"] = 0
-        self.counts["('HER2', '3+')"] = 0
 
     def increment(self, myRow):
         for receptor in [ 'ER', 'PgR', 'HER2']:
+            # add to overall count
             if myRow[receptor] == 'NA':
                 continue
             else:
-                self.counts[str((receptor, myRow[receptor]))] += 1
+                if str((receptor, myRow[receptor])) not in self.counts:
+                    self.counts[str((receptor, myRow[receptor]))] = 1
+                else:
+                    self.counts[str((receptor, myRow[receptor]))] += 1
+                # add to <50
+                if myRow['Age at onset'] != 'NA' and int(myRow['Age at onset']) < 50:
+                    if str((receptor, myRow[receptor], "age<50")) not in self.counts:
+                        self.counts[str((receptor, myRow[receptor], "age<50"))] = 1
+                    else:
+                        self.counts[str((receptor, myRow[receptor], "age<50"))] += 1
+                # add to >= 50
+                else:
+                    if str((receptor, myRow[receptor], "age>=50")) not in self.counts:
+                        self.counts[str((receptor, myRow[receptor], "age>=50"))] = 1
+                    else:
+                        self.counts[str((receptor, myRow[receptor], "age>=50"))] += 1
+
 
     def print(self):
         print(json.dumps(self.__dict__))
-        '''for status in self.counts.keys():
-            print(str(status) + ': ' + str(self.counts[status]))'''
 
 
 def run(myFDA):
     try:
+        # initialize counters
         countsPerGene = dict()
         tripleNegatives = list()
         triplePositives = list()
         tripleValues = list()
         nonTripleNegatives = list()
+
+        skipTheseGenes = ['NonCarrier']
+
+        # iterate through data frame to gather counts
         for myIndex, myRow in myFDA.dataFile.iterrows():
             # if all fields != NA, then add to that list
             if (isTripleValue(myRow)):
@@ -53,17 +65,21 @@ def run(myFDA):
                     triplePositives.append(myIndex)
             else:
                 nonTripleNegatives.append(myIndex)
-            if myRow['CarrierGene'] == 'NonCarrier':
+            # don't count for genes in skipTheseGenes
+            if myRow['CarrierGene'] in skipTheseGenes:
                 continue
             else:
                 if myRow['CarrierGene']  not in countsPerGene.keys():
                     countsPerGene[myRow['CarrierGene']] = ReceptorCounts()
                 countsPerGene[myRow['CarrierGene']].increment(myRow)
 
+        # define fileObject based on config
         if myFDA.configFile.outputFile == "":
             fileObject = sys.stdout
         else:
             fileObject = open(myFDA.configFile.outputFile, mode='a')
+
+        # print results to fileObject
         print("number of triple negatives = " + str(len(tripleNegatives)), file=fileObject)
         print('============================================')
         print("number of triple positives = " + str(len(triplePositives)), file=fileObject)
@@ -72,8 +88,6 @@ def run(myFDA):
         print('============================================')
         print("number of non-triple negatives = " + str(len(nonTripleNegatives)), file=fileObject)
         print('============================================')
-
-
         for gene in list(myFDA.dataFile['CarrierGene'].unique()):
             if gene == 'NonCarrier':
                 continue
@@ -82,16 +96,10 @@ def run(myFDA):
                 countsPerGene[gene].print()
                 print('============================================')
 
-        # for each gene, pgr status overall, <50, and >=50
-
-        # for each gene, her2 grade overall , <50, and >=50
-
-
         return True
 
-
     except Exception as e:
-        print(str(e))
+        print('exception in customDataAnalylzer.run() method: ' + str(e))
         return False
 
 
