@@ -250,7 +250,8 @@ class FederatedDataAnalyzer:
             self.printResults()
             return True
 
-        except:
+        except Exception as e:
+            print(str(e))
             return False
 
 def main():
