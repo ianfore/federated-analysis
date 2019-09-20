@@ -7,7 +7,7 @@ class TestDataAnalyzer(unittest.TestCase):
     def test_readConfigFile(self):
         configFileName = 'tests/test_conf.json'
         myFDA = FederatedDataAnalyzer(configFileName)
-        fieldFilter = [{'fieldName': 'ER', 'fieldType': 'categorical', 'fieldValues': ['Positive', 'Negative', 'NA']}, \
+        fieldFilters = [{'fieldName': 'ER', 'fieldType': 'categorical', 'fieldValues': ['Positive', 'Negative', 'NA']}, \
                        {'fieldName': 'PgR', 'fieldType': 'categorical', 'fieldValues': ['Positive', 'Negative', 'NA']}, \
                        {'fieldName': 'HER2', 'fieldType': 'categorical', 'fieldValues': ['0', '1+', '2+', '3+', 'NA']}, \
                        {'fieldName': 'Age at onset', 'fieldType': 'numerical', 'fieldValues': []}, \
@@ -19,7 +19,7 @@ class TestDataAnalyzer(unittest.TestCase):
         with self.subTest():
             self.assertEqual(myFDA.configFile.fieldDelimiter, ',', 'wrong field delimiter')
         with self.subTest():
-            self.assertEqual(myFDA.configFile.fieldFilter, fieldFilter, 'wrong field filter')
+            self.assertEqual(myFDA.configFile.fieldFilters, fieldFilters, 'wrong field filter')
 
 
     def test_readDataFile(self):
@@ -37,22 +37,22 @@ class TestDataAnalyzer(unittest.TestCase):
         myFDA = FederatedDataAnalyzer(configFileName)
         # test categorical for categorical
         with self.subTest():
-            self.assertTrue(myFDA.validateField('Positive', myFDA.fieldFilter['ER']))
+            self.assertTrue(myFDA.validateField('Positive', myFDA.fieldFilters['ER']))
         # test categorical for non-categorical
         with self.subTest():
-            self.assertFalse(myFDA.validateField(42, myFDA.fieldFilter['ER']))
+            self.assertFalse(myFDA.validateField(42, myFDA.fieldFilters['ER']))
         # test numerical for numerical
         with self.subTest():
-            self.assertTrue(myFDA.validateField(42, myFDA.fieldFilter['Age at onset']))
+            self.assertTrue(myFDA.validateField(42, myFDA.fieldFilters['Age at onset']))
         # test numerical for non-numerical
         with self.subTest():
-            self.assertFalse(myFDA.validateField('Positive', myFDA.fieldFilter['Age at onset']))
+            self.assertFalse(myFDA.validateField('Positive', myFDA.fieldFilters['Age at onset']))
         # test free-form for free-form
         with self.subTest():
-            self.assertTrue(myFDA.validateField('42', myFDA.fieldFilter['Tissue type (3 groups)']))
+            self.assertTrue(myFDA.validateField('42', myFDA.fieldFilters['Tissue type (3 groups)']))
         # test free-form for non-free-form
         with self.subTest():
-            self.assertFalse(myFDA.validateField("\u00ff8", myFDA.fieldFilter['Tissue type (3 groups)']))
+            self.assertFalse(myFDA.validateField("\u00ff8", myFDA.fieldFilters['Tissue type (3 groups)']))
 
 
     def test_run(self):
