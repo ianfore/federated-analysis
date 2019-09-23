@@ -1,8 +1,8 @@
 {
 	"outputFile": "",
-	"fileName": "/data/MyShuffleData.csv",
+	"fileName": "/data/shuffle.tsv",
 	"fileHeader": "True",
-	"fieldDelimiter": ",",
+	"fieldDelimiter": "\t",
 	"fieldFilters": [
 		{"fieldName": "ER", "fieldType": "categorical", "fieldValues": ["Positive", "Negative", "NA"]},
 		{"fieldName": "PgR", "fieldType": "categorical", "fieldValues": ["Positive", "Negative", "NA"]},
