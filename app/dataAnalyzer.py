@@ -26,6 +26,10 @@ class ConfigFile:
         self.fieldFilters = fieldFilters
         self.outputFile = outputFile
 
+        if self.outputFile != '' and os.path.exists(self.outputFile):
+            print('output file ' + self.outputFile + ' exists!', file=sys.stderr)
+            sys.exit(1)
+
 class FieldCounter:
     """
     Purpose:
@@ -190,14 +194,11 @@ class FederatedDataAnalyzer:
         Returns:
             void
         """
-        if self.configFile.outputFile != '' and os.path.exists(self.configFile.outputFile):
-            print('output file ' + self.configFile.outputFile + ' exists!', file=sys.stderr)
-            sys.exit(1)
+
+        if self.configFile.outputFile == "":
+            fileObject = sys.stdout
         else:
-            if self.configFile.outputFile == "":
-                fileObject = sys.stdout
-            else:
-                fileObject = open(self.configFile.outputFile, mode='a')
+            fileObject = open(self.configFile.outputFile, mode='a')
 
         print("============================================", file=fileObject)
         print('config file info: ' + str(json.dumps(self.configFile.__dict__)), file=fileObject)
