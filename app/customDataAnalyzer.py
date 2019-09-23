@@ -38,7 +38,7 @@ class ReceptorCounts:
 
 
     def print(self):
-        print(json.dumps(self.__dict__))
+        print(json.dumps(self.__dict__, sort_keys=True))
 
 
 def run(myFDA):
