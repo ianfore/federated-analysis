@@ -37,8 +37,13 @@ class ReceptorCounts:
                         self.counts[str((receptor, myRow[receptor], "age>=50"))] += 1
 
 
-    def print(self):
-        print(json.dumps(self.__dict__, sort_keys=True))
+    def print(self, myFDA):
+        # define fileObject based on config
+        if myFDA.configFile.outputFile == "":
+            fileObject = sys.stdout
+        else:
+            fileObject = open(myFDA.configFile.outputFile, mode='a')
+        print(json.dumps(self.__dict__, sort_keys=True), file=fileObject)
 
 
 def run(myFDA):
@@ -92,9 +97,9 @@ def run(myFDA):
             if gene == 'NonCarrier':
                 continue
             else:
-                print("gene: " + gene)
-                countsPerGene[gene].print()
-                print('============================================')
+                print("gene: " + gene, file=fileObject)
+                countsPerGene[gene].print(myFDA)
+                print('============================================', file=fileObject)
 
         return True
 
