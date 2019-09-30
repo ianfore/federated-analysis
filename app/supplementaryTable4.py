@@ -255,4 +255,4 @@ def prettyPrint(results):
     df = pandas.DataFrame(results)
 
     # pretty print the data frame
-    print(tabulate(df, headers='keys', tablefmt='psql'))
+    print(tabulate(df.T, headers='keys', tablefmt='psql'))
