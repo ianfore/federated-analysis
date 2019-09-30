@@ -4,6 +4,7 @@ import json
 import pandas
 import numpy
 import app.customDataAnalyzer
+import app.supplementaryTable4
 import os
 
 class ConfigFile:
@@ -146,7 +147,15 @@ class FederatedDataAnalyzer:
                 if len(fieldFilter['fieldValues']) == 0 or fieldValue in fieldFilter['fieldValues']:
                     return True
                 else:
+                    print(fieldFilter['fieldType'] + ' is bad first')
                     return False
+            elif isinstance(fieldValue, (str)):
+                # try to cast it to float (floats and ints will cast to float)
+                try:
+                    fieldValue = float(fieldValue.strip("'"))
+                except Exception as e:
+                    return False
+                return True
             else:
                 return False
         # else if field is free-form and data is a string, then test character encodings of string.
@@ -181,7 +190,14 @@ class FederatedDataAnalyzer:
         allVals = list()
         for x in valueFrequency[myField].fieldCount.keys():
             for n in range(0, valueFrequency[myField].fieldCount[x]):
-                allVals.append(x)
+                if isinstance(x, (int)) or isinstance(x, (float)):
+                    allVals.append(x)
+                elif isinstance(x, (str)):
+                    try:
+                        x = float(x.strip("'"))
+                        allVals.append(x)
+                    except:
+                        continue
         return min(allVals), max(allVals), statistics.mean(allVals), statistics.median(allVals)
 
 
@@ -264,7 +280,8 @@ def main():
     myFederatedDataAnalyzer = FederatedDataAnalyzer(configFileName)
 
     # run analyzer and any custom code
-    return myFederatedDataAnalyzer.run() and app.customDataAnalyzer.run(myFederatedDataAnalyzer)
+    return myFederatedDataAnalyzer.run() and app.customDataAnalyzer.run(myFederatedDataAnalyzer) \
+            and app.supplementaryTable4.run(myFederatedDataAnalyzer)
 
 if __name__ == "__main__":
     main()
