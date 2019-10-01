@@ -13,16 +13,13 @@ def run(myFDA):
     results = dict()
 
     try:
-
         dfWithPath = myFDA.dataFile[myFDA.dataFile.CarrierGene != 'NonCarrier']
         dfWithoutPath = myFDA.dataFile[myFDA.dataFile.CarrierGene == 'NonCarrier']
-
 
         # No. of subjects
         results['No. of subjects'] = list()
         results['No. of subjects'].append(len(dfWithPath))
         results['No. of subjects'].append(len(dfWithoutPath))
-
 
         # Age at onset
         results['Age at onset'] = list()
@@ -36,7 +33,6 @@ def run(myFDA):
         # History of ovarian cancer
         results['History of ovarian cancer Yes'] = list()
         results['History of ovarian cancer No'] = list()
-
         results['History of ovarian cancer Yes'].append(
             psql.sqldf("select * from dfWithPath where `Ovarian cancer history` = 1",locals()).shape[0])
         results['History of ovarian cancer Yes'].append(
@@ -46,7 +42,6 @@ def run(myFDA):
         results['History of ovarian cancer No'].append(
             psql.sqldf("select * from dfWithoutPath where `Ovarian cancer history` = 0",locals()).shape[0])
 
-
         # Location of cancer (?)
 
         # TNM clinical classification: N
@@ -54,8 +49,6 @@ def run(myFDA):
         results['TNM clinical classification: N 1'] = list()
         results['TNM clinical classification: N 2'] = list()
         results['TNM clinical classification: N 3'] = list()
-
-
         results['TNM clinical classification: N 0'].append(
             psql.sqldf("select * from dfWithPath where `TNM classification / N` = 0", locals()).shape[0])
         results['TNM clinical classification: N 0'].append(
@@ -76,12 +69,9 @@ def run(myFDA):
         results['TNM clinical classification: N 3'].append(
             psql.sqldf("select * from dfWithoutPath where `TNM classification / N` = 3", locals()).shape[0])
 
-
-
         # TNM clinical classification: M
         results['TNM clinical classification: M 0'] = list()
         results['TNM clinical classification: M 1'] = list()
-
         results['TNM clinical classification: M 0'].append(
             psql.sqldf("select * from dfWithPath where `TNM classification / M` = 0", locals()).shape[0])
         results['TNM clinical classification: M 0'].append(
@@ -90,8 +80,6 @@ def run(myFDA):
             psql.sqldf("select * from dfWithPath where `TNM classification / M` = 1", locals()).shape[0])
         results['TNM clinical classification: M 1'].append(
             psql.sqldf("select * from dfWithoutPath where `TNM classification / M` = 1", locals()).shape[0])
-
-
 
         # Estrogen-receptor status
         results['Estrogen-receptor status Positive'] = list()
@@ -105,7 +93,6 @@ def run(myFDA):
             psql.sqldf("select * from dfWithPath where `ER` = 'Negative'", locals()).shape[0])
         results['Estrogen-receptor status Negative'].append(
             psql.sqldf("select * from dfWithoutPath where `ER` = 'Negative'", locals()).shape[0])
-
 
         # Progesterone-receptor status
         results['Progesterone-receptor status Positive'] = list()
@@ -251,6 +238,7 @@ def run(myFDA):
         return False
 
 def prettyPrint(results):
+
     # convert dict to data frame
     df = pandas.DataFrame(results)
 
