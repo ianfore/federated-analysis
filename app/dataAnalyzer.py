@@ -5,6 +5,7 @@ import pandas
 import numpy
 import app.customDataAnalyzer
 import app.supplementaryTable4
+import app.sup2
 import os
 
 class ConfigFile:
@@ -68,6 +69,7 @@ class FederatedDataAnalyzer:
         valueFrequency:     dictionary object mapping field name to value count {fieldName: FieldCount}
         badValues:          dictionary object tracking bad values {rowIndex: [list of tuples (fieldName:fieldValue)]}
         missingValues:      dictionary object tracking missing values {rowIndex: [list of missing values in row]}
+        frequencyStats:     dictionary object holding statistics for value frequencies
 
     """
     def __init__(self, configFileName):
@@ -80,6 +82,7 @@ class FederatedDataAnalyzer:
         self.valueFrequency = dict()
         self.badValues = dict() #
         self.missingValues = dict()
+        self.frequencyStats = dict()
 
 
     def readConfigFile(self):
@@ -198,7 +201,11 @@ class FederatedDataAnalyzer:
                         allVals.append(x)
                     except:
                         continue
-        return min(allVals), max(allVals), statistics.mean(allVals), statistics.median(allVals)
+        self.frequencyStats['min'] = min(allVals)
+        self.frequencyStats['max'] = max(allVals)
+        self.frequencyStats['mean'] = statistics.mean(allVals)
+        self.frequencyStats['median'] = statistics.median(allVals)
+        self.frequencyStats['stdev'] = statistics.stdev(allVals)
 
 
     def printResults(self):
@@ -225,9 +232,11 @@ class FederatedDataAnalyzer:
             print('column: ' + myField + ' / type: ' + self.fieldFilter[myField]['fieldType'], file=fileObject)
             print(json.dumps(self.valueFrequency[myField].__dict__, sort_keys=True), file=fileObject)
             if self.fieldFilter[myField]['fieldType'] == 'numerical':
-                minVal, maxVal, meanVal, medianVal = self.getStatistics(self.valueFrequency, myField)
-                print('min = ' + str(minVal) + ', max = ' + str(maxVal) + ', mean = ' + str(meanVal) + ' median = ' +
-                      str(medianVal), file=fileObject)
+                print('min = ' + str(self.frequencyStats['min']) +
+                      ', max = ' + str(self.frequencyStats['max']) +
+                      ', mean = ' + str(self.frequencyStats['mean']) +
+                      ' median = ' + str(self.frequencyStats['median']) +
+                      ' stdev = ' + str(self.frequencyStats['stdev']), file=fileObject)
             print("============================================", file=fileObject)
         print('bad values: ' + str(self.badValues), file=fileObject)
         print("============================================", file=fileObject)
@@ -263,6 +272,11 @@ class FederatedDataAnalyzer:
                             self.valueFrequency[myField] = FieldCounter(myRow[myField])
                         else:
                             self.valueFrequency[myField].incrementCounter(myRow[myField])
+            # populatate statistics
+            for myField in self.valueFrequency.keys():
+                if self.fieldFilter[myField]['fieldType'] == 'numerical':
+                    self.getStatistics(self.valueFrequency, myField)
+
             # print data summary to stdout
             self.printResults()
             return True
