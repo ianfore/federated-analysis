@@ -252,7 +252,7 @@ def runFisherExact(results, key, allValues):
     # run fisher exact test
     oddsRatio, pValue = stats.fisher_exact([[a, b], [c, d]])
     results[key]['OR'] = round(oddsRatio, 3)
-    results[key]['P value'] =  round(pValue, 2)
+    results[key]['P value'] =  round(pValue, 3)
 
 
 def prettyPrint(results, fileObject):
