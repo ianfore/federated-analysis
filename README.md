@@ -1,10 +1,9 @@
 # federated-analysis
 
-While HIPAA requires that medical information be kept private, scientists need medical information in order to conduct their research.  So instead of sharing data, hospitals and clinics can run software on that data and share the summarized, aggregated results with the interested scientists.  In this way, people's privacy is protected, and science can move forward on important research.
+HIPAA requires that medical records be kept private, yet scientists need this data in order to conduct their research.  So instead of sharing data, hospitals and clinics can run software on that data and share the summarized, aggregated, anonymized results with the interested scientists.  In this way, people's privacy is protected, and science can move forward on important research.
 
-This software repository contains scripts that achieve the above goal.  Specifically, this software allows users to run a Docker container which has the necessary code to perform the statistical analysis and validity checking.  There's a configuration file that the cooperating owner of the data must fill out in conjunction with the scientist to define the fields of interest in the data set.  
-
-There are two Python modules in this repository: one which performs default analysis (dataAnalyzer.py) and one that performs custom analysis (customDataAnalyzer.py).  
+This software repository contains scripts that achieve the above goal.  Specifically, this software allows users to run a Docker container which has the necessary code to perform basic statistical analysis and validity checking.  There's a configuration file that the cooperating owner of the data must fill out in conjunction with the scientist to define the fields of interest in the data set.  
+There are three Python modules in this repository: one which performs default analysis (dataAnalyzer.py), one that performs custom analysis (customDataAnalyzer.py), and one that creates a table (supplementaryTable4.py).  
 
 The default data analysis outputs the following information:
 1. data file name 
@@ -24,17 +23,24 @@ Note that the default data analysis is generic -- it's completely devoid of any 
 
 In order to use this solution, perform the following steps.
 
-1. Edit the config/conf.json file to reflect the metadata regarding the data file (file name, header line, field delimiter) as well as the correct fields of interest.
+1. Change directory to the top-level directory of the repository.
 
-2. Edit the runMe.sh script to point to the correct location of the local repository.
+cd federated-analysis/
 
-3. Run the runMe.sh script. 
+2. Optionally, edit the config/conf.json file to reflect the metadata regarding the data file (file name, header line, field delimiter) as well as the correct fields of interest.
 
+vi config/conf.json
+
+3. Run the runMe.sh script as follows:
+
+./runMe.sh
 
 
 To run the unit tests, perform the following steps:
 
 1. change directory to the top-level directory of the repository
+
+cd federated-analysis/
 
 2. run the following command:
 

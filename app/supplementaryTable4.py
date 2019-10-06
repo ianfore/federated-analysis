@@ -219,6 +219,7 @@ def run(myFDA):
             'without': {
                 'Yes': 40,
                 'No': 6607}}
+        getPctg(results, 'his history of ovarian cancer', 'Yes', ['Yes', 'No'])
         getFisherExact(results, 'his history of ovarian cancer', ['Yes', 'No'])'''
 
         # define fileObject based on config
@@ -254,8 +255,7 @@ def getFisherExact(results, key, allValues):
     # run fisher exact test
     oddsRatio, pValue = stats.fisher_exact([[a, b], [c, d]])
 
-    # get confidence interval for odds ratio
-    # CI = e^(ln(OR) +/- [1.96 * sqrt(1/a + 1/b + 1/c + 1/d)])
+    # get confidence interval for odds ratio: CI = e^(ln(OR) +/- [1.96 * sqrt(1/a + 1/b + 1/c + 1/d)])
 
     x = log(oddsRatio)
     y = 1.96 * sqrt(1/a + 1/b + 1/c + 1/d)
