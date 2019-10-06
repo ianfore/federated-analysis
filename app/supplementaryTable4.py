@@ -269,8 +269,8 @@ def getFisherExact(results, key, allValues):
 
 
 def prettyPrint(results, fileObject):
-    # convert dict to data frame
-    df = pandas.DataFrame(results)
+    # convert dict to data frame and reorder rows (which will become columns after transposing it)
+    df = pandas.DataFrame(results).reindex(['with', 'without', 'P value', 'OR', '95% CI']).T
 
     # pretty print the data frame
-    print(tabulate(df.T, headers='keys', tablefmt='psql'), file=fileObject)
+    print(tabulate(df, headers='keys', tablefmt='psql'), file=fileObject)
