@@ -4,6 +4,7 @@ import statistics
 import pandasql as psql
 from tabulate import tabulate
 import scipy.stats as stats
+from math import exp, log, sqrt
 
 def removeNA(myList):
     return [elt for elt in myList if str(elt) != 'NA']
@@ -41,7 +42,7 @@ def run(myFDA):
                 'No': psql.sqldf("select * from dfWithoutPath where `Ovarian cancer history` = 0",locals()).shape[0]}}
 
         getPctg(results, 'History of ovarian cancer', 'Yes', ['Yes', 'No'])
-        runFisherExact(results, 'History of ovarian cancer', ['Yes', 'No'])
+        getFisherExact(results, 'History of ovarian cancer', ['Yes', 'No'])
 
         # Location of cancer (?)
 
@@ -87,7 +88,7 @@ def run(myFDA):
                 'Negative': psql.sqldf("select * from dfWithoutPath where `ER` = 'Negative'", locals()).shape[0]}}
 
         getPctg(results, 'Estrogen-receptor status', 'Positive', ['Positive', 'Negative'])
-        runFisherExact(results, 'Estrogen-receptor status', ['Positive', 'Negative'])
+        getFisherExact(results, 'Estrogen-receptor status', ['Positive', 'Negative'])
 
 
         # Progesterone-receptor status
@@ -100,7 +101,7 @@ def run(myFDA):
                 'Negative': psql.sqldf("select * from dfWithoutPath where `PgR` = 'Negative'", locals()).shape[0]}}
 
         getPctg(results, 'Progesterone-receptor status', 'Positive', ['Positive', 'Negative'])
-        runFisherExact(results, 'Progesterone-receptor status', ['Positive', 'Negative'])
+        getFisherExact(results, 'Progesterone-receptor status', ['Positive', 'Negative'])
 
 
         # Triple negative breast cancer
@@ -117,7 +118,7 @@ def run(myFDA):
                        locals()).shape[0]}}
 
         getPctg(results, 'Triple negative breast cancer', 'Yes', ['Yes', 'No'])
-        runFisherExact(results, 'Triple negative breast cancer', ['Yes', 'No'])
+        getFisherExact(results, 'Triple negative breast cancer', ['Yes', 'No'])
 
 
         # Family history of breast cancer
@@ -130,7 +131,7 @@ def run(myFDA):
                 'No': psql.sqldf("select * from dfWithoutPath where `Family history / breast cancer` = 0",locals()).shape[0]}}
 
         getPctg(results, 'Family history of breast cancer', 'Yes', ['Yes', 'No'])
-        runFisherExact(results, 'Family history of breast cancer', ['Yes', 'No'])
+        getFisherExact(results, 'Family history of breast cancer', ['Yes', 'No'])
 
 
         # Family history of ovarian cancer
@@ -143,7 +144,7 @@ def run(myFDA):
                 'No': psql.sqldf("select * from dfWithoutPath where `Family history / ovarian cancer` = 0", locals()).shape[0]}}
 
         getPctg(results, 'Family history of ovarian cancer', 'Yes', ['Yes', 'No'])
-        runFisherExact(results, 'Family history of ovarian cancer', ['Yes', 'No'])
+        getFisherExact(results, 'Family history of ovarian cancer', ['Yes', 'No'])
 
 
         # Family history of pancreas cancer
@@ -156,7 +157,7 @@ def run(myFDA):
                 'No': psql.sqldf("select * from dfWithoutPath where `Family history / pancreatic cancer` = 0", locals()).shape[0]}}
 
         getPctg(results, 'Family history of pancreas cancer', 'Yes', ['Yes', 'No'])
-        runFisherExact(results, 'Family history of pancreas cancer', ['Yes', 'No'])
+        getFisherExact(results, 'Family history of pancreas cancer', ['Yes', 'No'])
 
 
         # Family history of gastric (stomach?) cancer
@@ -169,7 +170,7 @@ def run(myFDA):
                 'No': psql.sqldf("select * from dfWithoutPath where `Family history / stomach cancer` = 0", locals()).shape[0]}}
 
         getPctg(results, 'Family history of stomach cancer', 'Yes', ['Yes', 'No'])
-        runFisherExact(results, 'Family history of stomach cancer', ['Yes', 'No'])
+        getFisherExact(results, 'Family history of stomach cancer', ['Yes', 'No'])
 
 
         # Family history of liver cancer
@@ -182,7 +183,7 @@ def run(myFDA):
                 'No': psql.sqldf("select * from dfWithoutPath where `Family history / liver cancer` = 0", locals()).shape[0]}}
 
         getPctg(results, 'Family history of liver cancer', 'Yes', ['Yes', 'No'])
-        runFisherExact(results, 'Family history of liver cancer', ['Yes', 'No'])
+        getFisherExact(results, 'Family history of liver cancer', ['Yes', 'No'])
 
 
         # Family history of bone tumor
@@ -195,7 +196,7 @@ def run(myFDA):
                 'No': psql.sqldf("select * from dfWithoutPath where `Family history / bone tumor` = 0", locals()).shape[0]}}
 
         getPctg(results, 'Family history of bone tumor', 'Yes', ['Yes', 'No'])
-        runFisherExact(results, 'Family history of bone tumor', ['Yes', 'No'])
+        getFisherExact(results, 'Family history of bone tumor', ['Yes', 'No'])
 
 
         # Family history of bladder cancer
@@ -208,17 +209,17 @@ def run(myFDA):
                 'No': psql.sqldf("select * from dfWithoutPath where `Family history / bladder cancer` = 0", locals()).shape[0]}}
 
         getPctg(results, 'Family history of bladder cancer', 'Yes', ['Yes', 'No'])
-        runFisherExact(results, 'Family history of bladder cancer', ['Yes', 'No'])
+        getFisherExact(results, 'Family history of bladder cancer', ['Yes', 'No'])
 
 
-        results['his history of ovarian cancer'] = {
+        '''results['his history of ovarian cancer'] = {
             'with': {
                 'Yes': 7,
                 'No': 397},
             'without': {
                 'Yes': 40,
                 'No': 6607}}
-        runFisherExact(results, 'his history of ovarian cancer', ['Yes', 'No'])
+        runFisherExact(results, 'his history of ovarian cancer', ['Yes', 'No'])'''
 
         # define fileObject based on config
         if myFDA.configFile.outputFile == "":
@@ -243,16 +244,28 @@ def getPctg(results, key, value, allValues):
             denom += results[key][path][v]
         results[key][path]['% ' + value] = round(100 * num / denom, 2)
 
-def runFisherExact(results, key, allValues):
+def getFisherExact(results, key, allValues):
     # create 2x2 contingency table
     a = results[key]['with'][allValues[0]]
     b = results[key]['without'][allValues[0]]
     c = results[key]['with'][allValues[1]]
     d = results[key]['without'][allValues[1]]
+
     # run fisher exact test
     oddsRatio, pValue = stats.fisher_exact([[a, b], [c, d]])
+
+    # get confidence interval for odds ratio
+    # CI = e^(ln(OR) +/- [1.96 * sqrt(1/a + 1/b + 1/c + 1/d)])
+
+    x = log(oddsRatio)
+    y = 1.96 * sqrt(1/a + 1/b + 1/c + 1/d)
+    lowerBound = exp(x - y)
+    upperBound = exp(x + y)
+
+    # insert OR and p-value into results dict
     results[key]['OR'] = round(oddsRatio, 3)
     results[key]['P value'] =  round(pValue, 3)
+    results[key]['95% CI'] = (round(lowerBound, 2), round(upperBound, 2))
 
 
 def prettyPrint(results, fileObject):
