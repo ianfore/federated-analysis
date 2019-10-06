@@ -219,7 +219,7 @@ def run(myFDA):
             'without': {
                 'Yes': 40,
                 'No': 6607}}
-        runFisherExact(results, 'his history of ovarian cancer', ['Yes', 'No'])'''
+        getFisherExact(results, 'his history of ovarian cancer', ['Yes', 'No'])'''
 
         # define fileObject based on config
         if myFDA.configFile.outputFile == "":
