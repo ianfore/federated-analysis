@@ -5,7 +5,6 @@ import pandas
 import numpy
 import app.customDataAnalyzer
 import app.supplementaryTable4
-import app.sup2
 import os
 
 class ConfigFile:
