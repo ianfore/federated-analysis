@@ -107,12 +107,12 @@ def run(myFDA):
         # Triple negative breast cancer
         results['Triple negative breast cancer'] = {
             'with': {
-                'Yes': psql.sqldf("select * from dfWithPath where `PgR` = 'Negative' and `ER` = 'Negative' and `HER2` = '0'",
+                'Yes': psql.sqldf("select * from dfWithPath where `PgR` = 'Negative' and `ER` = 'Negative' and (`HER2` = '0' or `HER2` = '1+')",
                        locals()).shape[0],
-                'No': psql.sqldf("select * from dfWithoutPath where not `PgR` = 'Negative' or not `ER` = 'Negative' or not `HER2` = '0'",
+                'No': psql.sqldf("select * from dfWithPath where not `PgR` = 'Negative' or not `ER` = 'Negative' or not `HER2` = '0'",
                        locals()).shape[0]},
             'without': {
-                'Yes': psql.sqldf("select * from dfWithPath where `PgR` = 'Negative' and `ER` = 'Negative' and `HER2` = '0'",
+                'Yes': psql.sqldf("select * from dfWithoutPath where `PgR` = 'Negative' and `ER` = 'Negative' and (`HER2` = '0'  or `HER2` = '1+')",
                        locals()).shape[0],
                 'No': psql.sqldf("select * from dfWithoutPath where not `PgR` = 'Negative' or not `ER` = 'Negative' or not `HER2` = '0'",
                        locals()).shape[0]}}
@@ -127,7 +127,7 @@ def run(myFDA):
                 'Yes': psql.sqldf("select * from dfWithPath where `Family history / breast cancer` = 1",locals()).shape[0],
                 'No': psql.sqldf("select * from dfWithPath where `Family history / breast cancer` = 0", locals()).shape[0]},
             'without': {
-                'Yes': psql.sqldf("select * from dfWithPath where `Family history / breast cancer` = 1", locals()).shape[0],
+                'Yes': psql.sqldf("select * from dfWithoutPath where `Family history / breast cancer` = 1", locals()).shape[0],
                 'No': psql.sqldf("select * from dfWithoutPath where `Family history / breast cancer` = 0",locals()).shape[0]}}
 
         getPctg(results, 'Family history of breast cancer', 'Yes', ['Yes', 'No'])
@@ -203,9 +203,9 @@ def run(myFDA):
         results['Family history of bladder cancer'] = {
             'with': {
                 'Yes': psql.sqldf("select * from dfWithPath where `Family history / bladder cancer` = 1", locals()).shape[0],
-                'No': psql.sqldf("select * from dfWithoutPath where `Family history / bladder cancer` = 1", locals()).shape[0]},
+                'No': psql.sqldf("select * from dfWithPath where `Family history / bladder cancer` = 0", locals()).shape[0]},
             'without': {
-                'Yes': psql.sqldf("select * from dfWithPath where `Family history / bladder cancer` = 0", locals()).shape[0],
+                'Yes': psql.sqldf("select * from dfWithoutPath where `Family history / bladder cancer` = 1", locals()).shape[0],
                 'No': psql.sqldf("select * from dfWithoutPath where `Family history / bladder cancer` = 0", locals()).shape[0]}}
 
         getPctg(results, 'Family history of bladder cancer', 'Yes', ['Yes', 'No'])
@@ -243,7 +243,7 @@ def getPctg(results, key, value, allValues):
         num = results[key][path][value]
         for v in allValues:
             denom += results[key][path][v]
-        results[key][path]['% ' + value] = round(100 * num / denom, 2)
+        results[key][path]['% ' + value] = str(round(100 * num / denom, 2)) + '%'
 
 def getFisherExact(results, key, allValues):
     # create 2x2 contingency table
