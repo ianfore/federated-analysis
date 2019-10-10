@@ -110,7 +110,7 @@ def run(myFDA):
 
 def isTripleNegative(myRow):
     # HER2 = 0, 1, or 2 => 'negative'; =3 => 'positive'?
-    if myRow['ER'] == 'Negative' and myRow['PgR'] == 'Negative' and (myRow['HER2'] == '0'):
+    if myRow['ER'] == 'Negative' and myRow['PgR'] == 'Negative' and (myRow['HER2'] == '0' or myRow['HER2'] == '1+'):
         return True
     else:
         return False

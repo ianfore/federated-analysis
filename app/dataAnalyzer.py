@@ -20,12 +20,15 @@ class ConfigFile:
         outputFile:     name of file to write results
     """
 
-    def __init__(self, fileName, fileHeader, fieldDelimiter, fieldFilters, outputFile):
+    def __init__(self, fileName, fileHeader, fieldDelimiter, fieldFilters, outputFile, printBadValues,
+                 printConfigFileInfo):
         self.fileName = fileName
         self.fileHeader = fileHeader
         self.fieldDelimiter = fieldDelimiter
         self.fieldFilters = fieldFilters
         self.outputFile = outputFile
+        self.printBadValues = printBadValues
+        self.printConfigFileInfo = printConfigFileInfo
 
         if self.outputFile != '' and os.path.exists(self.outputFile):
             print('output file ' + self.outputFile + ' exists!', file=sys.stderr)
@@ -98,7 +101,7 @@ class FederatedDataAnalyzer:
         data = json.loads(jsonData)
 
         configFile = ConfigFile(data['fileName'], data['fileHeader'], data['fieldDelimiter'], data['fieldFilters'],
-                                data['outputFile'])
+                                data['outputFile'], data['printBadValues'], data['printConfigFileInfo'])
         fieldFilters = dict()
         for f in configFile.fieldFilters:
             fieldFilters[f['fieldName']] = f
@@ -200,11 +203,12 @@ class FederatedDataAnalyzer:
                         allVals.append(x)
                     except:
                         continue
-        self.frequencyStats['min'] = min(allVals)
-        self.frequencyStats['max'] = max(allVals)
-        self.frequencyStats['mean'] = statistics.mean(allVals)
-        self.frequencyStats['median'] = statistics.median(allVals)
-        self.frequencyStats['stdev'] = statistics.stdev(allVals)
+        self.frequencyStats[myField] = dict()
+        self.frequencyStats[myField]['min'] = min(allVals)
+        self.frequencyStats[myField]['max'] = max(allVals)
+        self.frequencyStats[myField]['mean'] = statistics.mean(allVals)
+        self.frequencyStats[myField]['median'] = statistics.median(allVals)
+        self.frequencyStats[myField]['stdev'] = statistics.stdev(allVals)
 
 
     def printResults(self):
@@ -223,22 +227,25 @@ class FederatedDataAnalyzer:
             fileObject = open(self.configFile.outputFile, mode='a')
 
         print("============================================", file=fileObject)
-        print('config file info: ' + str(json.dumps(self.configFile.__dict__)), file=fileObject)
+        if self.configFile.printConfigFileInfo == "True":
+            print('config file info: ' + str(json.dumps(self.configFile.__dict__)), file=fileObject)
         print("============================================", file=fileObject)
         print('total records read from data file: ' + str(len(self.dataFile)), file=fileObject)
         print("============================================", file=fileObject)
         for myField in self.valueFrequency.keys():
             print('column: ' + myField + ' / type: ' + self.fieldFilter[myField]['fieldType'], file=fileObject)
-            print(json.dumps(self.valueFrequency[myField].__dict__, sort_keys=True), file=fileObject)
+            if self.fieldFilter[myField]['printFieldCount'] == "True":
+                print(json.dumps(self.valueFrequency[myField].__dict__, sort_keys=True), file=fileObject)
             if self.fieldFilter[myField]['fieldType'] == 'numerical':
-                print('min = ' + str(self.frequencyStats['min']) +
-                      ', max = ' + str(self.frequencyStats['max']) +
-                      ', mean = ' + str(self.frequencyStats['mean']) +
-                      ' median = ' + str(self.frequencyStats['median']) +
-                      ' stdev = ' + str(self.frequencyStats['stdev']), file=fileObject)
+                print('min = ' + str(self.frequencyStats[myField]['min']) +
+                      ', max = ' + str(self.frequencyStats[myField]['max']) +
+                      ', mean = ' + str(self.frequencyStats[myField]['mean']) +
+                      ' median = ' + str(self.frequencyStats[myField]['median']) +
+                      ' stdev = ' + str(self.frequencyStats[myField]['stdev']), file=fileObject)
             print("============================================", file=fileObject)
-        print('bad values: ' + str(self.badValues), file=fileObject)
-        print("============================================", file=fileObject)
+        if self.configFile.printBadValues == "True":
+            print('bad values: ' + str(self.badValues), file=fileObject)
+            print("============================================", file=fileObject)
         print('missing values: ' + str(self.missingValues), file=fileObject)
         print("============================================", file=fileObject)
 
