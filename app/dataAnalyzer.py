@@ -21,7 +21,7 @@ class ConfigFile:
     """
 
     def __init__(self, fileName, fileHeader, fieldDelimiter, fieldFilters, outputFile, printBadValues,
-                 printConfigFileInfo):
+                 printConfigFileInfo, suppressAllOutput):
         self.fileName = fileName
         self.fileHeader = fileHeader
         self.fieldDelimiter = fieldDelimiter
@@ -29,6 +29,7 @@ class ConfigFile:
         self.outputFile = outputFile
         self.printBadValues = printBadValues
         self.printConfigFileInfo = printConfigFileInfo
+        self.suppressAllOutput = suppressAllOutput
 
         if self.outputFile != '' and os.path.exists(self.outputFile):
             print('output file ' + self.outputFile + ' exists!', file=sys.stderr)
@@ -101,7 +102,8 @@ class FederatedDataAnalyzer:
         data = json.loads(jsonData)
 
         configFile = ConfigFile(data['fileName'], data['fileHeader'], data['fieldDelimiter'], data['fieldFilters'],
-                                data['outputFile'], data['printBadValues'], data['printConfigFileInfo'])
+                                data['outputFile'], data['printBadValues'], data['printConfigFileInfo'],
+                                data['suppressAllOutput'])
         fieldFilters = dict()
         for f in configFile.fieldFilters:
             fieldFilters[f['fieldName']] = f
@@ -221,10 +223,14 @@ class FederatedDataAnalyzer:
             void
         """
 
+        if (self.configFile.suppressAllOutput == "True"):
+            return
+
         if self.configFile.outputFile == "":
             fileObject = sys.stdout
         else:
             fileObject = open(self.configFile.outputFile, mode='a')
+
 
         print("============================================", file=fileObject)
         if self.configFile.printConfigFileInfo == "True":
@@ -236,7 +242,7 @@ class FederatedDataAnalyzer:
             print('column: ' + myField + ' / type: ' + self.fieldFilter[myField]['fieldType'], file=fileObject)
             if self.fieldFilter[myField]['printFieldCount'] == "True":
                 print(json.dumps(self.valueFrequency[myField].__dict__, sort_keys=True), file=fileObject)
-            if self.fieldFilter[myField]['fieldType'] == 'numerical':
+            if self.fieldFilter[myField]['fieldType'] == 'numerical' and self.fieldFilter[myField]['printStats'] == "True":
                 print('min = ' + str(self.frequencyStats[myField]['min']) +
                       ', max = ' + str(self.frequencyStats[myField]['max']) +
                       ', mean = ' + str(self.frequencyStats[myField]['mean']) +
@@ -300,8 +306,10 @@ def main():
     myFederatedDataAnalyzer = FederatedDataAnalyzer(configFileName)
 
     # run analyzer and any custom code
-    return myFederatedDataAnalyzer.run() and app.customDataAnalyzer.run(myFederatedDataAnalyzer) \
-            and app.supplementaryTable4.run(myFederatedDataAnalyzer)
+    '''return myFederatedDataAnalyzer.run() and app.customDataAnalyzer.run(myFederatedDataAnalyzer) \
+            and app.supplementaryTable4.run(myFederatedDataAnalyzer)'''
+
+    return myFederatedDataAnalyzer.run() and app.supplementaryTable4.run(myFederatedDataAnalyzer)
 
 if __name__ == "__main__":
     main()
