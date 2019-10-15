@@ -81,11 +81,15 @@ def run(myFDA):
         # Estrogen-receptor status
         results['Estrogen-receptor status'] = {
             'with': {
-                'Positive': psql.sqldf("select * from dfWithPath where `ER` = 'Positive'", locals()).shape[0],
-                'Negative': psql.sqldf("select * from dfWithPath where `ER` = 'Negative'", locals()).shape[0]},
+                'Positive': psql.sqldf("select * from dfWithPath where `ER` = 'Positive' and `HER2` != 'NA' and \
+            `PgR` != 'NA'", locals()).shape[0],
+                'Negative': psql.sqldf("select * from dfWithPath where `ER` = 'Negative' and `HER2` != 'NA' and \
+            `PgR` != 'NA'", locals()).shape[0]},
             'without': {
-                'Positive': psql.sqldf("select * from dfWithoutPath where `ER` = 'Positive'", locals()).shape[0],
-                'Negative': psql.sqldf("select * from dfWithoutPath where `ER` = 'Negative'", locals()).shape[0]}}
+                'Positive': psql.sqldf("select * from dfWithoutPath where `ER` = 'Positive' and `HER2` != 'NA' and \
+            `PgR` != 'NA'", locals()).shape[0],
+                'Negative': psql.sqldf("select * from dfWithoutPath where `ER` = 'Negative' and `HER2` != 'NA' and \
+            `PgR` != 'NA'", locals()).shape[0]}}
 
         getPctg(results, 'Estrogen-receptor status', 'Positive', ['Positive', 'Negative'])
         getFisherExact(results, 'Estrogen-receptor status', ['Positive', 'Negative'])
@@ -94,11 +98,15 @@ def run(myFDA):
         # Progesterone-receptor status
         results['Progesterone-receptor status'] = {
             'with': {
-                'Positive': psql.sqldf("select * from dfWithPath where `PgR` = 'Positive'", locals()).shape[0],
-                'Negative': psql.sqldf("select * from dfWithPath where `PgR` = 'Negative'", locals()).shape[0]},
+                'Positive': psql.sqldf("select * from dfWithPath where `ER` != 'NA' and `HER2` != 'NA' and \
+                `PgR` = 'Positive'", locals()).shape[0],
+                'Negative': psql.sqldf("select * from dfWithPath where `ER` != 'NA' and `HER2` != 'NA' and \
+                `PgR` = 'Negative'", locals()).shape[0]},
             'without': {
-                'Positive': psql.sqldf("select * from dfWithoutPath where `PgR` = 'Positive'", locals()).shape[0],
-                'Negative': psql.sqldf("select * from dfWithoutPath where `PgR` = 'Negative'", locals()).shape[0]}}
+                'Positive': psql.sqldf("select * from dfWithoutPath where `ER` != 'NA' and `HER2` != 'NA' and \
+                `PgR` = 'Positive'", locals()).shape[0],
+                'Negative': psql.sqldf("select * from dfWithoutPath where `ER` != 'NA' and `HER2` != 'NA' and \
+                `PgR` = 'Negative'", locals()).shape[0]}}
 
         getPctg(results, 'Progesterone-receptor status', 'Positive', ['Positive', 'Negative'])
         getFisherExact(results, 'Progesterone-receptor status', ['Positive', 'Negative'])
@@ -107,15 +115,17 @@ def run(myFDA):
         # Triple negative breast cancer
         results['Triple negative breast cancer'] = {
             'with': {
-                'Yes': psql.sqldf("select * from dfWithPath where `PgR` = 'Negative' and `ER` = 'Negative' and (`HER2` = '0' or `HER2` = '1+')",
-                       locals()).shape[0],
-                'No': psql.sqldf("select * from dfWithPath where not `PgR` = 'Negative' or not `ER` = 'Negative' or not `HER2` = '0'",
-                       locals()).shape[0]},
+                'Yes': psql.sqldf("select * from dfWithPath where (`PgR` = 'Negative' and `ER` = 'Negative') and \
+                (`HER2` = '0'  or `HER2` = '1+')", locals()).shape[0],
+                'No': psql.sqldf("select * from (select * from dfWithPath where  `PgR` != 'NA' and  `ER` != 'NA' \
+                and  `HER2` != 'NA') T where  T.`PgR` != 'Negative' or  T.`ER` != 'Negative' or  (T.`HER2` != '0' and \
+                T.`HER2` != '1+')", locals()).shape[0]},
             'without': {
-                'Yes': psql.sqldf("select * from dfWithoutPath where `PgR` = 'Negative' and `ER` = 'Negative' and (`HER2` = '0'  or `HER2` = '1+')",
-                       locals()).shape[0],
-                'No': psql.sqldf("select * from dfWithoutPath where not `PgR` = 'Negative' or not `ER` = 'Negative' or not `HER2` = '0'",
-                       locals()).shape[0]}}
+                'Yes': psql.sqldf("select * from dfWithoutPath where (`PgR` = 'Negative' and `ER` = 'Negative') and \
+                (`HER2` = '0'  or `HER2` = '1+')", locals()).shape[0],
+                'No': psql.sqldf("select * from (select * from dfWithoutPath where  `PgR` != 'NA' and  `ER` != 'NA' \
+                and  `HER2` != 'NA') T where  T.`PgR` != 'Negative' or  T.`ER` != 'Negative' or  (T.`HER2` != '0' and \
+                T.`HER2` != '1+')", locals()).shape[0]}}
 
         getPctg(results, 'Triple negative breast cancer', 'Yes', ['Yes', 'No'])
         getFisherExact(results, 'Triple negative breast cancer', ['Yes', 'No'])
