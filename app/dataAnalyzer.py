@@ -235,7 +235,7 @@ class FederatedDataAnalyzer:
         print("============================================", file=fileObject)
         if self.configFile.printConfigFileInfo == "True":
             print('config file info: ' + str(json.dumps(self.configFile.__dict__)), file=fileObject)
-        print("============================================", file=fileObject)
+            print("============================================", file=fileObject)
         print('total records read from data file: ' + str(len(self.dataFile)), file=fileObject)
         print("============================================", file=fileObject)
         for myField in self.valueFrequency.keys():
