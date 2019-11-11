@@ -77,19 +77,17 @@ def run(myFDA):
 
         getPctg(results, 'TNM clinical classification M', '0', ['0', '1'])
         getPctg(results, 'TNM clinical classification M', '1', ['0', '1'])
+        getFisherExact(results, 'TNM clinical classification M', ['0', '1'])
+
 
         # Estrogen-receptor status
         results['Estrogen-receptor status'] = {
             'with': {
-                'Positive': psql.sqldf("select * from dfWithPath where `ER` = 'Positive' and `HER2` != 'NA' and \
-            `PgR` != 'NA'", locals()).shape[0],
-                'Negative': psql.sqldf("select * from dfWithPath where `ER` = 'Negative' and `HER2` != 'NA' and \
-            `PgR` != 'NA'", locals()).shape[0]},
+                'Positive': psql.sqldf("select * from dfWithPath where `ER` = 'Positive'", locals()).shape[0],
+                'Negative': psql.sqldf("select * from dfWithPath where `ER` = 'Negative'", locals()).shape[0]},
             'without': {
-                'Positive': psql.sqldf("select * from dfWithoutPath where `ER` = 'Positive' and `HER2` != 'NA' and \
-            `PgR` != 'NA'", locals()).shape[0],
-                'Negative': psql.sqldf("select * from dfWithoutPath where `ER` = 'Negative' and `HER2` != 'NA' and \
-            `PgR` != 'NA'", locals()).shape[0]}}
+                'Positive': psql.sqldf("select * from dfWithoutPath where `ER` = 'Positive'", locals()).shape[0],
+                'Negative': psql.sqldf("select * from dfWithoutPath where `ER` = 'Negative'", locals()).shape[0]}}
 
         getPctg(results, 'Estrogen-receptor status', 'Positive', ['Positive', 'Negative'])
         getFisherExact(results, 'Estrogen-receptor status', ['Positive', 'Negative'])
@@ -98,15 +96,11 @@ def run(myFDA):
         # Progesterone-receptor status
         results['Progesterone-receptor status'] = {
             'with': {
-                'Positive': psql.sqldf("select * from dfWithPath where `ER` != 'NA' and `HER2` != 'NA' and \
-                `PgR` = 'Positive'", locals()).shape[0],
-                'Negative': psql.sqldf("select * from dfWithPath where `ER` != 'NA' and `HER2` != 'NA' and \
-                `PgR` = 'Negative'", locals()).shape[0]},
+                'Positive': psql.sqldf("select * from dfWithPath where `PgR` = 'Positive'", locals()).shape[0],
+                'Negative': psql.sqldf("select * from dfWithPath where `PgR` = 'Negative'", locals()).shape[0]},
             'without': {
-                'Positive': psql.sqldf("select * from dfWithoutPath where `ER` != 'NA' and `HER2` != 'NA' and \
-                `PgR` = 'Positive'", locals()).shape[0],
-                'Negative': psql.sqldf("select * from dfWithoutPath where `ER` != 'NA' and `HER2` != 'NA' and \
-                `PgR` = 'Negative'", locals()).shape[0]}}
+                'Positive': psql.sqldf("select * from dfWithoutPath where `PgR` = 'Positive'", locals()).shape[0],
+                'Negative': psql.sqldf("select * from dfWithoutPath where `PgR` = 'Negative'", locals()).shape[0]}}
 
         getPctg(results, 'Progesterone-receptor status', 'Positive', ['Positive', 'Negative'])
         getFisherExact(results, 'Progesterone-receptor status', ['Positive', 'Negative'])
@@ -266,7 +260,6 @@ def getFisherExact(results, key, allValues):
     oddsRatio, pValue = stats.fisher_exact([[a, b], [c, d]])
 
     # get confidence interval for odds ratio: CI = e^(ln(OR) +/- [1.96 * sqrt(1/a + 1/b + 1/c + 1/d)])
-
     x = log(oddsRatio)
     y = 1.96 * sqrt(1/a + 1/b + 1/c + 1/d)
     lowerBound = exp(x - y)
