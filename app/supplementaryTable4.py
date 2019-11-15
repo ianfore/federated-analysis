@@ -5,6 +5,7 @@ import pandasql as psql
 from tabulate import tabulate
 import scipy.stats as stats
 from math import exp, log, sqrt
+import subprocess
 
 def removeNA(myList):
     return [elt for elt in myList if str(elt) != 'NA']
@@ -216,16 +217,6 @@ def run(myFDA):
         getFisherExact(results, 'Family history of bladder cancer', ['Yes', 'No'])
 
 
-        '''results['his history of ovarian cancer'] = {
-            'with': {
-                'Yes': 7,
-                'No': 397},
-            'without': {
-                'Yes': 40,
-                'No': 6607}}
-        getPctg(results, 'his history of ovarian cancer', 'Yes', ['Yes', 'No'])
-        getFisherExact(results, 'his history of ovarian cancer', ['Yes', 'No'])'''
-
         # define fileObject based on config
         if myFDA.configFile.outputFile == "":
             fileObject = sys.stdout
@@ -260,15 +251,27 @@ def getFisherExact(results, key, allValues):
     oddsRatio, pValue = stats.fisher_exact([[a, b], [c, d]])
 
     # get confidence interval for odds ratio: CI = e^(ln(OR) +/- [1.96 * sqrt(1/a + 1/b + 1/c + 1/d)])
-    x = log(oddsRatio)
-    y = 1.96 * sqrt(1/a + 1/b + 1/c + 1/d)
-    lowerBound = exp(x - y)
-    upperBound = exp(x + y)
+    logOR = log(oddsRatio)
+    '''SE_logOR = sqrt(1/a + 1/b + 1/c + 1/d)
+    lowerBound = logOR - 1.96 * SE_logOR
+    upperBound = logOR + 1.96 * SE_logOR
+
+    CI95_lower = exp(lowerBound)
+    CI95_upper = exp(upperBound)'''
+    row1 = str('c(' + str(a) + ',' + str(b) + ')')
+    row2 = str('c(' + str(c) + ',' + str(d) + ')')
+    CIcmd_1 = str('/usr/bin/Rscript -e "fisher.test(rbind(' + row1 + ',' +  row2 + '))"')
+    CIcmd_2 = str('| grep -A1 confidence | sed -n "2,2 p" | xargs')
+    CIcmd = str(CIcmd_1 + CIcmd_2)
+    lb, ub = subprocess.check_output(CIcmd, shell=True).split()
+    # result = b'0.002439905 19.594803004\n'
+    lb = float(lb)
+    ub = float(ub)
 
     # insert OR and p-value into results dict
     results[key]['OR'] = round(oddsRatio, 3)
     results[key]['P value'] =  round(pValue, 3)
-    results[key]['95% CI'] = (round(lowerBound, 2), round(upperBound, 2))
+    results[key]['95% CI'] = (round(lb, 2), round(ub, 2))
 
 
 def prettyPrint(results, fileObject):
