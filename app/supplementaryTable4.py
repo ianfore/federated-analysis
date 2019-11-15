@@ -251,20 +251,23 @@ def getFisherExact(results, key, allValues):
     oddsRatio, pValue = stats.fisher_exact([[a, b], [c, d]])
 
     # get confidence interval for odds ratio: CI = e^(ln(OR) +/- [1.96 * sqrt(1/a + 1/b + 1/c + 1/d)])
-    logOR = log(oddsRatio)
-    '''SE_logOR = sqrt(1/a + 1/b + 1/c + 1/d)
+    '''logOR = log(oddsRatio)
+    SE_logOR = sqrt(1/a + 1/b + 1/c + 1/d)
     lowerBound = logOR - 1.96 * SE_logOR
     upperBound = logOR + 1.96 * SE_logOR
 
     CI95_lower = exp(lowerBound)
     CI95_upper = exp(upperBound)'''
+
+    # use R fisher.test to get confidence interval for LOR
     row1 = str('c(' + str(a) + ',' + str(b) + ')')
     row2 = str('c(' + str(c) + ',' + str(d) + ')')
     CIcmd_1 = str('/usr/bin/Rscript -e "fisher.test(rbind(' + row1 + ',' +  row2 + '))"')
     CIcmd_2 = str('| grep -A1 confidence | sed -n "2,2 p" | xargs')
     CIcmd = str(CIcmd_1 + CIcmd_2)
     lb, ub = subprocess.check_output(CIcmd, shell=True).split()
-    # result = b'0.002439905 19.594803004\n'
+
+    # cast result = b'0.002439905 19.594803004\n' to floats
     lb = float(lb)
     ub = float(ub)
 
