@@ -42,7 +42,7 @@ def run(myFDA):
                 'Yes': psql.sqldf("select * from dfWithoutPath where `Ovarian cancer history` = 1",locals()).shape[0],
                 'No': psql.sqldf("select * from dfWithoutPath where `Ovarian cancer history` = 0",locals()).shape[0]}}
 
-        getPctg(results, 'History of ovarian cancer', 'Yes', ['Yes', 'No'])
+        getPercentage(results, 'History of ovarian cancer', 'Yes', ['Yes', 'No'])
         getFisherExact(results, 'History of ovarian cancer', ['Yes', 'No'])
 
         # Location of cancer (?)
@@ -60,10 +60,10 @@ def run(myFDA):
                 '2': psql.sqldf("select * from dfWithoutPath where `TNM classification / N` = 2",locals()).shape[0],
                 '3': psql.sqldf("select * from dfWithoutPath where `TNM classification / N` = 3",locals()).shape[0]}}
 
-        getPctg(results, 'TNM clinical classification N', '0', ['0', '1', '2', '3'])
-        getPctg(results, 'TNM clinical classification N', '1', ['0', '1', '2', '3'])
-        getPctg(results, 'TNM clinical classification N', '2', ['0', '1', '2', '3'])
-        getPctg(results, 'TNM clinical classification N', '3', ['0', '1', '2', '3'])
+        getPercentage(results, 'TNM clinical classification N', '0', ['0', '1', '2', '3'])
+        getPercentage(results, 'TNM clinical classification N', '1', ['0', '1', '2', '3'])
+        getPercentage(results, 'TNM clinical classification N', '2', ['0', '1', '2', '3'])
+        getPercentage(results, 'TNM clinical classification N', '3', ['0', '1', '2', '3'])
 
 
 
@@ -76,8 +76,8 @@ def run(myFDA):
                 '0': psql.sqldf("select * from dfWithoutPath where `TNM classification / M` = 0", locals()).shape[0],
                 '1': psql.sqldf("select * from dfWithoutPath where `TNM classification / M` = 1",locals()).shape[0]}}
 
-        getPctg(results, 'TNM clinical classification M', '0', ['0', '1'])
-        getPctg(results, 'TNM clinical classification M', '1', ['0', '1'])
+        getPercentage(results, 'TNM clinical classification M', '0', ['0', '1'])
+        getPercentage(results, 'TNM clinical classification M', '1', ['0', '1'])
         getFisherExact(results, 'TNM clinical classification M', ['0', '1'])
 
 
@@ -90,7 +90,7 @@ def run(myFDA):
                 'Positive': psql.sqldf("select * from dfWithoutPath where `ER` = 'Positive'", locals()).shape[0],
                 'Negative': psql.sqldf("select * from dfWithoutPath where `ER` = 'Negative'", locals()).shape[0]}}
 
-        getPctg(results, 'Estrogen-receptor status', 'Positive', ['Positive', 'Negative'])
+        getPercentage(results, 'Estrogen-receptor status', 'Positive', ['Positive', 'Negative'])
         getFisherExact(results, 'Estrogen-receptor status', ['Positive', 'Negative'])
 
 
@@ -103,7 +103,7 @@ def run(myFDA):
                 'Positive': psql.sqldf("select * from dfWithoutPath where `PgR` = 'Positive'", locals()).shape[0],
                 'Negative': psql.sqldf("select * from dfWithoutPath where `PgR` = 'Negative'", locals()).shape[0]}}
 
-        getPctg(results, 'Progesterone-receptor status', 'Positive', ['Positive', 'Negative'])
+        getPercentage(results, 'Progesterone-receptor status', 'Positive', ['Positive', 'Negative'])
         getFisherExact(results, 'Progesterone-receptor status', ['Positive', 'Negative'])
 
 
@@ -122,7 +122,7 @@ def run(myFDA):
                 and  `HER2` != 'NA') T where  T.`PgR` != 'Negative' or  T.`ER` != 'Negative' or  (T.`HER2` != '0' and \
                 T.`HER2` != '1+')", locals()).shape[0]}}
 
-        getPctg(results, 'Triple negative breast cancer', 'Yes', ['Yes', 'No'])
+        getPercentage(results, 'Triple negative breast cancer', 'Yes', ['Yes', 'No'])
         getFisherExact(results, 'Triple negative breast cancer', ['Yes', 'No'])
 
 
@@ -135,7 +135,7 @@ def run(myFDA):
                 'Yes': psql.sqldf("select * from dfWithoutPath where `Family history / breast cancer` = 1", locals()).shape[0],
                 'No': psql.sqldf("select * from dfWithoutPath where `Family history / breast cancer` = 0",locals()).shape[0]}}
 
-        getPctg(results, 'Family history of breast cancer', 'Yes', ['Yes', 'No'])
+        getPercentage(results, 'Family history of breast cancer', 'Yes', ['Yes', 'No'])
         getFisherExact(results, 'Family history of breast cancer', ['Yes', 'No'])
 
 
@@ -148,7 +148,7 @@ def run(myFDA):
                 'Yes': psql.sqldf("select * from dfWithoutPath where `Family history / ovarian cancer` = 1", locals()).shape[0],
                 'No': psql.sqldf("select * from dfWithoutPath where `Family history / ovarian cancer` = 0", locals()).shape[0]}}
 
-        getPctg(results, 'Family history of ovarian cancer', 'Yes', ['Yes', 'No'])
+        getPercentage(results, 'Family history of ovarian cancer', 'Yes', ['Yes', 'No'])
         getFisherExact(results, 'Family history of ovarian cancer', ['Yes', 'No'])
 
 
@@ -161,7 +161,7 @@ def run(myFDA):
                 'Yes': psql.sqldf("select * from dfWithoutPath where `Family history / pancreatic cancer` = 1", locals()).shape[0],
                 'No': psql.sqldf("select * from dfWithoutPath where `Family history / pancreatic cancer` = 0", locals()).shape[0]}}
 
-        getPctg(results, 'Family history of pancreas cancer', 'Yes', ['Yes', 'No'])
+        getPercentage(results, 'Family history of pancreas cancer', 'Yes', ['Yes', 'No'])
         getFisherExact(results, 'Family history of pancreas cancer', ['Yes', 'No'])
 
 
@@ -174,7 +174,7 @@ def run(myFDA):
                 'Yes': psql.sqldf("select * from dfWithoutPath where `Family history / stomach cancer` = 1", locals()).shape[0],
                 'No': psql.sqldf("select * from dfWithoutPath where `Family history / stomach cancer` = 0", locals()).shape[0]}}
 
-        getPctg(results, 'Family history of stomach cancer', 'Yes', ['Yes', 'No'])
+        getPercentage(results, 'Family history of stomach cancer', 'Yes', ['Yes', 'No'])
         getFisherExact(results, 'Family history of stomach cancer', ['Yes', 'No'])
 
 
@@ -187,7 +187,7 @@ def run(myFDA):
                 'Yes': psql.sqldf("select * from dfWithoutPath where `Family history / liver cancer` = 1", locals()).shape[0],
                 'No': psql.sqldf("select * from dfWithoutPath where `Family history / liver cancer` = 0", locals()).shape[0]}}
 
-        getPctg(results, 'Family history of liver cancer', 'Yes', ['Yes', 'No'])
+        getPercentage(results, 'Family history of liver cancer', 'Yes', ['Yes', 'No'])
         getFisherExact(results, 'Family history of liver cancer', ['Yes', 'No'])
 
 
@@ -200,7 +200,7 @@ def run(myFDA):
                 'Yes': psql.sqldf("select * from dfWithoutPath where `Family history / bone tumor` = 1", locals()).shape[0],
                 'No': psql.sqldf("select * from dfWithoutPath where `Family history / bone tumor` = 0", locals()).shape[0]}}
 
-        getPctg(results, 'Family history of bone tumor', 'Yes', ['Yes', 'No'])
+        getPercentage(results, 'Family history of bone tumor', 'Yes', ['Yes', 'No'])
         getFisherExact(results, 'Family history of bone tumor', ['Yes', 'No'])
 
 
@@ -213,7 +213,7 @@ def run(myFDA):
                 'Yes': psql.sqldf("select * from dfWithoutPath where `Family history / bladder cancer` = 1", locals()).shape[0],
                 'No': psql.sqldf("select * from dfWithoutPath where `Family history / bladder cancer` = 0", locals()).shape[0]}}
 
-        getPctg(results, 'Family history of bladder cancer', 'Yes', ['Yes', 'No'])
+        getPercentage(results, 'Family history of bladder cancer', 'Yes', ['Yes', 'No'])
         getFisherExact(results, 'Family history of bladder cancer', ['Yes', 'No'])
 
 
@@ -232,7 +232,7 @@ def run(myFDA):
         return False
 
 
-def getPctg(results, key, value, allValues):
+def getPercentage(results, key, value, allValues):
     for path in ['with', 'without']:
         denom = 0
         num = results[key][path][value]

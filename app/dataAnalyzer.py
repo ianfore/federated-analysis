@@ -306,10 +306,10 @@ def main():
     myFederatedDataAnalyzer = FederatedDataAnalyzer(configFileName)
 
     # run analyzer and any custom code
-    '''return myFederatedDataAnalyzer.run() and app.customDataAnalyzer.run(myFederatedDataAnalyzer) \
-            and app.supplementaryTable4.run(myFederatedDataAnalyzer)'''
+    return myFederatedDataAnalyzer.run() and app.customDataAnalyzer.run(myFederatedDataAnalyzer) \
+            and app.supplementaryTable4.run(myFederatedDataAnalyzer)
 
-    return myFederatedDataAnalyzer.run() and app.supplementaryTable4.run(myFederatedDataAnalyzer)
+    #return myFederatedDataAnalyzer.run() and app.supplementaryTable4.run(myFederatedDataAnalyzer)
 
 if __name__ == "__main__":
     main()
