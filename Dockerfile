@@ -4,6 +4,7 @@ MAINTAINER James Casaletto <james.casaletto@ucsc.edu>
 
 USER root
 
+RUN chmod 1777 /tmp /var/tmp
 
 RUN apt-get update && apt-get install -y \
     python3.5 \
