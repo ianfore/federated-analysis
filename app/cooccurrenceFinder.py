@@ -1,104 +1,135 @@
 import pandas
 import itertools
-import ast
+import threading
 
 
-mutationsFile = '/data/mutationsPerIndividual.txt'
-cooccurrencesFile = '/data/cooccurringMutations.txt'
-'''fileObject = open(mutationsFile, mode='a')
-numMetaDataLines = 8
-numColsBeforeSamples = 9
-df = pandas.read_csv('/data/BreastCancer.shuffle.vcf', sep='\t', skiprows=numMetaDataLines)
+clinvarVCFMetadataLines = 27
+myVCFMetadataLines = 8
+myVCFskipCols = 9
+
+def main():
+    # creating thread
+    t1 = threading.Thread(target=run, args=(1,5))
+    t2 = threading.Thread(target=run, args=(6,10))
+
+    # starting thread 1
+    t1.start()
+    # starting thread 2
+    t2.start()
+
+    # wait until thread 1 is completely executed
+    t1.join()
+    # wait until thread 2 is completely executed
+    t2.join()
+
+    # both threads completely executed
+    print("Done!")
 
 
-# #CHROM  POS             ID      REF     ALT     QUAL    FILTER  INFO            FORMAT  0000057940      0000057950
-# 10      89624243        .       A       G       .       .       AF=1.622e-05    GT      0/0             0/0
+def run(start, stop):
 
+    print('finding pathogenic variants from brca')
+    count, pathogenicVariants = findVariantsInBRCA('/data/variants.tsv', 'Pathogenic', 'Clinical_significance_ENIGMA')
+    print('of ' + str(count) + ' variants, found ' + str(len(pathogenicVariants)) + ' pathogenic variants in brca')
 
-# 0/0 => does not have variant on either strand (homozygous negative)
-# 0/1  => has variant on 1 strand (heterozygous positive)
-# 1/1 =>  has variant on both strands (homozygous positive)
+    print('pre-processing data: removing variants with all 0/0')
+    count, nonNullVariants = removeNonoccurringVariants('/data/bc-10.vcf', myVCFMetadataLines)
+    print('of ' + str(count) + ' variants, found ' + str(len(nonNullVariants)) + ' that are occurring')
 
+    print('pre-processing data: removing individuals with all 0/0')
+    count, nonNullIndividuals = removeNonmutatedIndividuals(nonNullVariants, myVCFskipCols)
+    print('of ' + str(count) + ' individuals, found ' + str(len(nonNullIndividuals.columns) - myVCFskipCols) + ' that are mutated')
 
-# find mutations
-mutationsPerIndvidual = dict()
-for index, row in df.iterrows():
-    for col in range(numColsBeforeSamples, len(row)):
-        if row[col] == '0/1' or row[col] == '1/1':
-            if col not in mutationsPerIndvidual:
-                mutationsPerIndvidual[col] = list()
-            varTuple = (row['#CHROM'], row['POS'], row['REF'], row['ALT'], row['QUAL'])
-            mutationsPerIndvidual[col].append(varTuple)
+    print('indexing patients with variants')
+    count, variantsPerIndividual = findVariantsPerIndividual(nonNullIndividuals, myVCFskipCols)
+    print('of ' + str(count) + ' patients, found ' + str(len(variantsPerIndividual)) + ' with some type of variant')
 
-# write out mutations to file
-for i in mutationsPerIndvidual:
-    print(str(i) + ' = ' + str(mutationsPerIndvidual[i]), file=fileObject)
-fileObject.close()'''
+    print('finding patients with pathogenic variant')
+    pathogenicIndividuals = findIndividualsWithPathogenicVariant(variantsPerIndividual, pathogenicVariants)
+    print('of ' + str(len(variantsPerIndividual)) + ' patients with variants, found ' + str(len(pathogenicIndividuals)) + ' ones with a pathogenic variant')
 
-# now find co-occurrences
+    print('finding cooccurrences of pathogenic variant with any other variant')
+    cooccurrences = findCooccurrences(pathogenicIndividuals)
+    for k in cooccurrences.keys():
+        print('intersection of ' + str(k) + ' is ' + str(cooccurrences[k]))
 
-# userID = [(chrom, pos, ref, alt, qual), ... ]
+def removeNonoccurringVariants(fileName, numMetaDataLines):
+    # #CHROM  POS             ID      REF     ALT     QUAL    FILTER  INFO            FORMAT  0000057940      0000057950
+    # 10      89624243        .       A       G       .       .       AF=1.622e-05    GT      0/0             0/0
+    # 0/0 => does not have variant on either strand (homozygous negative)
+    # 0/1  => has variant on 1 strand (heterozygous positive)
+    # 1/1 =>  has variant on both strands (homozygous positive)
+    df = pandas.read_csv(fileName, sep='\t', skiprows=numMetaDataLines)
+    count = len(df)
+    df = df[df.apply(lambda r: r.str.contains('1/1').any() or r.str.contains('0/1').any(), axis=1)]
+    return count, df
 
-# 10748 = [(10, 89624243, 'A', 'G', '.'), (13, 32910721, 'T', 'C', '.'), (13, 32910842, 'A', 'G', '.')]
-# 27089 = [(10, 89624245, 'GA', 'G', '.'), (13, 32906729, 'A', 'C', '.'), (13, 32910721, 'T', 'C', '.')]
-# => both have (13, 32910721, 'T', 'C', '.')
+def removeNonmutatedIndividuals(df, skipcols):
+    # #CHROM  POS             ID      REF     ALT     QUAL    FILTER  INFO            FORMAT  0000057940      0000057950
+    # 10      89624243        .       A       G       .       .       AF=1.622e-05    GT      0/0             0/0
+    # 0/0 => does not have variant on either strand (homozygous negative)
+    # 0/1  => has variant on 1 strand (heterozygous positive)
+    # 1/1 =>  has variant on both strands (homozygous positive)
+    count = len(df.columns) - skipcols
+    df = df.loc[:, (df != '0/0').any(axis=0)]
+    return count, df
 
-# create list of sets, one set for each individual
-individuals = list()
+def findVariantsInBRCA(fileName, significanceString, sigColName):
+    brcaDF = pandas.read_csv(fileName, sep='\t', header=0)
+    pathVars = list()
 
-# open output file
-try:
-    fp = open (mutationsFile, 'r')
-    record = fp.readline()
-    print('read in mutations')
-    while record:
-        userId, mutations = record.split("=")
-        # mutations is a string now, so convert to list
-        mutations = ast.literal_eval(mutations.strip())
-        user = set()
-        # add mutations to user set
-        for m in mutations:
-            user.add(m)
-        individuals.append(user)
-        record = fp.readline()
+    for index, row in brcaDF.iterrows():
+        if significanceString.lower() in str(row[sigColName]).lower():
+            pathVars.append((int(row['Chr']), int(row['Pos']), row['Ref'], row['Alt']))
+    return len(brcaDF), pathVars
 
-    # find intersections of sets
-    print('find intersections')
-    cooccurrences = list()
-    for a, b in itertools.combinations(individuals, 2):
+def findVariantsPerIndividual(df, skipCols):
+
+    # find mutations
+    # #CHROM  POS             ID      REF     ALT     QUAL    FILTER  INFO            FORMAT  0000057940      0000057950
+    # 10      89624243        .       A       G       .       .       AF=1.622e-05    GT      0/0             0/0
+    # 0/0 => does not have variant on either strand (homozygous negative)
+    # 0/1  => has variant on 1 strand (heterozygous positive)
+    # 1/1 =>  has variant on both strands (homozygous positive)
+
+    variantsPerIndividual = dict()
+    for index, record in df.iterrows():
+        for individual in range(skipCols, len(record)):
+            id = list(df.columns)[individual]
+            if record[individual] == '0/1' or record[individual] == '1/1':
+                if id not in variantsPerIndividual:
+                    variantsPerIndividual[id] = set()
+                varTuple = (record['#CHROM'], record['POS'], record['REF'], record['ALT'])
+                variantsPerIndividual[id].add(varTuple)
+    return len(df), variantsPerIndividual
+
+def findIndividualsWithPathogenicVariant(variantsPerIndividual, pathogenicVars):
+    # variantsPerIndividua[userID] = [(chrom, pos, ref, alt, qual), ... ]
+
+    # 10748 = [(10, 89624243, 'A', 'G', '.'), (13, 32910721, 'T', 'C'), (13, 32910842, 'A', 'G')]
+    # 27089 = [(10, 89624245, 'GA', 'G', '.'), (13, 32906729, 'A', 'C'), (13, 32910721, 'T', 'C')]
+    # => both have (13, 32910721, 'T', 'C')
+
+    individualsWithPathogenicVariant = dict()
+
+    for patient in variantsPerIndividual.keys():
+        for variant in variantsPerIndividual[patient]:
+            if variant in pathogenicVars:
+                individualsWithPathogenicVariant[repr(patient)] = variantsPerIndividual[patient]
+                break
+    return individualsWithPathogenicVariant
+
+def findCooccurrences(patientsWithPathogenicVars):
+    cooccurrences = dict()
+    for a, b in itertools.combinations(patientsWithPathogenicVars.values(), 2):
+        print('comparing ' + repr(a) + ' and ' + repr(b))
         intersection = a.intersection(b)
-        cooccurrences.append(intersection)
-
-# close file
-finally:
-    fp.close()
-
-# print list of intersections to stdout
-print('write cooccurrences to file')
-fileObject = open(mutationsFile, mode='a')
-for c in cooccurrences:
-    print(str(c), file = fileObject)
-
-fileObject.close()
+        if len(intersection) > 0:
+            cooccurrences[(repr(a), repr(b))] = intersection
+    return cooccurrences
 
 
+if __name__ == "__main__":
+    main()
 
-
-'''mutationsPerIndividual = dict() # {id: [var1, var2, ...]}
-
-i = 0
-vcf_reader = vcf.Reader(open('/data/BreastCancer.shuffle.vcf', 'r'))
-for record in vcf_reader:
-    for sample in record.samples:
-        if sample.is_variant:
-            if sample.sample not in mutationsPerIndividual:
-                mutationsPerIndividual[sample.sample] = list()
-            #mutationsPerIndividual[sample.sample].append(sample.site)
-            mutationsPerIndividual[sample.sample].append('1')
-            print('length of this list is ' + str(len(mutationsPerIndividual[sample.sample])))
-            print('length of map is ' + str(len(mutationsPerIndividual)))
-
-print('okay now we start printing out ')
-for individual in mutationsPerIndividual:
-    print('mutations for individual ' + individual + ' is ' + str(mutationsPerIndividual[individual]))'''
 
