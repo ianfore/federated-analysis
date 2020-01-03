@@ -16,7 +16,7 @@ def main():
     print('of ' + str(count) + ' variants, found ' + str(len(pathogenicVariants)) + ' pathogenic variants in brca')
 
     print('pre-processing data: removing variants with all 0/0')
-    count, nonNullVariants = readOccurringVariants('/data/bc-100.vcf', myVCFMetadataLines)
+    count, nonNullVariants = readOccurringVariants('/data/BreastCancer.shuffle.vcf', myVCFMetadataLines)
     print('of ' + str(count) + ' variants, found ' + str(len(nonNullVariants)) + ' that are occurring')
 
     print('pre-processing data: removing individuals with all 0/0')
