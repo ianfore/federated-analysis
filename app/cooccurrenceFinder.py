@@ -16,7 +16,7 @@ def main():
     print('of ' + str(count) + ' variants, found ' + str(len(pathogenicVariants)) + ' pathogenic variants in brca')
 
     print('pre-processing data: removing variants with all 0/0')
-    count, nonNullVariants = readOccurringVariants('/data/BreastCancer.shuffle.vcf', myVCFMetadataLines)
+    count, nonNullVariants = readOccurringVariants('/data/bc-100.vcf', myVCFMetadataLines)
     print('of ' + str(count) + ' variants, found ' + str(len(nonNullVariants)) + ' that are occurring')
 
     print('pre-processing data: removing individuals with all 0/0')
@@ -27,12 +27,19 @@ def main():
     t = time.process_time()
     results = list()
     variantsPerIndividual = dict()
-    with ThreadPool(processes=nThreads) as pool:
+    '''with ThreadPool(processes=nThreads) as pool:
         for i in range(nThreads):
             results.append(pool.apply_async(findVariantsPerIndividual, args=(nonNullIndividuals, myVCFskipCols, nThreads, i,)))
         for result in results:
             result.wait()
-            variantsPerIndividual.update(result.get())
+            variantsPerIndividual.update(result.get())'''
+    pool = ThreadPool(processes=nThreads)
+    for i in range(nThreads):
+        results.append(pool.apply_async(findVariantsPerIndividual, args=(nonNullIndividuals, myVCFskipCols, nThreads, i,)))
+    for result in results:
+        result.wait()
+        variantsPerIndividual.update(result.get())
+
     elapsed_time = time.process_time() - t
     print('elapsed time is ' + str(elapsed_time))
 
