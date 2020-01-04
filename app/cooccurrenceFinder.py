@@ -24,7 +24,7 @@ def main():
     print('of ' + str(count) + ' individuals, found ' + str(len(nonNullIndividuals.columns) - myVCFskipCols) + ' that are mutated')
 
     print('indexing individuals with variants')
-    t = time.process_time()
+    t = time.time()
     results = list()
     variantsPerIndividual = dict()
     '''with ThreadPool(processes=nThreads) as pool:
@@ -40,7 +40,7 @@ def main():
         result.wait()
         variantsPerIndividual.update(result.get())
 
-    elapsed_time = time.process_time() - t
+    elapsed_time = time.time() - t
     print('elapsed time is ' + str(elapsed_time))
 
     print('of ' + str(len(nonNullIndividuals.columns) - myVCFskipCols) + ' individuals, found ' + str(len(variantsPerIndividual)) + ' with some type of variant')
