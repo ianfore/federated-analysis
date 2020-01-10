@@ -2,7 +2,6 @@ import pandas
 import itertools
 from multiprocessing.pool import ThreadPool
 import time
-import json
 
 clinvarVCFMetadataLines = 27
 myVCFMetadataLines = 8
@@ -11,9 +10,9 @@ nThreads = 2
 classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely benign' ],
                  'Unknown': [ 'Uncertain significance'], 'Unclassified': [ '-']}
 sigColName = 'Clinical_significance_ENIGMA'
-brcaFileName = '/data/variants.tsv'
-vcfFileName = '/data/BreastCancer.shuffle.vcf'
-#vcfFileName = '/data/BreastCancer.shuffle-test.vcf'
+brcaFileName = '/data/variants-test.tsv'
+#vcfFileName = '/data/BreastCancer.shuffle.vcf'
+vcfFileName = '/data/BreastCancer.shuffle-test.vcf'
 #vcfFileName = '/data/bc-100.vcf'
 variantsPerIndividualFileName = '/data/variantsPerIndividual.txt'
 
@@ -45,7 +44,12 @@ def main():
 
     print('saving dictionary to ' + variantsPerIndividualFileName)
     with open(variantsPerIndividualFileName, 'w') as file:
-        file.write(json.dumps(variantsPerIndividual))
+        file.write(str(variantsPerIndividual))
+
+    # then to read it back in
+    '''import ast
+    with open(variantsPerIndividualFileName, 'r') as f:
+        my_set = ast.literal_eval(f.read())'''
 
     elapsed_time = time.time() - t
     print('elapsed time is ' + str(elapsed_time))
