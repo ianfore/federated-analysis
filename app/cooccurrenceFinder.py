@@ -1,12 +1,13 @@
 import pandas
 import itertools
 from multiprocessing.pool import ThreadPool
+from multiprocessing import cpu_count
 import time
 
 clinvarVCFMetadataLines = 27
 myVCFMetadataLines = 8
 myVCFskipCols = 9
-nThreads = 2
+nThreads = cpu_count()
 classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely benign' ],
                  'Unknown': [ 'Uncertain significance'], 'Unclassified': [ '-']}
 sigColName = 'Clinical_significance_ENIGMA'
