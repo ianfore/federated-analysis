@@ -6,36 +6,37 @@ import time
 clinvarVCFMetadataLines = 27
 myVCFMetadataLines = 8
 myVCFskipCols = 9
-nThreads = 4
+nThreads = 1
+classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely benign' ],
+                 'Unknown': [ 'Uncertain significance'], 'Unclassified': [ '-']}
+sigColName = 'Clinical_significance_ENIGMA'
+brcaFileName = '/data/variants.tsv'
+vcfFileName = '/data/BreastCancer.shuffle.vcf'
+#vcfFileName = '/data/BreastCancer.shuffle-test.vcf'
+#vcfFileName = '/data/bc-100.vcf'
 
 def main():
 
-
-    print('finding pathogenic variants from brca')
-    count, pathogenicVariants = findPathogenicVariantsInBRCA('/data/variants.tsv', 'Pathogenic', 'Clinical_significance_ENIGMA')
+    print('reading variants from ' + brcaFileName)
+    count, pathogenicVariants, benignVariants, unknownVariants, unclassifiedVariants = findPathogenicVariantsInBRCA(brcaFileName, classStrings, sigColName)
     print('of ' + str(count) + ' variants, found ' + str(len(pathogenicVariants)) + ' pathogenic variants in brca')
+    print('of ' + str(count) + ' variants, found ' + str(len(benignVariants)) + ' benign variants in brca')
+    print('of ' + str(count) + ' variants, found ' + str(len(unknownVariants)) + ' unknown variants in brca')
+    print('of ' + str(count) + ' variants, found ' + str(len(unclassifiedVariants)) + ' unclassified variants in brca')
 
-    print('pre-processing data: removing variants with all 0/0')
-    count, nonNullVariants = readOccurringVariants('/data/bc-100.vcf', myVCFMetadataLines)
-    print('of ' + str(count) + ' variants, found ' + str(len(nonNullVariants)) + ' that are occurring')
 
-    print('pre-processing data: removing individuals with all 0/0')
-    count, nonNullIndividuals = removeNonmutatedIndividuals(nonNullVariants, myVCFskipCols)
-    print('of ' + str(count) + ' individuals, found ' + str(len(nonNullIndividuals.columns) - myVCFskipCols) + ' that are mutated')
+    print('reading variants from ' + vcfFileName)
+    variants = readVariants(vcfFileName, myVCFMetadataLines)
+    print('found ' + str(len(variants)) + ' variants')
+    print('found ' + str(len(variants.columns) - myVCFskipCols) + ' individuals')
 
-    print('indexing individuals with variants')
+    print('finding variants per individual')
     t = time.time()
     results = list()
     variantsPerIndividual = dict()
-    '''with ThreadPool(processes=nThreads) as pool:
-        for i in range(nThreads):
-            results.append(pool.apply_async(findVariantsPerIndividual, args=(nonNullIndividuals, myVCFskipCols, nThreads, i,)))
-        for result in results:
-            result.wait()
-            variantsPerIndividual.update(result.get())'''
     pool = ThreadPool(processes=nThreads)
     for i in range(nThreads):
-        results.append(pool.apply_async(findVariantsPerIndividual, args=(nonNullIndividuals, myVCFskipCols, nThreads, i,)))
+        results.append(pool.apply_async(findVariantsPerIndividual, args=(variants, myVCFskipCols, nThreads, i,)))
     for result in results:
         result.wait()
         variantsPerIndividual.update(result.get())
@@ -43,27 +44,24 @@ def main():
     elapsed_time = time.time() - t
     print('elapsed time is ' + str(elapsed_time))
 
-    print('of ' + str(len(nonNullIndividuals.columns) - myVCFskipCols) + ' individuals, found ' + str(len(variantsPerIndividual)) + ' with some type of variant')
-
-    print('finding individuals with pathogenic variant')
+    print('finding individuals with 1 or more pathogenic variant')
     pathogenicIndividuals = findIndividualsWithPathogenicVariant(variantsPerIndividual, pathogenicVariants)
-    print('of ' + str(len(variantsPerIndividual)) + ' individuals with variants, found ' + str(len(pathogenicIndividuals)) + ' with a pathogenic variant')
+    print('found ' + str(len(pathogenicIndividuals)) + ' individuals with a pathogenic variant')
 
     print('finding cooccurrences of pathogenic variant with any other variant')
     cooccurrences = findCooccurrences(pathogenicIndividuals)
     for k in cooccurrences.keys():
         print('intersection of ' + str(k) + ' is ' + str(cooccurrences[k]))
 
-def readOccurringVariants(fileName, numMetaDataLines):
+def readVariants(fileName, numMetaDataLines):
     # #CHROM  POS             ID      REF     ALT     QUAL    FILTER  INFO            FORMAT  0000057940      0000057950
     # 10      89624243        .       A       G       .       .       AF=1.622e-05    GT      0/0             0/0
     # 0/0 => does not have variant on either strand (homozygous negative)
     # 0/1  => has variant on 1 strand (heterozygous positive)
     # 1/1 =>  has variant on both strands (homozygous positive)
     df = pandas.read_csv(fileName, sep='\t', skiprows=numMetaDataLines, dtype={'#CHROM':int, 'POS':int})
-    count = len(df)
     df = df[df.apply(lambda r: r.str.contains('1/1').any() or r.str.contains('0/1').any(), axis=1)]
-    return count, df
+    return df
 
 def removeNonmutatedIndividuals(df, skipcols):
     # #CHROM  POS             ID      REF     ALT     QUAL    FILTER  INFO            FORMAT  0000057940      0000057950
@@ -75,14 +73,24 @@ def removeNonmutatedIndividuals(df, skipcols):
     df = df.loc[:, (df != '0/0').any(axis=0)]
     return count, df
 
-def findPathogenicVariantsInBRCA(fileName, significanceString, sigColName):
+def findPathogenicVariantsInBRCA(fileName, classStrings, sigColName):
     brcaDF = pandas.read_csv(fileName, sep='\t', header=0, dtype=str)
     pathVars = list()
+    vusVars = list()
+    benignVars = list()
+    unclassifiedVars = list()
 
     for index, row in brcaDF.iterrows():
-        if significanceString.lower() == str(row[sigColName]).lower():
+        if str(row[sigColName]) in classStrings['Pathogenic']:
             pathVars.append((int(row['Chr']), int(row['Pos']), row['Ref'], row['Alt']))
-    return len(brcaDF), pathVars
+        elif str(row[sigColName]) in classStrings['Benign']:
+            benignVars.append((int(row['Chr']), int(row['Pos']), row['Ref'], row['Alt']))
+        elif str(row[sigColName]) in classStrings['Unknown']:
+            vusVars.append((int(row['Chr']), int(row['Pos']), row['Ref'], row['Alt']))
+        elif str(row[sigColName]) in classStrings['Unclassified']:
+            unclassifiedVars.append((int(row['Chr']), int(row['Pos']), row['Ref'], row['Alt']))
+
+    return len(brcaDF), pathVars, benignVars, vusVars, unclassifiedVars
 
 
 def findVariantsPerIndividual(df, skipCols, nThreads, threadID):
@@ -98,20 +106,43 @@ def findVariantsPerIndividual(df, skipCols, nThreads, threadID):
     numColumns = len(df.columns)
     numIndividuals = len(df.columns) - skipCols
     partitionSize = int(numIndividuals / nThreads)
-    start = threadID * partitionSize
+    start = threadID * partitionSize + skipCols
     if threadID == nThreads - 1:
         end = numColumns
     else:
         end = skipCols + start + partitionSize
 
-    for index, record in df.iterrows():
+    # TODO convert from row-major search to column-major search
+    '''for index, record in df.iterrows():
+        print('examining record ' + str(index))
         for individual in range(skipCols + start, end):
             id = list(df.columns)[individual]
-            if record[individual] == '0/1' or record[individual] == '1/1':
+            #if record[individual] == '0/1' or record[individual] == '1/1':
+            if '1' in record[individual]:
+                print('found an individual with mutation')
                 if id not in variantsPerIndividual:
                     variantsPerIndividual[id] = set()
                 varTuple = (record['#CHROM'], record['POS'], record['REF'], record['ALT'])
-                variantsPerIndividual[id].add(varTuple)
+                variantsPerIndividual[id].add(varTuple)'''
+
+    # get list of individuals
+    individuals = df.columns[start:end]
+
+    i=0
+    for individual in individuals:
+        print(str(i) + ': ' + str(individual))
+        variantsPerIndividual[individual] = set()
+        listOfVars = list(df[(df[individual] == '0/1') | (df[individual] == '1/1')].index)
+        for var in listOfVars:
+            try:
+                record = df.iloc[var]
+                varTuple = (record['#CHROM'], record['POS'], record['REF'], record['ALT'])
+                variantsPerIndividual[individual].add(varTuple)
+            except:
+                print(str(var) + ' from ' + str(listOfVars))
+                i+=1
+                continue
+        i+=1
     return variantsPerIndividual
 
 def findIndividualsWithPathogenicVariant(variantsPerIndividual, pathogenicVars):
