@@ -2,11 +2,12 @@ import pandas
 import itertools
 from multiprocessing.pool import ThreadPool
 import time
+import json
 
 clinvarVCFMetadataLines = 27
 myVCFMetadataLines = 8
 myVCFskipCols = 9
-nThreads = 1
+nThreads = 2
 classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely benign' ],
                  'Unknown': [ 'Uncertain significance'], 'Unclassified': [ '-']}
 sigColName = 'Clinical_significance_ENIGMA'
@@ -14,6 +15,7 @@ brcaFileName = '/data/variants.tsv'
 vcfFileName = '/data/BreastCancer.shuffle.vcf'
 #vcfFileName = '/data/BreastCancer.shuffle-test.vcf'
 #vcfFileName = '/data/bc-100.vcf'
+variantsPerIndividualFileName = '/data/variantsPerIndividual.txt'
 
 def main():
 
@@ -41,6 +43,10 @@ def main():
         result.wait()
         variantsPerIndividual.update(result.get())
 
+    print('saving dictionary to ' + variantsPerIndividualFileName)
+    with open(variantsPerIndividualFileName, 'w') as file:
+        file.write(json.dumps(variantsPerIndividual))
+
     elapsed_time = time.time() - t
     print('elapsed time is ' + str(elapsed_time))
 
@@ -53,6 +59,8 @@ def main():
     for k in cooccurrences.keys():
         print('intersection of ' + str(k) + ' is ' + str(cooccurrences[k]))
 
+    # TODO find "interesting" cooccurrences
+
 def readVariants(fileName, numMetaDataLines):
     # #CHROM  POS             ID      REF     ALT     QUAL    FILTER  INFO            FORMAT  0000057940      0000057950
     # 10      89624243        .       A       G       .       .       AF=1.622e-05    GT      0/0             0/0
@@ -63,15 +71,7 @@ def readVariants(fileName, numMetaDataLines):
     df = df[df.apply(lambda r: r.str.contains('1/1').any() or r.str.contains('0/1').any(), axis=1)]
     return df
 
-def removeNonmutatedIndividuals(df, skipcols):
-    # #CHROM  POS             ID      REF     ALT     QUAL    FILTER  INFO            FORMAT  0000057940      0000057950
-    # 10      89624243        .       A       G       .       .       AF=1.622e-05    GT      0/0             0/0
-    # 0/0 => does not have variant on either strand (homozygous negative)
-    # 0/1  => has variant on 1 strand (heterozygous positive)
-    # 1/1 =>  has variant on both strands (homozygous positive)
-    count = len(df.columns) - skipcols
-    df = df.loc[:, (df != '0/0').any(axis=0)]
-    return count, df
+
 
 def findPathogenicVariantsInBRCA(fileName, classStrings, sigColName):
     brcaDF = pandas.read_csv(fileName, sep='\t', header=0, dtype=str)
@@ -112,25 +112,11 @@ def findVariantsPerIndividual(df, skipCols, nThreads, threadID):
     else:
         end = skipCols + start + partitionSize
 
-    # TODO convert from row-major search to column-major search
-    '''for index, record in df.iterrows():
-        print('examining record ' + str(index))
-        for individual in range(skipCols + start, end):
-            id = list(df.columns)[individual]
-            #if record[individual] == '0/1' or record[individual] == '1/1':
-            if '1' in record[individual]:
-                print('found an individual with mutation')
-                if id not in variantsPerIndividual:
-                    variantsPerIndividual[id] = set()
-                varTuple = (record['#CHROM'], record['POS'], record['REF'], record['ALT'])
-                variantsPerIndividual[id].add(varTuple)'''
-
     # get list of individuals
     individuals = df.columns[start:end]
 
-    i=0
+    #
     for individual in individuals:
-        print(str(i) + ': ' + str(individual))
         variantsPerIndividual[individual] = set()
         listOfVars = list(df[(df[individual] == '0/1') | (df[individual] == '1/1')].index)
         for var in listOfVars:
@@ -140,9 +126,7 @@ def findVariantsPerIndividual(df, skipCols, nThreads, threadID):
                 variantsPerIndividual[individual].add(varTuple)
             except:
                 print(str(var) + ' from ' + str(listOfVars))
-                i+=1
                 continue
-        i+=1
     return variantsPerIndividual
 
 def findIndividualsWithPathogenicVariant(variantsPerIndividual, pathogenicVars):
