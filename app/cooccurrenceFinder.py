@@ -8,13 +8,14 @@ clinvarVCFMetadataLines = 27
 myVCFMetadataLines = 8
 myVCFskipCols = 9
 nThreads = cpu_count()
+#nThreads=1
 classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely benign' ],
                  'Unknown': [ 'Uncertain significance'], 'Unclassified': [ '-']}
 sigColName = 'Clinical_significance_ENIGMA'
-brcaFileName = '/data/variants-test.tsv'
+brcaFileName = '/data/variants.tsv'
 #vcfFileName = '/data/BreastCancer.shuffle.vcf'
-vcfFileName = '/data/BreastCancer.shuffle-test.vcf'
-#vcfFileName = '/data/bc-100.vcf'
+#vcfFileName = '/data/BreastCancer.shuffle-test.vcf'
+vcfFileName = '/data/bc-100.vcf'
 variantsPerIndividualFileName = '/data/variantsPerIndividual.txt'
 
 def main():
@@ -80,20 +81,32 @@ def readVariants(fileName, numMetaDataLines):
 
 def findPathogenicVariantsInBRCA(fileName, classStrings, sigColName):
     brcaDF = pandas.read_csv(fileName, sep='\t', header=0, dtype=str)
+    # Genomic_Coordinate_hg37
+    # chr13:g.32972575:G>T
     pathVars = list()
     vusVars = list()
     benignVars = list()
     unclassifiedVars = list()
 
     for index, row in brcaDF.iterrows():
+        coord = row['Genomic_Coordinate_hg37'].split(':')
+        chr = int(coord[0].split('chr')[1])
+        pos = int(coord[1].split('.')[1])
+        ref = coord[2].split('>')[0]
+        alt = coord[2].split('>')[1]
+
         if str(row[sigColName]) in classStrings['Pathogenic']:
-            pathVars.append((int(row['Chr']), int(row['Pos']), row['Ref'], row['Alt']))
+            #pathVars.append((int(row['Chr']), int(row['Pos']), row['Ref'], row['Alt']))
+            pathVars.append((chr, pos, ref, alt))
         elif str(row[sigColName]) in classStrings['Benign']:
-            benignVars.append((int(row['Chr']), int(row['Pos']), row['Ref'], row['Alt']))
+            #benignVars.append((int(row['Chr']), int(row['Pos']), row['Ref'], row['Alt']))
+            benignVars.append((chr, pos, ref, alt))
         elif str(row[sigColName]) in classStrings['Unknown']:
-            vusVars.append((int(row['Chr']), int(row['Pos']), row['Ref'], row['Alt']))
+            #vusVars.append((int(row['Chr']), int(row['Pos']), row['Ref'], row['Alt']))
+            vusVars.append((chr, pos, ref, alt))
         elif str(row[sigColName]) in classStrings['Unclassified']:
-            unclassifiedVars.append((int(row['Chr']), int(row['Pos']), row['Ref'], row['Alt']))
+            #unclassifiedVars.append((int(row['Chr']), int(row['Pos']), row['Ref'], row['Alt']))
+            unclassifiedVars.append((chr, pos, ref, alt))
 
     return len(brcaDF), pathVars, benignVars, vusVars, unclassifiedVars
 
@@ -122,16 +135,22 @@ def findVariantsPerIndividual(df, skipCols, nThreads, threadID):
 
     #
     for individual in individuals:
+        #variantsPerIndividual[individual] = set(df[df[individual] != '0/0'].index)
         variantsPerIndividual[individual] = set()
-        listOfVars = list(df[(df[individual] == '0/1') | (df[individual] == '1/1')].index)
-        for var in listOfVars:
+        #isVariant = df[individual] != '0/0'
+        #variantsPerIndividualDF = df[isVariant][['#CHROM', 'POS', 'REF', 'ALT']]
+
+
+        listOfVariantIndices = list(df[(df[individual] != '0/0')].index)
+        for variantIndex in listOfVariantIndices:
             try:
-                record = df.iloc[var]
+                record = df.iloc[variantIndex]
                 varTuple = (record['#CHROM'], record['POS'], record['REF'], record['ALT'])
                 variantsPerIndividual[individual].add(varTuple)
             except:
-                print(str(var) + ' from ' + str(listOfVars))
+                print('exception: ' + str(variantIndex) + ' from ' + str(listOfVariantIndices))
                 continue
+
     return variantsPerIndividual
 
 def findIndividualsWithPathogenicVariant(variantsPerIndividual, pathogenicVars):
@@ -155,7 +174,8 @@ def findCooccurrences(patientsWithPathogenicVars):
     for a, b in itertools.combinations(patientsWithPathogenicVars.values(), 2):
         #print('comparing ' + repr(a) + ' and ' + repr(b))
         intersection = a.intersection(b)
-        if len(intersection) > 0:
+        if len(intersection) > 0 and (repr(a), repr(b)) not in cooccurrences and (repr(b), repr(a)) not in cooccurrences:
+            print('found match b/w ' + repr(a) + ' and ' + repr(b))
             cooccurrences[(repr(a), repr(b))] = intersection
     return cooccurrences
 
