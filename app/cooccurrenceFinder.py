@@ -13,9 +13,9 @@ classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely ben
                  'Unknown': [ 'Uncertain significance'], 'Unclassified': [ '-']}
 sigColName = 'Clinical_significance_ENIGMA'
 brcaFileName = '/data/variants.tsv'
-#vcfFileName = '/data/BreastCancer.shuffle.vcf'
+vcfFileName = '/data/BreastCancer.shuffle.vcf'
 #vcfFileName = '/data/BreastCancer.shuffle-test.vcf'
-vcfFileName = '/data/bc-100.vcf'
+#vcfFileName = '/data/bc-100.vcf'
 variantsPerIndividualFileName = '/data/variantsPerIndividual.txt'
 
 def main():
@@ -89,24 +89,26 @@ def findPathogenicVariantsInBRCA(fileName, classStrings, sigColName):
     unclassifiedVars = list()
 
     for index, row in brcaDF.iterrows():
-        coord = row['Genomic_Coordinate_hg37'].split(':')
+        coord = row['Genomic_Coordinate_hg37']
+        coord = coord.split(':')
         chr = int(coord[0].split('chr')[1])
         pos = int(coord[1].split('.')[1])
         ref = coord[2].split('>')[0]
         alt = coord[2].split('>')[1]
+        tuple = (chr, pos, ref, alt)
 
         if str(row[sigColName]) in classStrings['Pathogenic']:
             #pathVars.append((int(row['Chr']), int(row['Pos']), row['Ref'], row['Alt']))
-            pathVars.append((chr, pos, ref, alt))
+            pathVars.append(tuple)
         elif str(row[sigColName]) in classStrings['Benign']:
             #benignVars.append((int(row['Chr']), int(row['Pos']), row['Ref'], row['Alt']))
-            benignVars.append((chr, pos, ref, alt))
+            benignVars.append(tuple)
         elif str(row[sigColName]) in classStrings['Unknown']:
             #vusVars.append((int(row['Chr']), int(row['Pos']), row['Ref'], row['Alt']))
-            vusVars.append((chr, pos, ref, alt))
+            vusVars.append(tuple)
         elif str(row[sigColName]) in classStrings['Unclassified']:
             #unclassifiedVars.append((int(row['Chr']), int(row['Pos']), row['Ref'], row['Alt']))
-            unclassifiedVars.append((chr, pos, ref, alt))
+            unclassifiedVars.append(tuple)
 
     return len(brcaDF), pathVars, benignVars, vusVars, unclassifiedVars
 
