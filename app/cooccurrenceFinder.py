@@ -17,6 +17,7 @@ vcfFileName = '/data/BreastCancer.shuffle.vcf'
 #vcfFileName = '/data/BreastCancer.shuffle-test.vcf'
 #vcfFileName = '/data/bc-100.vcf'
 variantsPerIndividualFileName = '/data/variantsPerIndividual.txt'
+cooccurrencesFileName = '/data/cooccurrences.txt'
 
 def main():
 
@@ -47,6 +48,7 @@ def main():
     print('saving dictionary to ' + variantsPerIndividualFileName)
     with open(variantsPerIndividualFileName, 'w') as file:
         file.write(str(variantsPerIndividual))
+    file.close()
 
     # then to read it back in
     '''import ast
@@ -62,8 +64,9 @@ def main():
 
     print('finding cooccurrences of pathogenic variant with any other variant')
     cooccurrences = findCooccurrences(pathogenicIndividuals)
-    for k in cooccurrences.keys():
-        print('intersection of ' + str(k) + ' is ' + str(cooccurrences[k]))
+    with open(cooccurrencesFileName, 'w') as file:
+        file.write(str(cooccurrences))
+    file.close()
 
     # TODO find "interesting" cooccurrences
 
@@ -96,6 +99,7 @@ def findPathogenicVariantsInBRCA(fileName, classStrings, sigColName):
         ref = coord[2].split('>')[0]
         alt = coord[2].split('>')[1]
         tuple = (chr, pos, ref, alt)
+        print(tuple)
 
         if str(row[sigColName]) in classStrings['Pathogenic']:
             #pathVars.append((int(row['Chr']), int(row['Pos']), row['Ref'], row['Alt']))
@@ -174,10 +178,8 @@ def findIndividualsWithPathogenicVariant(variantsPerIndividual, pathogenicVars):
 def findCooccurrences(patientsWithPathogenicVars):
     cooccurrences = dict()
     for a, b in itertools.combinations(patientsWithPathogenicVars.values(), 2):
-        #print('comparing ' + repr(a) + ' and ' + repr(b))
         intersection = a.intersection(b)
         if len(intersection) > 0 and (repr(a), repr(b)) not in cooccurrences and (repr(b), repr(a)) not in cooccurrences:
-            print('found match b/w ' + repr(a) + ' and ' + repr(b))
             cooccurrences[(repr(a), repr(b))] = intersection
     return cooccurrences
 
