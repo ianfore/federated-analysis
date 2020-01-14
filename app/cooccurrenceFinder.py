@@ -3,6 +3,7 @@ import itertools
 from multiprocessing.pool import ThreadPool
 from multiprocessing import cpu_count
 import time
+import sys
 
 clinvarVCFMetadataLines = 27
 myVCFMetadataLines = 8
@@ -12,15 +13,32 @@ nThreads=1
 classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely benign' ],
                  'Unknown': [ 'Uncertain significance'], 'Unclassified': [ '-']}
 sigColName = 'Clinical_significance_ENIGMA'
-brcaFileName = '/data/variants.tsv'
+brcaFileName = '/data/variants-test.tsv'
 #vcfFileName = '/data/BreastCancer.shuffle.vcf'
-#vcfFileName = '/data/BreastCancer.shuffle-test.vcf'
-vcfFileName = '/data/bc-100.vcf'
+vcfFileName = '/data/BreastCancer.shuffle-test.vcf'
+#vcfFileName = '/data/bc-100.vcf'
 variantsPerIndividualFileName = '/data/variantsPerIndividual.txt'
 cooccurrencesFileName = '/data/cooccurrences.txt'
 
-def main():
 
+def main():
+    if len(sys.argv) != 2:
+        printUsage(sys.argv)
+        sys.exit(1)
+    if sys.argv[1] == '-p':
+        produceOutputFiles()
+    elif sys.argv[1] == '-c':
+        consumeOutputFiles()
+    else:
+        printUsage(sys.argv)
+        sys.exit(1)
+
+
+def printUsage(args):
+    sys.stderr.write("use -p to produce output files and -c to consume them")
+
+def produceOutputFiles():
+    print("producing output files!")
     print('reading BRCA data from ' + brcaFileName)
     count, pathogenicVariants, benignVariants, unknownVariants, unclassifiedVariants = \
         findPathogenicVariantsInBRCA(brcaFileName, classStrings, sigColName)
@@ -46,16 +64,9 @@ def main():
         file.write(str(variantsPerIndividual))
     file.close()
 
-    # then to read it back in
-    '''import ast
-    with open(variantsPerIndividualFileName, 'r') as f:
-        my_set = ast.literal_eval(f.read())'''
-
-
     print('finding individuals with 1 or more pathogenic variant')
     pathogenicIndividuals = findIndividualsWithPathogenicVariant(variantsPerIndividual, pathogenicVariants)
     print('found ' + str(len(pathogenicIndividuals)) + ' individuals with a pathogenic variant')
-
 
     print('finding cooccurrences of pathogenic variant with any other variant')
     cooccurrences = findCooccurrences(pathogenicIndividuals)
@@ -63,7 +74,20 @@ def main():
         file.write(str(cooccurrences))
     file.close()
 
-    # TODO find "interesting" cooccurrences
+
+def consumeOutputFiles():
+    print("consuming output files!")
+    # read in cooccurrences
+    import ast
+    cooccurrences = dict()
+    with open(cooccurrencesFileName, 'r') as f:
+        cooccurrences = ast.literal_eval(f.read())
+    f.close()
+
+    for c in cooccurrences:
+        print(c)
+
+
 
 def readVariants(fileName, numMetaDataLines):
     # #CHROM  POS             ID      REF     ALT     QUAL    FILTER  INFO            FORMAT  0000057940      0000057950
