@@ -4,6 +4,7 @@ from multiprocessing.pool import ThreadPool
 from multiprocessing import cpu_count
 import time
 import sys
+import json
 
 clinvarVCFMetadataLines = 27
 myVCFMetadataLines = 8
@@ -18,7 +19,7 @@ brcaFileName = '/data/variants-test.tsv'
 vcfFileName = '/data/BreastCancer.shuffle-test.vcf'
 #vcfFileName = '/data/bc-100.vcf'
 variantsPerIndividualFileName = '/data/variantsPerIndividual.txt'
-cooccurrencesFileName = '/data/cooccurrences.txt'
+cooccurrencesFileName = '/data/cooccurrences.json'
 
 
 def main():
@@ -60,9 +61,9 @@ def produceOutputFiles():
     print('elapsed time is ' + str(elapsed_time))
 
     print('saving dictionary to ' + variantsPerIndividualFileName)
-    with open(variantsPerIndividualFileName, 'w') as file:
-        file.write(str(variantsPerIndividual))
-    file.close()
+    with open(variantsPerIndividualFileName, 'w') as f:
+        json.dump(str(variantsPerIndividual), f)
+    f.close()
 
     print('finding individuals with 1 or more pathogenic variant')
     pathogenicIndividuals = findIndividualsWithPathogenicVariant(variantsPerIndividual, pathogenicVariants)
@@ -70,9 +71,10 @@ def produceOutputFiles():
 
     print('finding cooccurrences of pathogenic variant with any other variant')
     cooccurrences = findCooccurrences(pathogenicIndividuals)
-    with open(cooccurrencesFileName, 'w') as file:
-        file.write(str(cooccurrences))
-    file.close()
+    with open(cooccurrencesFileName, 'w') as f:
+        json.dump(cooccurrences, f)
+    f.close()
+
 
 
 def consumeOutputFiles():
@@ -80,14 +82,17 @@ def consumeOutputFiles():
     # read in cooccurrences
     import ast
     cooccurrences = dict()
-    with open(cooccurrencesFileName, 'r') as f:
-        cooccurrences = ast.literal_eval(f.read())
-    f.close()
+
+    try:
+        with open(cooccurrencesFileName, 'r') as f:
+            cooccurrences = ast.literal_eval(f.read())
+        f.close()
+    except Exception as e:
+        print("hit exception when reading " + cooccurrencesFileName)
+        print(str(e))
 
     for c in cooccurrences:
-        print(c)
-
-
+        print('cooccurrences[' + c + '] = ' + cooccurrences[c])
 
 def readVariants(fileName, numMetaDataLines):
     # #CHROM  POS             ID      REF     ALT     QUAL    FILTER  INFO            FORMAT  0000057940      0000057950
@@ -98,8 +103,6 @@ def readVariants(fileName, numMetaDataLines):
     df = pandas.read_csv(fileName, sep='\t', skiprows=numMetaDataLines, dtype={'#CHROM':int, 'POS':int}, header=0)
     # this creates a bug: df = df[df.apply(lambda r: r.str.contains('1/1').any() or r.str.contains('0/1').any(), axis=1)]
     return df
-
-
 
 def findPathogenicVariantsInBRCA(fileName, classStrings, sigColName):
     brcaDF = pandas.read_csv(fileName, sep='\t', header=0, dtype=str)
@@ -195,10 +198,17 @@ def findIndividualsWithPathogenicVariant(variantsPerIndividual, pathogenicVars):
 
 def findCooccurrences(patientsWithPathogenicVars):
     cooccurrences = dict()
-    for a, b in itertools.combinations(patientsWithPathogenicVars.values(), 2):
+    '''for a, b in itertools.combinations(patientsWithPathogenicVars.values(), 2):
         intersection = a.intersection(b)
         if len(intersection) > 0 and (repr(a), repr(b)) not in cooccurrences and (repr(b), repr(a)) not in cooccurrences:
-            cooccurrences[(repr(a), repr(b))] = intersection
+            cooccurrences[str((repr(a), repr(b)))] = str(intersection)'''
+    for a, b in itertools.combinations(patientsWithPathogenicVars.keys(), 2):
+        intersection = patientsWithPathogenicVars[a].intersection(patientsWithPathogenicVars[b])
+        if len(intersection) > 0:
+            d1 = {eval(a):patientsWithPathogenicVars[a]}
+            d2 = {eval(b):patientsWithPathogenicVars[b]}
+            key = str((d1, d2))
+            cooccurrences[key] = str(intersection)
     return cooccurrences
 
 
