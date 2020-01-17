@@ -22,4 +22,6 @@ RUN add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-
 
 RUN DEBIAN_FRONTEND=noninteractive  apt-get install r-base -y
 
-RUN pip3 install pyvcf
+#RUN pip3 install pyvcf
+
+RUN pip3 install sklearn

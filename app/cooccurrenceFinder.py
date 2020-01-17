@@ -12,12 +12,12 @@ myVCFskipCols = 9
 #nThreads = cpu_count()
 nThreads=1
 classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely benign' ],
-                 'Unknown': [ 'Uncertain significance'], 'Unclassified': [ '-']}
+                 'Unknown': [ 'Uncertain significance', '-']}
 sigColName = 'Clinical_significance_ENIGMA'
-brcaFileName = '/data/variants-test.tsv'
+brcaFileName = '/data/variants.tsv'
 #vcfFileName = '/data/BreastCancer.shuffle.vcf'
-vcfFileName = '/data/BreastCancer.shuffle-test.vcf'
-#vcfFileName = '/data/bc-100.vcf'
+#vcfFileName = '/data/BreastCancer.shuffle-test.vcf'
+vcfFileName = '/data/bc-100.vcf'
 variantsPerIndividualFileName = '/data/variantsPerIndividual.txt'
 cooccurrencesFileName = '/data/cooccurrences.json'
 
@@ -41,7 +41,7 @@ def printUsage(args):
 def produceOutputFiles():
     print("producing output files!")
     print('reading BRCA data from ' + brcaFileName)
-    count, pathogenicVariants, benignVariants, unknownVariants, unclassifiedVariants = \
+    count, pathogenicVariants, benignVariants, unknownVariants = \
         findPathogenicVariantsInBRCA(brcaFileName, classStrings, sigColName)
 
     print('reading variant data from ' + vcfFileName)
@@ -109,9 +109,8 @@ def findPathogenicVariantsInBRCA(fileName, classStrings, sigColName):
     # Genomic_Coordinate_hg37
     # chr13:g.32972575:G>T
     pathVars = list()
-    vusVars = list()
     benignVars = list()
-    unclassifiedVars = list()
+    vusVars = list()
 
     for index, row in brcaDF.iterrows():
         coord = row['Genomic_Coordinate_hg37']
@@ -131,11 +130,9 @@ def findPathogenicVariantsInBRCA(fileName, classStrings, sigColName):
         elif str(row[sigColName]) in classStrings['Unknown']:
             #vusVars.append((int(row['Chr']), int(row['Pos']), row['Ref'], row['Alt']))
             vusVars.append(tuple)
-        elif str(row[sigColName]) in classStrings['Unclassified']:
-            #unclassifiedVars.append((int(row['Chr']), int(row['Pos']), row['Ref'], row['Alt']))
-            unclassifiedVars.append(tuple)
 
-    return len(brcaDF), pathVars, benignVars, vusVars, unclassifiedVars
+
+    return len(brcaDF), pathVars, benignVars, vusVars
 
 
 def findVariantsPerIndividual(df, skipCols, nThreads, threadID):
@@ -160,14 +157,19 @@ def findVariantsPerIndividual(df, skipCols, nThreads, threadID):
     # get list of individuals
     individuals = df.columns[start:end]
 
-    #
+    # iterate through columns (not rows! iterows() takes 20x longer b/c pandas are stored column-major)
     for individual in individuals:
-        #variantsPerIndividual[individual] = set(df[df[individual] != '0/0'].index)
         variantsPerIndividual[individual] = set()
-        #isVariant = df[individual] != '0/0'
-        #variantsPerIndividualDF = df[isVariant][['#CHROM', 'POS', 'REF', 'ALT']]
 
-        listOfVariantIndices = list(df[(df[individual] != '0/0')].index)
+        # transform column values from strings to ints
+        from sklearn.preprocessing import LabelEncoder
+        enc = LabelEncoder()
+        enc.fit(df[individual])
+        df[individual] = enc.transform(df[individual])
+
+        #listOfVariantIndices = list(df[(df[individual] != '0/0')].index)
+        listOfVariantIndices = list(df[(df[individual] != 0)].index)
+
         for variantIndex in listOfVariantIndices:
             try:
                 record = df.iloc[variantIndex]
@@ -198,17 +200,13 @@ def findIndividualsWithPathogenicVariant(variantsPerIndividual, pathogenicVars):
 
 def findCooccurrences(patientsWithPathogenicVars):
     cooccurrences = dict()
-    '''for a, b in itertools.combinations(patientsWithPathogenicVars.values(), 2):
-        intersection = a.intersection(b)
-        if len(intersection) > 0 and (repr(a), repr(b)) not in cooccurrences and (repr(b), repr(a)) not in cooccurrences:
-            cooccurrences[str((repr(a), repr(b)))] = str(intersection)'''
     for a, b in itertools.combinations(patientsWithPathogenicVars.keys(), 2):
         intersection = patientsWithPathogenicVars[a].intersection(patientsWithPathogenicVars[b])
         if len(intersection) > 0:
             d1 = {eval(a):patientsWithPathogenicVars[a]}
             d2 = {eval(b):patientsWithPathogenicVars[b]}
-            key = str((d1, d2))
-            cooccurrences[key] = str(intersection)
+            key = (d1, d2)
+            cooccurrences[str(key)] = str(intersection)
     return cooccurrences
 
 
