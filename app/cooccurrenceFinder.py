@@ -115,22 +115,16 @@ def findPathogenicVariantsInBRCA(fileName, classStrings, sigColName):
     for index, row in brcaDF.iterrows():
         coord = row['Genomic_Coordinate_hg37']
         coord = coord.split(':')
-        chr = int(coord[0].split('chr')[1])
-        pos = int(coord[1].split('.')[1])
-        ref = coord[2].split('>')[0]
-        alt = coord[2].split('>')[1]
+        chr, pos = int(coord[0].split('chr'))
+        ref, alt = coord[2].split('>')
         tuple = (chr, pos, ref, alt)
 
         if str(row[sigColName]) in classStrings['Pathogenic']:
-            #pathVars.append((int(row['Chr']), int(row['Pos']), row['Ref'], row['Alt']))
             pathVars.append(tuple)
         elif str(row[sigColName]) in classStrings['Benign']:
-            #benignVars.append((int(row['Chr']), int(row['Pos']), row['Ref'], row['Alt']))
             benignVars.append(tuple)
         elif str(row[sigColName]) in classStrings['Unknown']:
-            #vusVars.append((int(row['Chr']), int(row['Pos']), row['Ref'], row['Alt']))
             vusVars.append(tuple)
-
 
     return len(brcaDF), pathVars, benignVars, vusVars
 
@@ -162,13 +156,13 @@ def findVariantsPerIndividual(df, skipCols, nThreads, threadID):
         variantsPerIndividual[individual] = set()
 
         # transform column values from strings to ints
-        from sklearn.preprocessing import LabelEncoder
-        enc = LabelEncoder()
-        enc.fit(df[individual])
-        df[individual] = enc.transform(df[individual])
+        #from sklearn.preprocessing import LabelEncoder
+        #enc = LabelEncoder()
+        #enc.fit(df[individual])
+        #df[individual] = enc.transform(df[individual])
+        #listOfVariantIndices = list(df[(df[individual] != 0)].index)
 
-        #listOfVariantIndices = list(df[(df[individual] != '0/0')].index)
-        listOfVariantIndices = list(df[(df[individual] != 0)].index)
+        listOfVariantIndices = list(df[(df[individual] != '0/0')].index)
 
         for variantIndex in listOfVariantIndices:
             try:
