@@ -18,7 +18,7 @@ brcaFileName = '/data/variants.tsv'
 #vcfFileName = '/data/BreastCancer.shuffle.vcf'
 #vcfFileName = '/data/BreastCancer.shuffle-test.vcf'
 vcfFileName = '/data/bc-100.vcf'
-variantsPerIndividualFileName = '/data/variantsPerIndividual.txt'
+variantsPerIndividualFileName = '/data/variantsPerIndividual.json'
 cooccurrencesFileName = '/data/cooccurrences.json'
 
 
