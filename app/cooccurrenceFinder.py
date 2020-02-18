@@ -115,7 +115,8 @@ def findPathogenicVariantsInBRCA(fileName, classStrings, sigColName):
     for index, row in brcaDF.iterrows():
         coord = row['Genomic_Coordinate_hg37']
         coord = coord.split(':')
-        chr, pos = int(coord[0].split('chr'))
+        chr = int(coord[0].split('chr')[1])
+        pos = int(coord[1].split('g.')[1])
         ref, alt = coord[2].split('>')
         tuple = (chr, pos, ref, alt)
 
@@ -188,7 +189,7 @@ def findIndividualsWithPathogenicVariant(variantsPerIndividual, pathogenicVars):
     for individual in variantsPerIndividual.keys():
         for variant in variantsPerIndividual[individual]:
             if variant in pathogenicVars:
-                individualsWithPathogenicVariant[repr(individual)] = variantsPerIndividual[individual]
+                individualsWithPathogenicVariant[repr(individual) + '_' + str(variant)] = variantsPerIndividual[individual]
                 break
     return individualsWithPathogenicVariant
 
