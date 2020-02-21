@@ -16,8 +16,8 @@ classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely ben
 sigColName = 'Clinical_significance_ENIGMA'
 brcaFileName = '/data/variants.tsv'
 #vcfFileName = '/data/BreastCancer.shuffle.vcf'
-#vcfFileName = '/data/BreastCancer.shuffle-test.vcf'
-vcfFileName = '/data/bc-100.vcf'
+vcfFileName = '/data/BreastCancer.shuffle-test.vcf'
+#vcfFileName = '/data/bc-100.vcf'
 variantsPerIndividualFileName = '/data/variantsPerIndividual.json'
 cooccurrencesFileName = '/data/cooccurrences.json'
 
@@ -91,8 +91,31 @@ def consumeOutputFiles():
         print("hit exception when reading " + cooccurrencesFileName)
         print(str(e))
 
+    cooccurrenceList = list()
     for c in cooccurrences:
-        print('cooccurrences[' + c + '] = ' + cooccurrences[c])
+        # each line is of the form:
+        # cooccurrences[({'id1': {(v11), (v12), ...}, {'id2': {(v21), (v22), ...}})] = {(cov1), (cov2), ...}
+        '''cooccurrences[({'0000058180': {(13, 32945109, 'C', 'A'), (13, 32911888, 'A', 'G'), (13, 32929232, 'A', 'G'), 
+        (8, 90967711, 'A', 'G'), (17, 41267763, 'C', 'T'), (8, 90990479, 'C', 'G'), (13, 32912299, 'T', 'C'), 
+        (16, 68862165, 'C', 'T'), (17, 41234470, 'A', 'G'), (13, 32906729, 'A', 'C'), (16, 68857441, 'T', 'C'), 
+        (8, 90995019, 'C', 'T'), (17, 29553485, 'G', 'A')}}
+        , 
+        {'0000058260': {(13, 32945109, 'C', 'A'), (13, 32911888, 'A', 'G'), (13, 32929232, 'A', 'G'), 
+        (8, 90967711, 'A', 'G'), (17, 41244435, 'T', 'C'), (8, 90990479, 'C', 'G'), (13, 32910721, 'T', 'C'), 
+        (17, 41245466, 'G', 'A'), (13, 32912299, 'T', 'C'), (17, 7579472, 'G', 'C'), (17, 29508775, 'G', 'A'), 
+        (11, 108159732, 'C', 'T'), (13, 32906579, 'A', 'C'), (13, 32906729, 'A', 'C'), (8, 90995019, 'C', 'T'), 
+        (17, 29553485, 'G', 'A'), (13, 32945110, 'A', 'G'), (13, 32906480, 'A', 'C')}})] 
+        = 
+        {(13, 32945109, 'C', 'A'), (8, 90967711, 'A', 'G'), (13, 32911888, 'A', 'G'), (13, 32929232, 'A', 'G'), 
+        (8, 90990479, 'C', 'G'), (13, 32912299, 'T', 'C'), (13, 32906729, 'A', 'C'), (8, 90995019, 'C', 'T'), 
+        (17, 29553485, 'G', 'A')}'''
+
+        # first get what's after '='
+        cooccurrenceList.append(c.split('=')[1])
+
+        #print('cooccurrences[' + c + '] = ' + cooccurrences[c])
+    for c in cooccurrenceList:
+        print(c)
 
 def readVariants(fileName, numMetaDataLines):
     # #CHROM  POS             ID      REF     ALT     QUAL    FILTER  INFO            FORMAT  0000057940      0000057950
