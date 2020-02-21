@@ -6,6 +6,7 @@ import time
 import sys
 import json
 from collections import defaultdict
+import ast
 
 clinvarVCFMetadataLines = 27
 myVCFMetadataLines = 8
@@ -21,6 +22,11 @@ vcfFileName = '/data/BreastCancer.shuffle.vcf'
 #vcfFileName = '/data/bc-100.vcf'
 variantsPerIndividualFileName = '/data/variantsPerIndividual.json'
 cooccurrencesFileName = '/data/cooccurrences.json'
+vusFileName = '/data/vus.json'
+pathVarsFileName = '/data/pathogenicVariants.json'
+vusToPathogenicVariantsFileName = '/data/vusToPathogenicVariants.json'
+vusToBenignVariantsFileName = '/data/vusToBenignVariants.json'
+vusToVusFileName ='/data/vusToVus.json'
 
 
 def main():
@@ -45,6 +51,16 @@ def produceOutputFiles():
     count, pathogenicVariants, benignVariants, unknownVariants = \
         findPathogenicVariantsInBRCA(brcaFileName, classStrings, sigColName)
 
+    print('saving VUS to ' + vusFileName)
+    with open(vusFileName, 'w') as f:
+        json.dump(str(unknownVariants), f)
+    f.close()
+
+    print('saving pathogenic vars to ' + pathVarsFileName)
+    with open(pathVarsFileName, 'w') as f:
+        json.dump(str(pathogenicVariants), f)
+    f.close()
+
     print('reading variant data from ' + vcfFileName)
     variants = readVariants(vcfFileName, myVCFMetadataLines)
 
@@ -61,7 +77,7 @@ def produceOutputFiles():
     elapsed_time = time.time() - t
     print('elapsed time is ' + str(elapsed_time))
 
-    print('saving dictionary to ' + variantsPerIndividualFileName)
+    print('saving variants per individual to ' + variantsPerIndividualFileName)
     with open(variantsPerIndividualFileName, 'w') as f:
         json.dump(str(variantsPerIndividual), f)
     f.close()
@@ -72,53 +88,38 @@ def produceOutputFiles():
 
     print('finding cooccurrences of pathogenic variant with any other variant')
     cooccurrences = findCooccurrences(pathogenicIndividuals)
+
+    print('saving cooccurrences of pathogenic variant with any other variant')
     with open(cooccurrencesFileName, 'w') as f:
         json.dump(cooccurrences, f)
     f.close()
 
-
+    print('mapping cooccurrences of pathogenic and benign variants with vus')
+    vusToPathogenicVariants, vusToBenignVariants , vusToVus= mapVusToVariants(cooccurrences, unknownVariants, pathogenicVariants)
+    print('saving cooccurrences of vus vars with pathogenic variants to ' + vusToPathogenicVariantsFileName)
+    with open(vusToPathogenicVariantsFileName, 'w') as f:
+        json.dump(vusToPathogenicVariants, f)
+    f.close()
+    print('saving cooccurrences of vus vars with benign variants to ' + vusToBenignVariantsFileName)
+    with open(vusToBenignVariantsFileName, 'w') as f:
+        json.dump(vusToBenignVariants, f)
+    f.close()
+    print('saving cooccurrences of vus vars with vus vars to ' + vusToVusFileName)
+    with open(vusToVusFileName, 'w') as f:
+        json.dump(vusToVus, f)
+    f.close()
 
 def consumeOutputFiles():
-    print("consuming output files!")
-    # read in cooccurrences
-    import ast
-    cooccurrences = dict()
+    # do the math!
+    print('doing the math!')
 
-    try:
-        with open(cooccurrencesFileName, 'r') as f:
-            cooccurrences = ast.literal_eval(f.read())
-        f.close()
-    except Exception as e:
-        print("hit exception when reading " + cooccurrencesFileName)
-        print(str(e))
-
-
-    # each line is of the form:
-    #({id1:{variants},id2:{variants}}) : {co-occurring variants}
-    # ({'id1': {(v11), (v12), ...}, {'id2': {(v21), (v22), ...}}): {(cov1), (cov2), ...}
-    '''"({'0000058180': {(13, 32945109, 'C', 'A'), (13, 32911888, 'A', 'G'), (13, 32929232, 'A', 'G'), 
-    (8, 90967711, 'A', 'G'), (17, 41267763, 'C', 'T'), (8, 90990479, 'C', 'G'), (13, 32912299, 'T', 'C'), 
-    (16, 68862165, 'C', 'T'), (17, 41234470, 'A', 'G'), (13, 32906729, 'A', 'C'), (16, 68857441, 'T', 'C'), 
-    (8, 90995019, 'C', 'T'), (17, 29553485, 'G', 'A')}}
-    , 
-    {'0000058260': {(13, 32945109, 'C', 'A'), (13, 32911888, 'A', 'G'), (13, 32929232, 'A', 'G'), 
-    (8, 90967711, 'A', 'G'), (17, 41244435, 'T', 'C'), (8, 90990479, 'C', 'G'), (13, 32910721, 'T', 'C'), 
-    (17, 41245466, 'G', 'A'), (13, 32912299, 'T', 'C'), (17, 7579472, 'G', 'C'), (17, 29508775, 'G', 'A'), 
-    (11, 108159732, 'C', 'T'), (13, 32906579, 'A', 'C'), (13, 32906729, 'A', 'C'), (8, 90995019, 'C', 'T'), 
-    (17, 29553485, 'G', 'A'), (13, 32945110, 'A', 'G'), (13, 32906480, 'A', 'C')}})"
-    : 
-    "{(13, 32945109, 'C', 'A'), (8, 90967711, 'A', 'G'), (13, 32911888, 'A', 'G'), (13, 32929232, 'A', 'G'), 
-    (8, 90990479, 'C', 'G'), (13, 32912299, 'T', 'C'), (13, 32906729, 'A', 'C'), (8, 90995019, 'C', 'T'), 
-    (17, 29553485, 'G', 'A')}"'''
-
-    # create map of vus variant to path vars
-    count, pathogenicVariants, benignVariants, unknownVariants = \
-        findPathogenicVariantsInBRCA(brcaFileName, classStrings, sigColName)
-
+def mapVusToVariants(cooccurrences, unknownVariants, pathogenicVariants):
     for c in cooccurrences:
         cooccurrences[c] = cooccurrences[c].replace('),', ');').replace('{', '').replace('}', '')
 
     vusToPath = defaultdict(list)
+    vusToBenign = defaultdict(list)
+    vusToVus = defaultdict(list)
     for c in cooccurrences.values():
         variants = c.split(';')
         for v in variants:
@@ -132,16 +133,15 @@ def consumeOutputFiles():
 
             # look up variant to see if it's vus
             if tup in unknownVariants:
-                # now generate list of path that cooccur with vus
+                # now generate list of pathogenic vars that cooccur with vus
                 for cv in variants:
                     if cv in pathogenicVariants:
                         vusToPath[tup].append(cv)
-
-    for p in vusToPath:
-        print(p)
-        print(vusToPath[p])
-
-
+                    elif cv not in unknownVariants:
+                        vusToBenign[tup].append(cv)
+                    else:
+                        vusToVus[tup].append(cv)
+    return vusToPath, vusToBenign, vusToVus
 
 def readVariants(fileName, numMetaDataLines):
     # #CHROM  POS             ID      REF     ALT     QUAL    FILTER  INFO            FORMAT  0000057940      0000057950
