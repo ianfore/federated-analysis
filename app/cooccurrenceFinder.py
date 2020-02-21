@@ -16,8 +16,8 @@ classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely ben
                  'Unknown': [ 'Uncertain significance', '-']}
 sigColName = 'Clinical_significance_ENIGMA'
 brcaFileName = '/data/variants.tsv'
-#vcfFileName = '/data/BreastCancer.shuffle.vcf'
-vcfFileName = '/data/BreastCancer.shuffle-test.vcf'
+vcfFileName = '/data/BreastCancer.shuffle.vcf'
+#vcfFileName = '/data/BreastCancer.shuffle-test.vcf'
 #vcfFileName = '/data/bc-100.vcf'
 variantsPerIndividualFileName = '/data/variantsPerIndividual.json'
 cooccurrencesFileName = '/data/cooccurrences.json'
@@ -111,15 +111,14 @@ def consumeOutputFiles():
     (8, 90990479, 'C', 'G'), (13, 32912299, 'T', 'C'), (13, 32906729, 'A', 'C'), (8, 90995019, 'C', 'T'), 
     (17, 29553485, 'G', 'A')}"'''
 
-    # create map of pathogenic variant to list of other variants
+    # create map of vus variant to path vars
     count, pathogenicVariants, benignVariants, unknownVariants = \
         findPathogenicVariantsInBRCA(brcaFileName, classStrings, sigColName)
-
 
     for c in cooccurrences:
         cooccurrences[c] = cooccurrences[c].replace('),', ');').replace('{', '').replace('}', '')
 
-    pathToVars = defaultdict(list)
+    vusToPath = defaultdict(list)
     for c in cooccurrences.values():
         variants = c.split(';')
         for v in variants:
@@ -131,15 +130,16 @@ def consumeOutputFiles():
             alt = ast.literal_eval(v_split[3].strip())
             tup = (int(chrom), int(pos), ref, alt)
 
-            # look up variant to see if it's pathogenic
-            if tup in pathogenicVariants:
-                #pathToVars[tup] = list()
-	            pathToVars[tup].append(c)
-                #print('path var = ' + str(v))
+            # look up variant to see if it's vus
+            if tup in unknownVariants:
+                # now generate list of path that cooccur with vus
+                for cv in variants:
+                    if cv in pathogenicVariants:
+                        vusToPath[tup].append(cv)
 
-    for p in pathToVars:
+    for p in vusToPath:
         print(p)
-        print(pathToVars[p])
+        print(vusToPath[p])
 
 
 
