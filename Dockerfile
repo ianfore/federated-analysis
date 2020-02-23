@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
     python3-dev 
 
 
-RUN pip3 install --no-cache-dir numpy pandas pandasql tabulate scipy
+RUN pip3 install --no-cache-dir numpy pandas pandasql tabulate scipy pyensembl
 
 RUN apt-get install software-properties-common -y
 
