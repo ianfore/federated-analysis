@@ -24,13 +24,6 @@ variantsPerIndividualFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/feder
 pathogenicCooccurrencesFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/pathogenicCooccurrences.json'
 benignCooccurrencesFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/benignCooccurrences.json'
 vusCooccurrencesFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/vusCooccurrences.json'
-
-vusFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/vus.json'
-pathVarsFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/pathogenicVariants.json'
-benignVarsFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/benignVariants.json'
-vusToPathogenicVariantsFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/vusToPathogenicVariants.json'
-vusToBenignVariantsFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/vusToBenignVariants.json'
-vusToVusFileName ='/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/vusToVus.json'
 ensemblRelease=75
 
 p2 = 0.0001
@@ -80,20 +73,25 @@ def consumeOutputFiles():
     f.close()
 
 
+    calculateLikelihood(individualsPerPathogenicCooccurrence, individualsPerBenignCooccurrence, individualsPerVUSCooccurrence, p1)
 
 
 def calculateLikelihood(pathCoocs, benCoocs, vusCoocs, p1):
 
-    # coocs data: {"(10, 89624243, 'A', 'G')(10, 89624245, 'GA', 'G')": ["0000057940", "0000057950"], "(10, 89624243, 'A', 'G')(10, 89624248, 'A', 'G')": ["0000057940"]}
+    # coocs data: {"((10, 89624243, 'A', 'G'), (10, 89624245, 'GA', 'G'))": ["0000057940", "0000057950"], "((10, 89624243, 'A', 'G'), (10, 89624248, 'A', 'G'))": ["0000057940"]}
+
+    allVus = set()
 
     # get list of all vus
-    # key = (vusVarList[i]) + str(vusVarList[j])
-    vusKeys = list(pathCoocs.keys())
-    #for key in vusKeys:
-    #    vus =
+    for key in list(pathCoocs.keys()):
+        allVus.add(eval(key)[0])
+    for key in list(benCoocs.keys()):
+        allVus.add(eval(key)[0])
+    for key in list(vusCoocs.keys()):
+        allVus.add(eval(key)[0])
 
     # per vus, calculate number of times observed (n)
-
+    print(allVus)
 
     # per vus, calculate number times observed with pathogenic variant (k)
 
@@ -331,7 +329,8 @@ def findIndividualsPerCooccurrence(variantsPerIndividual, benPerGene, pathsPerGe
         vusVarList = list(variantsPerIndividual[individual]['vus'])
         pathVarList = list(variantsPerIndividual[individual]['pathogenic'])
         benignVarList = list(variantsPerIndividual[individual]['benign'])
-        for i in range(len(vusVarList) - 1):
+        #for i in range(len(vusVarList) - 1):
+        for i in range(len(vusVarList)):
             vus_gene = getGenesForVariant(vusVarList[i])
             if vus_gene is None:
                 continue
@@ -347,7 +346,10 @@ def findIndividualsPerCooccurrence(variantsPerIndividual, benPerGene, pathsPerGe
                     continue
                 elif benVar in benPerGene[ben_gene[0]] and vusVarList[i] in vusPerGene[vus_gene[0]]:
                     individualsPerBenignCooccurrence[str((vusVarList[i],benVar))].append(individual)
-            for j in range(i+1, len(vusVarList)):
+            #for j in range(i+1, len(vusVarList)):
+            for j in range(len(vusVarList)):
+                if i == j:
+                    continue
                 vus_gene_2 = getGenesForVariant(vusVarList[j])
                 if vus_gene != vus_gene_2 or vus_gene_2 is None:
                     continue
