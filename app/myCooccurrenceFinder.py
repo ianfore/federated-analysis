@@ -8,6 +8,7 @@ import json
 from collections import defaultdict
 import ast
 import pyensembl
+import numpy as np
 
 clinvarVCFMetadataLines = 27
 myVCFMetadataLines = 8
@@ -17,10 +18,13 @@ nThreads = cpu_count()
 classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely benign' ],
                  'Unknown': [ 'Uncertain significance', '-']}
 sigColName = 'Clinical_significance_ENIGMA'
-brcaFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/brca-variants.tsv'
-vcfFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/BreastCancer.shuffle.vcf'
+brcaFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/variants-test.tsv'
+vcfFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/bc100.vcf'
 variantsPerIndividualFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/variantsPerIndividual.json'
-cooccurrencesFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/cooccurrences.json'
+pathogenicCooccurrencesFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/pathogenicCooccurrences.json'
+benignCooccurrencesFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/benignCooccurrences.json'
+vusCooccurrencesFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/vusCooccurrences.json'
+
 vusFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/vus.json'
 pathVarsFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/pathogenicVariants.json'
 benignVarsFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/benignVariants.json'
@@ -45,6 +49,32 @@ def main():
 
 def printUsage(args):
     sys.stderr.write("use -p to produce output files and -c to consume them")
+
+def consumeOutputFiles():
+    # do the math!
+    print('doing the math!')
+    with open(pathogenicCooccurrencesFileName) as f:
+        individualsPerPathogenicCooccurrence = json.load(f)
+    f.close()
+    for c in individualsPerPathogenicCooccurrence:
+        print('path cooccurrence: ' + str(c) + ' occurred ' + str(len(individualsPerPathogenicCooccurrence[c])))
+
+    with open(benignCooccurrencesFileName) as f:
+        individualsPerBenignCooccurrence = json.load(f)
+    f.close()
+    for c in individualsPerBenignCooccurrence:
+        print('benign cooccurrence: ' + str(c) + ' occurred ' + str(len(individualsPerBenignCooccurrence[c])))
+
+    with open(vusCooccurrencesFileName) as f:
+        individualsPerVUSCooccurrence = json.load(f)
+    f.close()
+    for c in individualsPerVUSCooccurrence:
+        print('vus cooccurrence: ' + str(c) + ' occurred ' + str(len(individualsPerVUSCooccurrence[c])))
+
+    f.close()
+
+
+
 
 def produceOutputFiles():
     print("producing output files!")
@@ -71,45 +101,61 @@ def produceOutputFiles():
 
     print('slicing up VCF data by gene')
     t = time.time()
-    vusPerGene, pathogenicPerGene = findVariantsPerGene(variantsPerChromosome, unknownVariants, pathogenicVariants, ensemblRelease)
+    benignPerGene, pathogenicPerGene, vusPerGene = findVariantsPerGene(variantsPerChromosome,
+                                                    benignVariants, pathogenicVariants, unknownVariants,ensemblRelease)
     elapsed_time = time.time() - t
     print('elapsed time in variantsPerGene() ' + str(elapsed_time))
 
-    print('finding non-benign variants per individual')
+    print('finding variants per individual')
     t = time.time()
     results = list()
-    nonBenignVariantsPerIndividual = dict()
+    variantsPerIndividual = defaultdict(lambda: defaultdict(list))
     pool = ThreadPool(processes=nThreads)
     for i in range(nThreads):
-        results.append(pool.apply_async(findNonBenignVariantsPerIndividual, args=(vcfData, benignVariants, myVCFskipCols, nThreads, i)))
+        results.append(pool.apply_async(findVariantsPerIndividual, args=(vcfData, benignVariants, pathogenicVariants,
+                                                                         unknownVariants, myVCFskipCols, nThreads, i)))
     for result in results:
         result.wait()
-        nonBenignVariantsPerIndividual.update(result.get())
+        variantsPerIndividual.update(result.get())
     elapsed_time = time.time() - t
     print('elapsed time in findVariantsPerIndividual() ' + str(elapsed_time))
+    print(variantsPerIndividual)
 
-    print('finding vus-path co-occurring variants per individual')
+    print('finding individuals per cooc')
     t = time.time()
     # for each person, find list of pairs of vus and path that co-occur on same gene
-    coocsPerIndividual = findCooccurrencesPerIndividual(nonBenignVariantsPerIndividual, pathogenicVariants, unknownVariants)
+    individualsPerBenignCooccurrence, individualsPerPathogenicCooccurrence, individualsPerVUSCooccurrence = \
+        findIndividualsPerCooccurrence(variantsPerIndividual, benignPerGene, pathogenicPerGene, vusPerGene)
     elapsed_time = time.time() - t
-    print('elapsed time in findVariantsPerIndividual() ' + str(elapsed_time))
+    print('elapsed time in findIndividualsPerCooccurrence() ' + str(elapsed_time))
 
-    for i in coocsPerIndividual:
-        print('individual: ' + str(i))
-        print('coocs = ' + str(coocsPerIndividual[i]))
+    # then for each co-occurring pair of variants, add individual who has that co-occurrence to list
+    print('saving individuals per pathogenic cooc  to ' + pathogenicCooccurrencesFileName)
+    with open(pathogenicCooccurrencesFileName, 'w') as f:
+        json.dump(individualsPerPathogenicCooccurrence, f)
+    f.close()
+    print('saving individuals per benign cooc  to ' + benignCooccurrencesFileName)
+    with open(benignCooccurrencesFileName, 'w') as f:
+        json.dump(individualsPerBenignCooccurrence, f)
+    f.close()
 
-    # then for each co-occurrence pair, add individual to list
+    print('saving individuals per vus cooc  to ' + vusCooccurrencesFileName)
+    with open(vusCooccurrencesFileName, 'w') as f:
+        json.dump(individualsPerVUSCooccurrence, f)
+    f.close()
+
     # length of list is number of co-coccurrences for vus-path pair
     # now you can you do the math!
 
-def findVariantsPerGene(variantsPerChromosome, unknownVariants, pathogenicVariants, ensemblRelease):
+def findVariantsPerGene(variantsPerChromosome, benignVariants, pathogenicVariants, unknownVariants, ensemblRelease):
     ensembl_db = pyensembl.database.Database(gtf_path='/Users/jcasaletto/Library/Caches/pyensembl/GRCh37.75.gtf.db')
     vusPerGene = defaultdict(list)
     pathogenicPerGene = defaultdict(list)
+    benignPerGene = defaultdict(list)
+
     for chrom in variantsPerChromosome:
         x = variantsPerChromosome[chrom]
-        for i in range(len(x.iloc[1])):
+        for i in range(len(x)):
             chrom = int(chrom)
             try:
                 pos = int(x.iloc[i][1])
@@ -124,16 +170,28 @@ def findVariantsPerGene(variantsPerChromosome, unknownVariants, pathogenicVarian
             # see if variant is vus
             if v in unknownVariants:
                 genes = getGenesForVariant(v)
+                if genes is None:
+                    continue
                 for gene in genes:
                     vusPerGene[gene].append((chrom, pos, ref, alt))
 
             # see if variant is pathogenic
             elif v in pathogenicVariants:
                 genes = getGenesForVariant(v)
+                if genes is None:
+                    continue
                 for gene in genes:
                     pathogenicPerGene[gene].append((chrom, pos, ref, alt))
 
-    return vusPerGene, pathogenicPerGene
+            # see if variant is benign
+            elif v in benignVariants:
+                genes = getGenesForVariant(v)
+                if genes is None:
+                    continue
+                for gene in genes:
+                    benignPerGene[gene].append((chrom, pos, ref, alt))
+
+    return benignPerGene, pathogenicPerGene, vusPerGene
 
 def findVariantsPerChromosome(variants):
     variantsPerChromosome = defaultdict(dict)
@@ -141,9 +199,7 @@ def findVariantsPerChromosome(variants):
         variantsPerChromosome[chrom] = variants.loc[variants['#CHROM']==chrom]
     return variantsPerChromosome
 
-def consumeOutputFiles():
-    # do the math!
-    print('doing the math!')
+
 
 def readVCFFile(fileName, numMetaDataLines):
     # #CHROM  POS             ID      REF     ALT     QUAL    FILTER  INFO            FORMAT  0000057940      0000057950
@@ -181,7 +237,7 @@ def findVariantsInBRCA(fileName, classStrings, sigColName):
     return len(brcaDF), pathVars, benignVars, vusVars
 
 
-def findNonBenignVariantsPerIndividual(vcfDF, benignVariants, skipCols, nThreads, threadID):
+def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, unknownVariants, skipCols, nThreads, threadID):
 
     # find mutations
     # #CHROM  POS             ID      REF     ALT     QUAL    FILTER  INFO            FORMAT  0000057940      0000057950
@@ -190,7 +246,7 @@ def findNonBenignVariantsPerIndividual(vcfDF, benignVariants, skipCols, nThreads
     # 0/1  => has variant on 1 strand (heterozygous positive)
     # 1/1 =>  has variant on both strands (homozygous positive)
 
-    variantsPerIndividual = defaultdict(list)
+    variantsPerIndividual = defaultdict(lambda: defaultdict(list))
     numColumns = len(vcfDF.columns)
     numIndividuals = len(vcfDF.columns) - skipCols
     partitionSize = int(numIndividuals / nThreads)
@@ -206,14 +262,21 @@ def findNonBenignVariantsPerIndividual(vcfDF, benignVariants, skipCols, nThreads
     # iterate through columns (not rows! iterows() takes 20x longer b/c pandas are stored column-major)
     for individual in individuals:
 
-        listOfVariantIndices = list(vcfDF[(vcfDF[individual] != '0/0')].index)
+        includeList = ['1/0', '0/1', '1/1']
+        listOfVariantIndices = list()
+        for x in includeList:
+            listOfVariantIndices += list(np.where(vcfDF[individual] == x)[0])
 
         for variantIndex in listOfVariantIndices:
             try:
                 record = vcfDF.iloc[variantIndex]
                 varTuple = (record['#CHROM'], record['POS'], record['REF'], record['ALT'])
-                if varTuple not in benignVariants:
-                    variantsPerIndividual[individual].append(varTuple)
+                if varTuple in benignVariants:
+                    variantsPerIndividual[individual]['benign'].append(varTuple)
+                elif varTuple in pathogenicVariants:
+                    variantsPerIndividual[individual]['pathogenic'].append(varTuple)
+                else:
+                    variantsPerIndividual[individual]['vus'].append(varTuple)
             except Exception as e:
                 print("exception for index " + str(variantIndex) + " of individual " + str(individual))
                 print("exception: " + str(e))
@@ -223,32 +286,53 @@ def findNonBenignVariantsPerIndividual(vcfDF, benignVariants, skipCols, nThreads
 
 
 def getGenesForVariant(variant):
+    ensembl_db = pyensembl.database.Database(gtf_path='/Users/jcasaletto/Library/Caches/pyensembl/GRCh37.75.gtf.db')
     ensembl = pyensembl.EnsemblRelease(release=75)
     chrom = variant[0]
     pos = variant[1]
     try:
-        return ensembl.gene_names_at_locus(contig=chrom, position=pos)
+        genes = ensembl.gene_names_at_locus(contig=int(chrom), position=int(pos))
+        if genes:
+            return genes
+        else:
+            return None
     except Exception as e:
         return None
 
-def findCooccurrencesPerIndividual(nonBenignVariantsPerIndividual, pathsPerGene, vusPerGene):
-    coocsPerIndividual = defaultdict(list)
+def findIndividualsPerCooccurrence(variantsPerIndividual, benPerGene, pathsPerGene, vusPerGene):
+    individualsPerBenignCooccurrence = defaultdict(list)
+    individualsPerPathogenicCooccurrence = defaultdict(list)
+    individualsPerVUSCooccurrence = defaultdict(list)
 
-    for i in nonBenignVariantsPerIndividual:
-        variantList = nonBenignVariantsPerIndividual[i]
-        for j in range(len(variantList)-1):
-            for k in range(j+1, len(variantList)):
-                gene_j = getGenesForVariant(variantList[j])
-                gene_k = getGenesForVariant(variantList[k])
-                if gene_j != gene_k or gene_j is None:
+
+    for individual in variantsPerIndividual:
+        vusVarList = list(variantsPerIndividual[individual]['vus'])
+        pathVarList = list(variantsPerIndividual[individual]['pathogenic'])
+        benignVarList = list(variantsPerIndividual[individual]['benign'])
+        for i in range(len(vusVarList) - 1):
+            vus_gene = getGenesForVariant(vusVarList[i])
+            if vus_gene is None:
+                continue
+            for pathVar in pathVarList:
+                path_gene = getGenesForVariant(pathVar)
+                if vus_gene != path_gene or path_gene is None:
                     continue
-                elif variantList[j] in pathsPerGene[gene_j] and variantList[k] in vusPerGene[gene_j]:
-                    coocsPerIndividual[i].append((variantList[j], variantList[k]))
+                elif pathVar in pathsPerGene[path_gene[0]] and vusVarList[i] in vusPerGene[vus_gene[0]]:
+                    individualsPerPathogenicCooccurrence[str(vusVarList[i]) + str(pathVar)].append(individual)
+            for benVar in benignVarList:
+                ben_gene = getGenesForVariant(benVar)
+                if vus_gene != ben_gene or ben_gene is None:
+                    continue
+                elif benVar in benPerGene[ben_gene[0]] and vusVarList[i] in vusPerGene[vus_gene[0]]:
+                    individualsPerBenignCooccurrence[str(vusVarList[i]) + str(benVar)].append(individual)
+            for j in range(i+1, len(vusVarList)):
+                vus_gene_2 = getGenesForVariant(vusVarList[j])
+                if vus_gene != vus_gene_2 or vus_gene_2 is None:
+                    continue
+                elif vusVarList[j] in vusPerGene[vus_gene_2[0]] and vusVarList[i] in vusPerGene[vus_gene[0]]:
+                    individualsPerVUSCooccurrence[str(vusVarList[i]) + str(vusVarList[j])].append(individual)
 
-                elif variantList[k] in pathsPerGene[gene_k] and variantList[j] in vusPerGene[gene_k]:
-                    coocsPerIndividual[i].append((variantList[k], variantList[j]))
-
-    return coocsPerIndividual
+    return individualsPerBenignCooccurrence, individualsPerPathogenicCooccurrence, individualsPerVUSCooccurrence
 
 def findCooccurrences(patientsWithPathogenicVars):
     cooccurrences = dict()
