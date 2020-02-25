@@ -24,6 +24,7 @@ variantsPerIndividualFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/feder
 pathogenicCooccurrencesFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/pathogenicCooccurrences.json'
 benignCooccurrencesFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/benignCooccurrences.json'
 vusCooccurrencesFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/vusCooccurrences.json'
+vusFinalDataFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/vusFinalData.json'
 ensemblRelease=75
 
 p2 = 0.0001
@@ -74,9 +75,11 @@ def consumeOutputFiles():
 
 
     dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, individualsPerBenignCooccurrence, individualsPerVUSCooccurrence, p1)
+    print('saving final VUS data  to ' + vusFinalDataFileName)
+    with open(vusFinalDataFileName, 'w') as f:
+        json.dump(dataPerVus, f)
+    f.close()
 
-    for vus in dataPerVus:
-        print('vus: ' + str(vus) + ' data: ' + str(dataPerVus[vus]))
 
 
 def calculateLikelihood(pathCoocs, benCoocs, vusCoocs, p1):
@@ -137,7 +140,7 @@ def calculateLikelihood(pathCoocs, benCoocs, vusCoocs, p1):
         likelihoodRatios[vus] = ( (p2**k) * (1-p2)**(n-k)) / ((p1**k) * (1-p1)**(n-k))
 
 
-    # last, find all the pathogenic variants this vus co-occurred with
+    # find all the pathogenic variants this vus co-occurred with
     pathVarsPerVus = defaultdict(set)
     for cooc in pathCoocs:
         vus = eval(cooc)[0]
