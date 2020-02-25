@@ -9,27 +9,40 @@ from collections import defaultdict
 import ast
 import pyensembl
 import numpy as np
+from functools import partial
 
 
 clinvarVCFMetadataLines = 27
 myVCFMetadataLines = 8
 myVCFskipCols = 9
-nThreads = cpu_count()
-#nThreads=1
+#nThreads = cpu_count()
+nThreads=1
 classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely benign' ],
                  'Unknown': [ 'Uncertain significance', '-']}
 sigColName = 'Clinical_significance_ENIGMA'
-brcaFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/variants-test.tsv'
-vcfFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/bc100.vcf'
-variantsPerIndividualFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/variantsPerIndividual.json'
-pathogenicCooccurrencesFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/pathogenicCooccurrences.json'
-benignCooccurrencesFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/benignCooccurrences.json'
-vusCooccurrencesFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/vusCooccurrences.json'
-vusFinalDataFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/vusFinalData.json'
+DATA_DIR='/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data'
+brcaFileName = DATA_DIR + '/brca-variants.tsv'
+vcfFileName = DATA_DIR + '/22-BreastCancer.shuffle.vcf'
+variantsPerIndividualFileName = DATA_DIR + '/variantsPerIndividual.json'
+pathogenicCooccurrencesFileName = DATA_DIR + '/pathogenicCooccurrences.json'
+benignCooccurrencesFileName = DATA_DIR + '/benignCooccurrences.json'
+vusCooccurrencesFileName = DATA_DIR + '/vusCooccurrences.json'
+vusFinalDataFileName = DATA_DIR + '/vusFinalData.json'
 ensemblRelease=75
 
 p2 = 0.0001
 
+
+class NpEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        else:
+            return super(NpEncoder, self).default(obj)
 
 def main():
     if len(sys.argv) != 2:
@@ -47,7 +60,7 @@ def main():
 
 
 def printUsage(args):
-    sys.stderr.write("use -p to produce output files and -c to consume them")
+    sys.stderr.write("use -p to produce output files, -c to consume them, and -b to do both in one go")
 
 def combo():
     print('reading BRCA data from ' + brcaFileName)
@@ -80,7 +93,7 @@ def combo():
     print('finding variants per individual')
     t = time.time()
     results = list()
-    variantsPerIndividual = defaultdict(lambda: defaultdict(list))
+    variantsPerIndividual = dict()
     pool = ThreadPool(processes=nThreads)
     for i in range(nThreads):
         results.append(pool.apply_async(findVariantsPerIndividual, args=(vcfData, benignVariants, pathogenicVariants,
@@ -91,12 +104,18 @@ def combo():
     elapsed_time = time.time() - t
     print('elapsed time in findVariantsPerIndividual() ' + str(elapsed_time))
 
+    print('saving variantsPerIndividual to ' + variantsPerIndividualFileName)
+    with open(variantsPerIndividualFileName, 'w') as f:
+        json.dump(variantsPerIndividual, f, cls=NpEncoder)
+    f.close()
+
     print('finding individuals per cooc')
     t = time.time()
     individualsPerBenignCooccurrence, individualsPerPathogenicCooccurrence, individualsPerVUSCooccurrence = \
         findIndividualsPerCooccurrence(variantsPerIndividual, benignPerGene, pathogenicPerGene, vusPerGene)
     elapsed_time = time.time() - t
     print('elapsed time in findIndividualsPerCooccurrence() ' + str(elapsed_time))
+
 
     # now you can you do the math!
     p1 = 0.5 * len(pathogenicVariants) / count
@@ -105,7 +124,7 @@ def combo():
                                      individualsPerVUSCooccurrence, p1)
     print('saving final VUS data  to ' + vusFinalDataFileName)
     with open(vusFinalDataFileName, 'w') as f:
-        json.dump(dataPerVus, f)
+        json.dump(dataPerVus, f, cls=NpEncoder)
     f.close()
     print(dataPerVus)
 
@@ -140,7 +159,7 @@ def consumeOutputFiles():
     dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, individualsPerBenignCooccurrence, individualsPerVUSCooccurrence, p1)
     print('saving final VUS data  to ' + vusFinalDataFileName)
     with open(vusFinalDataFileName, 'w') as f:
-        json.dump(dataPerVus, f)
+        json.dump(dataPerVus, f, cls=NpEncoder)
     f.close()
 
 
@@ -191,12 +210,12 @@ def calculateLikelihood(pathCoocs, benCoocs, vusCoocs, p1):
 
 
     # per vus, calculate total number of times observed (n) and number of times observed with path variant (k)
-    nk = defaultdict(set)
+    nk = dict()
     for vus in vusList:
         nk[vus] = (len(vusIndividuals[vus]), len(vusPathIndividuals[vus]))
 
     # now calculate log likelihood ratios!
-    likelihoodRatios = defaultdict(float)
+    likelihoodRatios = dict()
     for vus in nk:
         n = nk[vus][0]
         k = nk[vus][1]
@@ -204,16 +223,22 @@ def calculateLikelihood(pathCoocs, benCoocs, vusCoocs, p1):
 
 
     # find all the pathogenic variants this vus co-occurred with
-    pathVarsPerVus = defaultdict(set)
+    #pathVarsPerVus = defaultdict(set)
+    pathVarsPerVus = dict()
     for cooc in pathCoocs:
+        print(cooc)
         vus = eval(cooc)[0]
-        pathVarsPerVus[vus].add(eval(cooc)[1])
+        if vus not in pathVarsPerVus:
+            pathVarsPerVus[vus] = list()
+        pathVarsPerVus[vus].append(eval(cooc)[1])
 
     # put it all together in a single dict
     dataPerVus = dict()
     for vus in likelihoodRatios:
-        data = (p1, p2, nk[vus][0], nk[vus][1], likelihoodRatios[vus], pathVarsPerVus[vus])
-        dataPerVus[repr(vus)] = repr(data)
+        if vus not in pathVarsPerVus:
+            pathVarsPerVus[vus] = list()
+        data = [p1, p2, nk[vus][0], nk[vus][1], likelihoodRatios[vus], pathVarsPerVus[vus]]
+        dataPerVus[repr(vus)] = data
 
     return dataPerVus
 
@@ -249,7 +274,7 @@ def produceOutputFiles():
 
     print('finding variants per individual')
     t = time.time()
-    '''results = list()
+    results = list()
     variantsPerIndividual = defaultdict(lambda: defaultdict(list))
     pool = ThreadPool(processes=nThreads)
     for i in range(nThreads):
@@ -264,16 +289,7 @@ def produceOutputFiles():
     print('saving variantsPerIndividual to ' + variantsPerIndividualFileName)
     with open(variantsPerIndividualFileName, 'w') as f:
         json.dump(variantsPerIndividual, f)
-    f.close()'''
-
-    with open(variantsPerIndividualFileName) as f:
-        variantsPerIndividual = json.load(f)
     f.close()
-    elapsed_time = time.time() - t
-    print('elapsed time in findVariantsPerIndividual() ' + str(elapsed_time))
-
-
-
 
     print('finding individuals per cooc')
     t = time.time()
@@ -396,7 +412,8 @@ def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, unknown
     # 0/1  => has variant on 1 strand (heterozygous positive)
     # 1/1 =>  has variant on both strands (homozygous positive)
 
-    variantsPerIndividual = defaultdict(lambda: defaultdict(list))
+    #variantsPerIndividual = defaultdict(lambda: defaultdict(list))
+    variantsPerIndividual = dict()
     numColumns = len(vcfDF.columns)
     numIndividuals = len(vcfDF.columns) - skipCols
     partitionSize = int(numIndividuals / nThreads)
@@ -411,6 +428,10 @@ def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, unknown
 
     # iterate through columns (not rows! iterows() takes 20x longer b/c pandas are stored column-major)
     for individual in individuals:
+        variantsPerIndividual[individual] = dict()
+        variantsPerIndividual[individual]['benign'] = list()
+        variantsPerIndividual[individual]['pathogenic'] = list()
+        variantsPerIndividual[individual]['vus'] = list()
 
         includeList = ['1/0', '0/1', '1/1']
         listOfVariantIndices = list()
@@ -420,7 +441,7 @@ def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, unknown
         for variantIndex in listOfVariantIndices:
             try:
                 record = vcfDF.iloc[variantIndex]
-                varTuple = (record['#CHROM'], record['POS'], record['REF'], record['ALT'])
+                varTuple = tuple((record['#CHROM'], int(record['POS']), record['REF'], record['ALT']))
                 if varTuple in benignVariants:
                     variantsPerIndividual[individual]['benign'].append(varTuple)
                 elif varTuple in pathogenicVariants:
