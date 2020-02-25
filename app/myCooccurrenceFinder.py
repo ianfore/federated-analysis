@@ -10,6 +10,7 @@ import ast
 import pyensembl
 import numpy as np
 
+
 clinvarVCFMetadataLines = 27
 myVCFMetadataLines = 8
 myVCFskipCols = 9
