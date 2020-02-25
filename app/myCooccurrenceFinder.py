@@ -38,6 +38,8 @@ def main():
         produceOutputFiles()
     elif sys.argv[1] == '-c':
         consumeOutputFiles()
+    elif sys.argv[1] == '-b':
+        combo()
     else:
         printUsage(sys.argv)
         sys.exit(1)
@@ -45,6 +47,67 @@ def main():
 
 def printUsage(args):
     sys.stderr.write("use -p to produce output files and -c to consume them")
+
+def combo():
+    print('reading BRCA data from ' + brcaFileName)
+    t = time.time()
+    count, pathogenicVariants, benignVariants, unknownVariants = \
+        findVariantsInBRCA(brcaFileName, classStrings, sigColName)
+    elapsed_time = time.time() - t
+    print('elapsed time in findVariantsInBRCA() ' + str(elapsed_time))
+
+    print('reading VCF data from ' + vcfFileName)
+    t = time.time()
+    vcfData = readVCFFile(vcfFileName, myVCFMetadataLines)
+    elapsed_time = time.time() - t
+    print('elapsed time in readVCFFile() ' + str(elapsed_time))
+
+    print('slicing up VCF data by chromosome')
+    t = time.time()
+    variantsPerChromosome = findVariantsPerChromosome(vcfData)
+    elapsed_time = time.time() - t
+    print('elapsed time in variantsPerChromosome() ' + str(elapsed_time))
+
+    print('slicing up VCF data by gene')
+    t = time.time()
+    benignPerGene, pathogenicPerGene, vusPerGene = findVariantsPerGene(variantsPerChromosome,
+                                                                       benignVariants, pathogenicVariants,
+                                                                       unknownVariants, ensemblRelease)
+    elapsed_time = time.time() - t
+    print('elapsed time in variantsPerGene() ' + str(elapsed_time))
+
+    print('finding variants per individual')
+    t = time.time()
+    results = list()
+    variantsPerIndividual = defaultdict(lambda: defaultdict(list))
+    pool = ThreadPool(processes=nThreads)
+    for i in range(nThreads):
+        results.append(pool.apply_async(findVariantsPerIndividual, args=(vcfData, benignVariants, pathogenicVariants,
+                                                                 unknownVariants, myVCFskipCols, nThreads, i)))
+    for result in results:
+        result.wait()
+        variantsPerIndividual.update(result.get())
+    elapsed_time = time.time() - t
+    print('elapsed time in findVariantsPerIndividual() ' + str(elapsed_time))
+
+    print('finding individuals per cooc')
+    t = time.time()
+    individualsPerBenignCooccurrence, individualsPerPathogenicCooccurrence, individualsPerVUSCooccurrence = \
+        findIndividualsPerCooccurrence(variantsPerIndividual, benignPerGene, pathogenicPerGene, vusPerGene)
+    elapsed_time = time.time() - t
+    print('elapsed time in findIndividualsPerCooccurrence() ' + str(elapsed_time))
+
+    # now you can you do the math!
+    p1 = 0.5 * len(pathogenicVariants) / count
+
+    dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, individualsPerBenignCooccurrence,
+                                     individualsPerVUSCooccurrence, p1)
+    print('saving final VUS data  to ' + vusFinalDataFileName)
+    with open(vusFinalDataFileName, 'w') as f:
+        json.dump(dataPerVus, f)
+    f.close()
+    print(dataPerVus)
+
 
 def consumeOutputFiles():
     # do the math!
@@ -58,7 +121,6 @@ def consumeOutputFiles():
     print('elapsed time in findVariantsInBRCA() ' + str(elapsed_time))
 
     p1 = 0.5 * len(pathogenicVariants) / count
-
 
     with open(pathogenicCooccurrencesFileName) as f:
         individualsPerPathogenicCooccurrence = json.load(f)
@@ -147,9 +209,10 @@ def calculateLikelihood(pathCoocs, benCoocs, vusCoocs, p1):
         pathVarsPerVus[vus].add(eval(cooc)[1])
 
     # put it all together in a single dict
-    dataPerVus = defaultdict(tuple)
+    dataPerVus = dict()
     for vus in likelihoodRatios:
-        dataPerVus[vus] = (p1, p2, nk[vus][0], nk[vus][1], likelihoodRatios[vus], pathVarsPerVus[vus])
+        data = (p1, p2, nk[vus][0], nk[vus][1], likelihoodRatios[vus], pathVarsPerVus[vus])
+        dataPerVus[repr(vus)] = repr(data)
 
     return dataPerVus
 
@@ -185,18 +248,31 @@ def produceOutputFiles():
 
     print('finding variants per individual')
     t = time.time()
-    results = list()
+    '''results = list()
     variantsPerIndividual = defaultdict(lambda: defaultdict(list))
     pool = ThreadPool(processes=nThreads)
     for i in range(nThreads):
         results.append(pool.apply_async(findVariantsPerIndividual, args=(vcfData, benignVariants, pathogenicVariants,
-                                                                         unknownVariants, myVCFskipCols, nThreads, i)))
+                                                                 unknownVariants, myVCFskipCols, nThreads, i)))
     for result in results:
         result.wait()
         variantsPerIndividual.update(result.get())
     elapsed_time = time.time() - t
     print('elapsed time in findVariantsPerIndividual() ' + str(elapsed_time))
-    print(variantsPerIndividual)
+
+    print('saving variantsPerIndividual to ' + variantsPerIndividualFileName)
+    with open(variantsPerIndividualFileName, 'w') as f:
+        json.dump(variantsPerIndividual, f)
+    f.close()'''
+
+    with open(variantsPerIndividualFileName) as f:
+        variantsPerIndividual = json.load(f)
+    f.close()
+    elapsed_time = time.time() - t
+    print('elapsed time in findVariantsPerIndividual() ' + str(elapsed_time))
+
+
+
 
     print('finding individuals per cooc')
     t = time.time()
