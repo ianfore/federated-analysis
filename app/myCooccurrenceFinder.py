@@ -73,32 +73,82 @@ def consumeOutputFiles():
     f.close()
 
 
-    calculateLikelihood(individualsPerPathogenicCooccurrence, individualsPerBenignCooccurrence, individualsPerVUSCooccurrence, p1)
+    dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, individualsPerBenignCooccurrence, individualsPerVUSCooccurrence, p1)
+
+    for vus in dataPerVus:
+        print('vus: ' + str(vus) + ' data: ' + str(dataPerVus[vus]))
 
 
 def calculateLikelihood(pathCoocs, benCoocs, vusCoocs, p1):
 
-    # coocs data: {"((10, 89624243, 'A', 'G'), (10, 89624245, 'GA', 'G'))": ["0000057940", "0000057950"], "((10, 89624243, 'A', 'G'), (10, 89624248, 'A', 'G'))": ["0000057940"]}
+    # vus coocs data: {(vus1, vus2):[individuals]}
+    # "((10, 89624243, 'A', 'G'), (10, 89624304, 'C', 'T'))": ["0000057940", "0000057950"],
+    # "((10, 89624304, 'C', 'T'), (10, 89624243, 'A', 'G'))": ["0000057940", "0000057950"],
+    # "((10, 89624243, 'A', 'G'), (10, 89624298, 'C', 'T'))": ["0000057950"],
+    # "((10, 89624304, 'C', 'T'), (10, 89624298, 'C', 'T'))": ["0000057950"],
+    # "((10, 89624298, 'C', 'T'), (10, 89624243, 'A', 'G'))": ["0000057950"],
+    # "((10, 89624298, 'C', 'T'), (10, 89624304, 'C', 'T'))": ["0000057950"]}
 
-    allVus = set()
+    vusIndividuals = defaultdict(set)
+    for cooc in vusCoocs.keys():
+        vus = eval(cooc)[0]
+        for i in vusCoocs[cooc]:
+            vusIndividuals[vus].add(i)
 
-    # get list of all vus
-    for key in list(pathCoocs.keys()):
-        allVus.add(eval(key)[0])
-    for key in list(benCoocs.keys()):
-        allVus.add(eval(key)[0])
-    for key in list(vusCoocs.keys()):
-        allVus.add(eval(key)[0])
+    for cooc in pathCoocs:
+        vus = eval(cooc)[0]
+        for i in pathCoocs[cooc]:
+            vusIndividuals[vus].add(i)
 
-    # per vus, calculate number of times observed (n)
-    print(allVus)
+    for cooc in benCoocs:
+        vus = eval(cooc)[0]
+        for i in benCoocs[cooc]:
+            vusIndividuals[vus].add(i)
 
-    # per vus, calculate number times observed with pathogenic variant (k)
+    # len of list associated with each vus is n (total number of times it was observed)
+    vusList = list(vusIndividuals.keys())
+
+    # path coocs data: {(vus, path):[individuals]}
+    # "((10, 89624243, 'A', 'G'), (10, 89624245, 'GA', 'G'))": ["0000057940", "0000057950"],
+    # "((10, 89624243, 'A', 'G'), (10, 89624248, 'A', 'G'))": ["0000057940"],
+    # "((10, 89624304, 'C', 'T'), (10, 89624245, 'GA', 'G'))": ["0000057940", "0000057950"],
+    # "((10, 89624304, 'C', 'T'), (10, 89624248, 'A', 'G'))": ["0000057940", "0000057960"],
+    # "((10, 89624298, 'C', 'T'), (10, 89624245, 'GA', 'G'))": ["0000057950"]
+    # }
+
+    # now we calculate k (total number of times it co-occurred with a pathogenic variant)
+    vusPathIndividuals = defaultdict(set)
+    for cooc in pathCoocs:
+        vus = eval(cooc)[0]
+        for i in pathCoocs[cooc]:
+            vusPathIndividuals[vus].add(i)
 
 
+    # per vus, calculate total number of times observed (n) and number of times observed with path variant (k)
+    nk = defaultdict(set)
+    for vus in vusList:
+        nk[vus] = (len(vusIndividuals[vus]), len(vusPathIndividuals[vus]))
+
+    # now calculate log likelihood ratios!
+    likelihoodRatios = defaultdict(float)
+    for vus in nk:
+        n = nk[vus][0]
+        k = nk[vus][1]
+        likelihoodRatios[vus] = ( (p2**k) * (1-p2)**(n-k)) / ((p1**k) * (1-p1)**(n-k))
 
 
+    # last, find all the pathogenic variants this vus co-occurred with
+    pathVarsPerVus = defaultdict(set)
+    for cooc in pathCoocs:
+        vus = eval(cooc)[0]
+        pathVarsPerVus[vus].add(eval(cooc)[1])
 
+    # put it all together in a single dict
+    dataPerVus = defaultdict(tuple)
+    for vus in likelihoodRatios:
+        dataPerVus[vus] = (p1, p2, nk[vus][0], nk[vus][1], likelihoodRatios[vus], pathVarsPerVus[vus])
+
+    return dataPerVus
 
 def produceOutputFiles():
     print("producing output files!")
