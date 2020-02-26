@@ -21,8 +21,8 @@ classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely ben
                  'Unknown': [ 'Uncertain significance', '-']}
 sigColName = 'Clinical_significance_ENIGMA'
 DATA_DIR='/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data'
-brcaFileName = DATA_DIR + '/brca-variants.tsv'
-vcfFileName = DATA_DIR + '/22-BreastCancer.shuffle.vcf'
+brcaFileName = DATA_DIR + '/variants-test.tsv'
+vcfFileName = DATA_DIR + '/bc100.vcf'
 variantsPerIndividualFileName = DATA_DIR + '/variantsPerIndividual.json'
 pathogenicCooccurrencesFileName = DATA_DIR + '/pathogenicCooccurrences.json'
 benignCooccurrencesFileName = DATA_DIR + '/benignCooccurrences.json'
@@ -178,17 +178,17 @@ def calculateLikelihood(pathCoocs, benCoocs, vusCoocs, p1):
     for cooc in vusCoocs.keys():
         vus = eval(cooc)[0]
         for i in vusCoocs[cooc]:
-            vusIndividuals[vus].add(i)
+            vusIndividuals[repr(vus)].add(i)
 
     for cooc in pathCoocs:
         vus = eval(cooc)[0]
         for i in pathCoocs[cooc]:
-            vusIndividuals[vus].add(i)
+            vusIndividuals[repr(vus)].add(i)
 
     for cooc in benCoocs:
         vus = eval(cooc)[0]
         for i in benCoocs[cooc]:
-            vusIndividuals[vus].add(i)
+            vusIndividuals[repr(vus)].add(i)
 
     # len of list associated with each vus is n (total number of times it was observed)
     vusList = list(vusIndividuals.keys())
@@ -206,7 +206,7 @@ def calculateLikelihood(pathCoocs, benCoocs, vusCoocs, p1):
     for cooc in pathCoocs:
         vus = eval(cooc)[0]
         for i in pathCoocs[cooc]:
-            vusPathIndividuals[vus].add(i)
+            vusPathIndividuals[repr(vus)].add(i)
 
 
     # per vus, calculate total number of times observed (n) and number of times observed with path variant (k)
@@ -227,7 +227,7 @@ def calculateLikelihood(pathCoocs, benCoocs, vusCoocs, p1):
     pathVarsPerVus = dict()
     for cooc in pathCoocs:
         print(cooc)
-        vus = eval(cooc)[0]
+        vus = repr(eval(cooc)[0])
         if vus not in pathVarsPerVus:
             pathVarsPerVus[vus] = list()
         pathVarsPerVus[vus].append(eval(cooc)[1])
@@ -238,7 +238,7 @@ def calculateLikelihood(pathCoocs, benCoocs, vusCoocs, p1):
         if vus not in pathVarsPerVus:
             pathVarsPerVus[vus] = list()
         data = [p1, p2, nk[vus][0], nk[vus][1], likelihoodRatios[vus], pathVarsPerVus[vus]]
-        dataPerVus[repr(vus)] = data
+        dataPerVus[vus] = data
 
     return dataPerVus
 
@@ -327,7 +327,7 @@ def findVariantsPerGene(variantsPerChromosome, benignVariants, pathogenicVariant
                 pos = int(x.iloc[i][1])
                 ref = str(x.iloc[i][3])
                 alt = str(x.iloc[i][4])
-                v = (chrom, pos, ref, alt)
+                v = [chrom, pos, ref, alt]
             except Exception as e:
                 print('exception at column ' + str(i))
                 #print('exception getting variant out of x.iloc[' + str(i) + ']: ' + str(x.iloc[i]))
@@ -339,7 +339,7 @@ def findVariantsPerGene(variantsPerChromosome, benignVariants, pathogenicVariant
                 if genes is None:
                     continue
                 for gene in genes:
-                    vusPerGene[gene].append((chrom, pos, ref, alt))
+                    vusPerGene[gene].append([chrom, pos, ref, alt])
 
             # see if variant is pathogenic
             elif v in pathogenicVariants:
@@ -347,7 +347,7 @@ def findVariantsPerGene(variantsPerChromosome, benignVariants, pathogenicVariant
                 if genes is None:
                     continue
                 for gene in genes:
-                    pathogenicPerGene[gene].append((chrom, pos, ref, alt))
+                    pathogenicPerGene[gene].append([chrom, pos, ref, alt])
 
             # see if variant is benign
             elif v in benignVariants:
@@ -355,7 +355,7 @@ def findVariantsPerGene(variantsPerChromosome, benignVariants, pathogenicVariant
                 if genes is None:
                     continue
                 for gene in genes:
-                    benignPerGene[gene].append((chrom, pos, ref, alt))
+                    benignPerGene[gene].append([chrom, pos, ref, alt])
 
     return benignPerGene, pathogenicPerGene, vusPerGene
 
@@ -391,14 +391,14 @@ def findVariantsInBRCA(fileName, classStrings, sigColName):
         chrom = int(coord[0].split('chr')[1])
         pos = int(coord[1].split('g.')[1])
         ref, alt = coord[2].split('>')
-        tup = (chrom, pos, ref, alt)
+        var = [chrom, pos, ref, alt]
 
         if str(row[sigColName]) in classStrings['Pathogenic']:
-            pathVars.append(tup)
+            pathVars.append(var)
         elif str(row[sigColName]) in classStrings['Benign']:
-            benignVars.append(tup)
+            benignVars.append(var)
         elif str(row[sigColName]) in classStrings['Unknown']:
-            vusVars.append(tup)
+            vusVars.append(var)
 
     return len(brcaDF), pathVars, benignVars, vusVars
 
@@ -441,13 +441,13 @@ def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, unknown
         for variantIndex in listOfVariantIndices:
             try:
                 record = vcfDF.iloc[variantIndex]
-                varTuple = tuple((record['#CHROM'], int(record['POS']), record['REF'], record['ALT']))
-                if varTuple in benignVariants:
-                    variantsPerIndividual[individual]['benign'].append(varTuple)
-                elif varTuple in pathogenicVariants:
-                    variantsPerIndividual[individual]['pathogenic'].append(varTuple)
+                varList = [record['#CHROM'], int(record['POS']), record['REF'], record['ALT']]
+                if varList in benignVariants:
+                    variantsPerIndividual[individual]['benign'].append(varList)
+                elif varList in pathogenicVariants:
+                    variantsPerIndividual[individual]['pathogenic'].append(varList)
                 else:
-                    variantsPerIndividual[individual]['vus'].append(varTuple)
+                    variantsPerIndividual[individual]['vus'].append(varList)
             except Exception as e:
                 print("exception for index " + str(variantIndex) + " of individual " + str(individual))
                 print("exception: " + str(e))
@@ -490,13 +490,13 @@ def findIndividualsPerCooccurrence(variantsPerIndividual, benPerGene, pathsPerGe
                 if vus_gene != path_gene or path_gene is None:
                     continue
                 elif pathVar in pathsPerGene[path_gene[0]] and vusVarList[i] in vusPerGene[vus_gene[0]]:
-                    individualsPerPathogenicCooccurrence[str((vusVarList[i], pathVar))].append(individual)
+                    individualsPerPathogenicCooccurrence[repr((vusVarList[i], pathVar))].append(individual)
             for benVar in benignVarList:
                 ben_gene = getGenesForVariant(benVar)
                 if vus_gene != ben_gene or ben_gene is None:
                     continue
                 elif benVar in benPerGene[ben_gene[0]] and vusVarList[i] in vusPerGene[vus_gene[0]]:
-                    individualsPerBenignCooccurrence[str((vusVarList[i],benVar))].append(individual)
+                    individualsPerBenignCooccurrence[repr((vusVarList[i],benVar))].append(individual)
             #for j in range(i+1, len(vusVarList)):
             for j in range(len(vusVarList)):
                 if i == j:
@@ -505,22 +505,10 @@ def findIndividualsPerCooccurrence(variantsPerIndividual, benPerGene, pathsPerGe
                 if vus_gene != vus_gene_2 or vus_gene_2 is None:
                     continue
                 elif vusVarList[j] in vusPerGene[vus_gene_2[0]] and vusVarList[i] in vusPerGene[vus_gene[0]]:
-                    individualsPerVUSCooccurrence[str((vusVarList[i], vusVarList[j]))].append(individual)
+                    individualsPerVUSCooccurrence[repr((vusVarList[i], vusVarList[j]))].append(individual)
 
     return individualsPerBenignCooccurrence, individualsPerPathogenicCooccurrence, individualsPerVUSCooccurrence
 
-def findCooccurrences(patientsWithPathogenicVars):
-    cooccurrences = dict()
-    for a, b in itertools.combinations(patientsWithPathogenicVars.keys(), 2):
-        intersection = patientsWithPathogenicVars[a].intersection(patientsWithPathogenicVars[b])
-        if len(intersection) > 0:
-            #d1 = {eval(a):patientsWithPathogenicVars[a]}
-            #d2 = {eval(b):patientsWithPathogenicVars[b]}
-            d1 = {a: patientsWithPathogenicVars[a]}
-            d2 = {b: patientsWithPathogenicVars[b]}
-            key = (d1, d2)
-            cooccurrences[str(key)] = str(intersection)
-    return cooccurrences
 
 
 if __name__ == "__main__":
