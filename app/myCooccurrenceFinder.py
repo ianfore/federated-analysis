@@ -19,7 +19,7 @@ myVCFskipCols = 9
 nThreads=1
 classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely benign' ],
                  'Unknown': [ 'Uncertain significance', '-']}
-CHROMOSOMES=[13, 17]
+CHROMOSOMES=[17]
 sigColName = 'Clinical_significance_ENIGMA'
 DATA_DIR='/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data'
 brcaFileName = DATA_DIR + '/brca-variants.tsv'
@@ -76,6 +76,7 @@ def combo():
     vcfData = readVCFFile(vcfFileName, myVCFMetadataLines)
     elapsed_time = time.time() - t
     print('elapsed time in readVCFFile() ' + str(elapsed_time))
+    print(vcfData)
 
     print('slicing up VCF data by chromosome')
     t = time.time()
@@ -369,9 +370,8 @@ def findVariantsPerGene(variantsPerChromosome, benignVariants, pathogenicVariant
 
 def findVariantsPerChromosome(variants):
     variantsPerChromosome = defaultdict(dict)
-    for chrom in variants['#CHROM'].unique():
-        if chrom in CHROMOSOMES:
-            variantsPerChromosome[chrom] = variants.loc[variants['#CHROM']==chrom]
+    for chrom in variants['CHROM'].unique():
+        variantsPerChromosome[chrom] = variants.loc[variants['CHROM']==chrom]
     return variantsPerChromosome
 
 
@@ -384,7 +384,11 @@ def readVCFFile(fileName, numMetaDataLines):
     # 1/1 =>  has variant on both strands (homozygous positive)
     df = pandas.read_csv(fileName, sep='\t', skiprows=numMetaDataLines, dtype={'#CHROM':int, 'POS':int}, header=0)
     # this creates a bug: df = df[df.apply(lambda r: r.str.contains('1/1').any() or r.str.contains('0/1').any(), axis=1)]
-    return df
+    # filter chromosomes in CHROMOSOMES here
+    df.columns = df.columns.str.replace('#', '')
+    chromsDF = df[df.CHROM.isin(CHROMOSOMES)]
+
+    return chromsDF
 
 def findVariantsInBRCA(fileName, classStrings, sigColName):
     brcaDF = pandas.read_csv(fileName, sep='\t', header=0, dtype=str)
@@ -415,7 +419,7 @@ def findVariantsInBRCA(fileName, classStrings, sigColName):
 def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, unknownVariants, skipCols, nThreads, threadID):
 
     # find mutations
-    # #CHROM  POS             ID      REF     ALT     QUAL    FILTER  INFO            FORMAT  0000057940      0000057950
+    # CHROM  POS             ID      REF     ALT     QUAL    FILTER  INFO            FORMAT  0000057940      0000057950
     # 10      89624243        .       A       G       .       .       AF=1.622e-05    GT      0/0             0/0
     # 0/0 => does not have variant on either strand (homozygous negative)
     # 0/1  => has variant on 1 strand (heterozygous positive)
@@ -450,9 +454,9 @@ def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, unknown
         for variantIndex in listOfVariantIndices:
             try:
                 record = vcfDF.iloc[variantIndex]
-                if record['#CHROM'] not in CHROMOSOMES:
-                    continue
-                varList = [record['#CHROM'], int(record['POS']), record['REF'], record['ALT']]
+                #if record['#CHROM'] not in CHROMOSOMES:
+                #    continue
+                varList = [record['CHROM'], int(record['POS']), record['REF'], record['ALT']]
                 if varList in benignVariants:
                     variantsPerIndividual[individual]['benign'].append(varList)
                 elif varList in pathogenicVariants:
