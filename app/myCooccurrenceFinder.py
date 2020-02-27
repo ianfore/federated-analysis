@@ -19,10 +19,11 @@ myVCFskipCols = 9
 nThreads=1
 classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely benign' ],
                  'Unknown': [ 'Uncertain significance', '-']}
+CHROMOSOMES=[13, 17]
 sigColName = 'Clinical_significance_ENIGMA'
 DATA_DIR='/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data'
 brcaFileName = DATA_DIR + '/brca-variants.tsv'
-vcfFileName = DATA_DIR + '/13-BreastCancer.shuffle.vcf'
+vcfFileName = DATA_DIR + '/BreastCancer.shuffle.vcf'
 variantsPerIndividualFileName = DATA_DIR + '/variantsPerIndividual.json'
 pathogenicCooccurrencesFileName = DATA_DIR + '/pathogenicCooccurrences.json'
 benignCooccurrencesFileName = DATA_DIR + '/benignCooccurrences.json'
@@ -109,6 +110,12 @@ def combo():
         json.dump(variantsPerIndividual, f, cls=NpEncoder)
     f.close()
 
+    '''print('reading in variantsPerIndividual from ' + variantsPerIndividualFileName)
+    with open(variantsPerIndividualFileName) as f:
+        variantsPerIndividual = json.load(f)
+    f.close()'''
+
+    # TODO make this multi-threaded (cpu is pegged at 99% for this method)
     print('finding individuals per cooc')
     t = time.time()
     individualsPerBenignCooccurrence, individualsPerPathogenicCooccurrence, individualsPerVUSCooccurrence = \
@@ -117,6 +124,7 @@ def combo():
     print('elapsed time in findIndividualsPerCooccurrence() ' + str(elapsed_time))
 
 
+    # TODO make the program idempotent (save/read data frames and take cli arg to figure out)
     # now you can you do the math!
     p1 = 0.5 * len(pathogenicVariants) / count
 
@@ -223,13 +231,13 @@ def calculateLikelihood(pathCoocs, benCoocs, vusCoocs, p1):
 
 
     # find all the pathogenic variants this vus co-occurred with
-    #pathVarsPerVus = defaultdict(set)
-    pathVarsPerVus = dict()
+    pathVarsPerVus = defaultdict(set)
+    #pathVarsPerVus = dict()
     for cooc in pathCoocs:
         print(cooc)
         vus = repr(eval(cooc)[0])
-        if vus not in pathVarsPerVus:
-            pathVarsPerVus[vus] = list()
+        #if vus not in pathVarsPerVus:
+        #    pathVarsPerVus[vus] = list()
         pathVarsPerVus[vus].append(eval(cooc)[1])
 
     # put it all together in a single dict
@@ -362,7 +370,8 @@ def findVariantsPerGene(variantsPerChromosome, benignVariants, pathogenicVariant
 def findVariantsPerChromosome(variants):
     variantsPerChromosome = defaultdict(dict)
     for chrom in variants['#CHROM'].unique():
-        variantsPerChromosome[chrom] = variants.loc[variants['#CHROM']==chrom]
+        if chrom in CHROMOSOMES:
+            variantsPerChromosome[chrom] = variants.loc[variants['#CHROM']==chrom]
     return variantsPerChromosome
 
 
@@ -441,12 +450,14 @@ def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, unknown
         for variantIndex in listOfVariantIndices:
             try:
                 record = vcfDF.iloc[variantIndex]
+                if record['#CHROM'] not in CHROMOSOMES:
+                    continue
                 varList = [record['#CHROM'], int(record['POS']), record['REF'], record['ALT']]
                 if varList in benignVariants:
                     variantsPerIndividual[individual]['benign'].append(varList)
                 elif varList in pathogenicVariants:
                     variantsPerIndividual[individual]['pathogenic'].append(varList)
-                else:
+                elif varList in unknownVariants:
                     variantsPerIndividual[individual]['vus'].append(varList)
             except Exception as e:
                 print("exception for index " + str(variantIndex) + " of individual " + str(individual))
