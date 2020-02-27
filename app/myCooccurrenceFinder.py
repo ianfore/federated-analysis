@@ -19,7 +19,7 @@ myVCFskipCols = 9
 nThreads=1
 classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely benign' ],
                  'Unknown': [ 'Uncertain significance', '-']}
-CHROMOSOMES=[17]
+CHROMOSOMES=[13]
 sigColName = 'Clinical_significance_ENIGMA'
 DATA_DIR='/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data'
 brcaFileName = DATA_DIR + '/brca-variants.tsv'
@@ -76,7 +76,6 @@ def combo():
     vcfData = readVCFFile(vcfFileName, myVCFMetadataLines)
     elapsed_time = time.time() - t
     print('elapsed time in readVCFFile() ' + str(elapsed_time))
-    print(vcfData)
 
     print('slicing up VCF data by chromosome')
     t = time.time()
@@ -131,6 +130,8 @@ def combo():
 
     dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, individualsPerBenignCooccurrence,
                                      individualsPerVUSCooccurrence, p1)
+    print(dataPerVus)
+
     print('saving final VUS data  to ' + vusFinalDataFileName)
     with open(vusFinalDataFileName, 'w') as f:
         json.dump(dataPerVus, f, cls=NpEncoder)
@@ -239,14 +240,12 @@ def calculateLikelihood(pathCoocs, benCoocs, vusCoocs, p1):
         vus = repr(eval(cooc)[0])
         #if vus not in pathVarsPerVus:
         #    pathVarsPerVus[vus] = list()
-        pathVarsPerVus[vus].append(eval(cooc)[1])
+        pathVarsPerVus[vus].add(cooc[1])
 
     # put it all together in a single dict
     dataPerVus = dict()
     for vus in likelihoodRatios:
-        if vus not in pathVarsPerVus:
-            pathVarsPerVus[vus] = list()
-        data = [p1, p2, nk[vus][0], nk[vus][1], likelihoodRatios[vus], pathVarsPerVus[vus]]
+        data = [p1, p2, nk[vus][0], nk[vus][1], likelihoodRatios[vus], list(pathVarsPerVus[vus])]
         dataPerVus[vus] = data
 
     return dataPerVus
