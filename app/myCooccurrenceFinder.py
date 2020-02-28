@@ -23,7 +23,7 @@ CHROMOSOMES=[13]
 sigColName = 'Clinical_significance_ENIGMA'
 DATA_DIR='/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data'
 brcaFileName = DATA_DIR + '/brca-variants.tsv'
-vcfFileName = DATA_DIR + '/BreastCancer.shuffle.vcf'
+vcfFileName = DATA_DIR + '/13-BreastCancer.shuffle.vcf'
 variantsPerIndividualFileName = DATA_DIR + '/variantsPerIndividual.json'
 pathogenicCooccurrencesFileName = DATA_DIR + '/pathogenicCooccurrences.json'
 benignCooccurrencesFileName = DATA_DIR + '/benignCooccurrences.json'
@@ -42,6 +42,8 @@ class NpEncoder(json.JSONEncoder):
             return float(obj)
         elif isinstance(obj, np.ndarray):
             return obj.tolist()
+        elif isinstance(obj, set):
+            return list(obj)
         else:
             return super(NpEncoder, self).default(obj)
 
@@ -49,11 +51,7 @@ def main():
     if len(sys.argv) != 2:
         printUsage(sys.argv)
         sys.exit(1)
-    if sys.argv[1] == '-p':
-        produceOutputFiles()
-    elif sys.argv[1] == '-c':
-        consumeOutputFiles()
-    elif sys.argv[1] == '-b':
+    if sys.argv[1] == '-b':
         combo()
     else:
         printUsage(sys.argv)
@@ -61,7 +59,7 @@ def main():
 
 
 def printUsage(args):
-    sys.stderr.write("use -p to produce output files, -c to consume them, and -b to do both in one go")
+    sys.stderr.write("use -b to produce and consume output")
 
 def combo():
     print('reading BRCA data from ' + brcaFileName)
@@ -91,7 +89,7 @@ def combo():
     elapsed_time = time.time() - t
     print('elapsed time in variantsPerGene() ' + str(elapsed_time))
 
-    print('finding variants per individual')
+    '''print('finding variants per individual')
     t = time.time()
     results = list()
     variantsPerIndividual = dict()
@@ -108,12 +106,12 @@ def combo():
     print('saving variantsPerIndividual to ' + variantsPerIndividualFileName)
     with open(variantsPerIndividualFileName, 'w') as f:
         json.dump(variantsPerIndividual, f, cls=NpEncoder)
-    f.close()
+    f.close()'''
 
-    '''print('reading in variantsPerIndividual from ' + variantsPerIndividualFileName)
+    print('reading in variantsPerIndividual from ' + variantsPerIndividualFileName)
     with open(variantsPerIndividualFileName) as f:
         variantsPerIndividual = json.load(f)
-    f.close()'''
+    f.close()
 
     # TODO make this multi-threaded (cpu is pegged at 99% for this method)
     print('finding individuals per cooc')
@@ -128,77 +126,51 @@ def combo():
     # now you can you do the math!
     p1 = 0.5 * len(pathogenicVariants) / count
 
+    print('putting all the data together per vus')
     dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, individualsPerBenignCooccurrence,
                                      individualsPerVUSCooccurrence, p1)
-    print(dataPerVus)
+
 
     print('saving final VUS data  to ' + vusFinalDataFileName)
     with open(vusFinalDataFileName, 'w') as f:
         json.dump(dataPerVus, f, cls=NpEncoder)
     f.close()
     print(dataPerVus)
-
-
-def consumeOutputFiles():
-    # do the math!
-    print('doing the math!')
-
-    print('reading BRCA data from ' + brcaFileName)
-    t = time.time()
-    count, pathogenicVariants, benignVariants, unknownVariants = \
-        findVariantsInBRCA(brcaFileName, classStrings, sigColName)
-    elapsed_time = time.time() - t
-    print('elapsed time in findVariantsInBRCA() ' + str(elapsed_time))
-
-    p1 = 0.5 * len(pathogenicVariants) / count
-
-    with open(pathogenicCooccurrencesFileName) as f:
-        individualsPerPathogenicCooccurrence = json.load(f)
-    f.close()
-
-    with open(benignCooccurrencesFileName) as f:
-        individualsPerBenignCooccurrence = json.load(f)
-    f.close()
-
-
-    with open(vusCooccurrencesFileName) as f:
-        individualsPerVUSCooccurrence = json.load(f)
-    f.close()
-
-
-    dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, individualsPerBenignCooccurrence, individualsPerVUSCooccurrence, p1)
-    print('saving final VUS data  to ' + vusFinalDataFileName)
-    with open(vusFinalDataFileName, 'w') as f:
-        json.dump(dataPerVus, f, cls=NpEncoder)
-    f.close()
 
 
 
 def calculateLikelihood(pathCoocs, benCoocs, vusCoocs, p1):
 
     # vus coocs data: {(vus1, vus2):[individuals]}
-    # "((10, 89624243, 'A', 'G'), (10, 89624304, 'C', 'T'))": ["0000057940", "0000057950"],
-    # "((10, 89624304, 'C', 'T'), (10, 89624243, 'A', 'G'))": ["0000057940", "0000057950"],
-    # "((10, 89624243, 'A', 'G'), (10, 89624298, 'C', 'T'))": ["0000057950"],
-    # "((10, 89624304, 'C', 'T'), (10, 89624298, 'C', 'T'))": ["0000057950"],
-    # "((10, 89624298, 'C', 'T'), (10, 89624243, 'A', 'G'))": ["0000057950"],
-    # "((10, 89624298, 'C', 'T'), (10, 89624304, 'C', 'T'))": ["0000057950"]}
+    # "([10, 89624243, 'A', 'G'], [10, 89624304, 'C', 'T')]": ["0000057940", "0000057950"],
+    # "([10, 89624304, 'C', 'T'], [10, 89624243, 'A', 'G')]": ["0000057940", "0000057950"],
+    # "([10, 89624243, 'A', 'G'], [10, 89624298, 'C', 'T')]": ["0000057950"],
+    # "([10, 89624304, 'C', 'T'], [10, 89624298, 'C', 'T')]": ["0000057950"],
+    # "([10, 89624298, 'C', 'T'], [10, 89624243, 'A', 'G')]": ["0000057950"],
+    # "([10, 89624298, 'C', 'T'], [10, 89624304, 'C', 'T')]": ["0000057950"]}
 
-    vusIndividuals = defaultdict(set)
+    #vusIndividuals = defaultdict(set)
+    vusIndividuals = dict()
     for cooc in vusCoocs.keys():
-        vus = eval(cooc)[0]
+        vus = repr(eval(cooc)[0])
+        if vus not in vusIndividuals:
+            vusIndividuals[vus] = set()
         for i in vusCoocs[cooc]:
-            vusIndividuals[repr(vus)].add(i)
+            vusIndividuals[vus].add(i)
 
     for cooc in pathCoocs:
-        vus = eval(cooc)[0]
+        vus = repr(eval(cooc)[0])
+        if vus not in vusIndividuals:
+            vusIndividuals[vus] = set()
         for i in pathCoocs[cooc]:
-            vusIndividuals[repr(vus)].add(i)
+            vusIndividuals[vus].add(i)
 
     for cooc in benCoocs:
-        vus = eval(cooc)[0]
+        vus = repr(eval(cooc)[0])
+        if vus not in vusIndividuals:
+            vusIndividuals[vus] = set()
         for i in benCoocs[cooc]:
-            vusIndividuals[repr(vus)].add(i)
+            vusIndividuals[vus].add(i)
 
     # len of list associated with each vus is n (total number of times it was observed)
     vusList = list(vusIndividuals.keys())
@@ -212,17 +184,27 @@ def calculateLikelihood(pathCoocs, benCoocs, vusCoocs, p1):
     # }
 
     # now we calculate k (total number of times it co-occurred with a pathogenic variant)
-    vusPathIndividuals = defaultdict(set)
+    vusPathIndividuals = dict()
     for cooc in pathCoocs:
-        vus = eval(cooc)[0]
+        vus = repr(eval(cooc)[0])
+        if vus not in vusPathIndividuals:
+            vusPathIndividuals[vus] = set()
         for i in pathCoocs[cooc]:
-            vusPathIndividuals[repr(vus)].add(i)
+            vusPathIndividuals[vus].add(i)
 
 
     # per vus, calculate total number of times observed (n) and number of times observed with path variant (k)
     nk = dict()
     for vus in vusList:
-        nk[vus] = (len(vusIndividuals[vus]), len(vusPathIndividuals[vus]))
+        if vus not in vusIndividuals:
+            n = 0
+        else:
+            n = len(vusIndividuals[vus])
+        if vus not in vusPathIndividuals:
+            k = 0
+        else:
+            k = len(vusPathIndividuals[vus])
+        nk[vus] = (n, k)
 
     # now calculate log likelihood ratios!
     likelihoodRatios = dict()
@@ -233,93 +215,18 @@ def calculateLikelihood(pathCoocs, benCoocs, vusCoocs, p1):
 
 
     # find all the pathogenic variants this vus co-occurred with
-    pathVarsPerVus = defaultdict(set)
-    #pathVarsPerVus = dict()
+    pathVarsPerVus = defaultdict(list)
     for cooc in pathCoocs:
-        print(cooc)
         vus = repr(eval(cooc)[0])
-        #if vus not in pathVarsPerVus:
-        #    pathVarsPerVus[vus] = list()
-        pathVarsPerVus[vus].add(cooc[1])
+        pathVarsPerVus[vus].append(eval(cooc)[1])
 
     # put it all together in a single dict
     dataPerVus = dict()
     for vus in likelihoodRatios:
-        data = [p1, p2, nk[vus][0], nk[vus][1], likelihoodRatios[vus], list(pathVarsPerVus[vus])]
+        data = [p1, p2, nk[vus][0], nk[vus][1], likelihoodRatios[vus], pathVarsPerVus[vus]]
         dataPerVus[vus] = data
 
     return dataPerVus
-
-def produceOutputFiles():
-    print("producing output files!")
-
-
-    print('reading BRCA data from ' + brcaFileName)
-    t = time.time()
-    count, pathogenicVariants, benignVariants, unknownVariants = \
-        findVariantsInBRCA(brcaFileName, classStrings, sigColName)
-    elapsed_time = time.time() - t
-    print('elapsed time in findVariantsInBRCA() ' + str(elapsed_time))
-
-    print('reading VCF data from ' + vcfFileName)
-    t = time.time()
-    vcfData = readVCFFile(vcfFileName, myVCFMetadataLines)
-    elapsed_time = time.time() - t
-    print('elapsed time in readVCFFile() ' + str(elapsed_time))
-
-    print('slicing up VCF data by chromosome')
-    t = time.time()
-    variantsPerChromosome = findVariantsPerChromosome(vcfData)
-    elapsed_time = time.time() - t
-    print('elapsed time in variantsPerChromosome() ' + str(elapsed_time))
-
-    print('slicing up VCF data by gene')
-    t = time.time()
-    benignPerGene, pathogenicPerGene, vusPerGene = findVariantsPerGene(variantsPerChromosome,
-                                                    benignVariants, pathogenicVariants, unknownVariants,ensemblRelease)
-    elapsed_time = time.time() - t
-    print('elapsed time in variantsPerGene() ' + str(elapsed_time))
-
-    print('finding variants per individual')
-    t = time.time()
-    results = list()
-    variantsPerIndividual = defaultdict(lambda: defaultdict(list))
-    pool = ThreadPool(processes=nThreads)
-    for i in range(nThreads):
-        results.append(pool.apply_async(findVariantsPerIndividual, args=(vcfData, benignVariants, pathogenicVariants,
-                                                                 unknownVariants, myVCFskipCols, nThreads, i)))
-    for result in results:
-        result.wait()
-        variantsPerIndividual.update(result.get())
-    elapsed_time = time.time() - t
-    print('elapsed time in findVariantsPerIndividual() ' + str(elapsed_time))
-
-    print('saving variantsPerIndividual to ' + variantsPerIndividualFileName)
-    with open(variantsPerIndividualFileName, 'w') as f:
-        json.dump(variantsPerIndividual, f)
-    f.close()
-
-    print('finding individuals per cooc')
-    t = time.time()
-    individualsPerBenignCooccurrence, individualsPerPathogenicCooccurrence, individualsPerVUSCooccurrence = \
-        findIndividualsPerCooccurrence(variantsPerIndividual, benignPerGene, pathogenicPerGene, vusPerGene)
-    elapsed_time = time.time() - t
-    print('elapsed time in findIndividualsPerCooccurrence() ' + str(elapsed_time))
-
-    print('saving individuals per pathogenic cooc  to ' + pathogenicCooccurrencesFileName)
-    with open(pathogenicCooccurrencesFileName, 'w') as f:
-        json.dump(individualsPerPathogenicCooccurrence, f)
-    f.close()
-    print('saving individuals per benign cooc  to ' + benignCooccurrencesFileName)
-    with open(benignCooccurrencesFileName, 'w') as f:
-        json.dump(individualsPerBenignCooccurrence, f)
-    f.close()
-    print('saving individuals per vus cooc  to ' + vusCooccurrencesFileName)
-    with open(vusCooccurrencesFileName, 'w') as f:
-        json.dump(individualsPerVUSCooccurrence, f)
-    f.close()
-
-    # now you can you do the math!
 
 def findVariantsPerGene(variantsPerChromosome, benignVariants, pathogenicVariants, unknownVariants, ensemblRelease):
     ensembl_db = pyensembl.database.Database(gtf_path='/Users/jcasaletto/Library/Caches/pyensembl/GRCh37.75.gtf.db')
@@ -341,21 +248,16 @@ def findVariantsPerGene(variantsPerChromosome, benignVariants, pathogenicVariant
                 #print('exception getting variant out of x.iloc[' + str(i) + ']: ' + str(x.iloc[i]))
                 continue
             #print(v)
-            # see if variant is vus
-            if v in unknownVariants:
-                genes = getGenesForVariant(v)
-                if genes is None:
-                    continue
-                for gene in genes:
-                    vusPerGene[gene].append([chrom, pos, ref, alt])
+
 
             # see if variant is pathogenic
-            elif v in pathogenicVariants:
+            if v in pathogenicVariants:
                 genes = getGenesForVariant(v)
                 if genes is None:
                     continue
                 for gene in genes:
-                    pathogenicPerGene[gene].append([chrom, pos, ref, alt])
+                    #pathogenicPerGene[gene].append([chrom, pos, ref, alt])
+                    pathogenicPerGene[gene].append(v)
 
             # see if variant is benign
             elif v in benignVariants:
@@ -363,7 +265,18 @@ def findVariantsPerGene(variantsPerChromosome, benignVariants, pathogenicVariant
                 if genes is None:
                     continue
                 for gene in genes:
-                    benignPerGene[gene].append([chrom, pos, ref, alt])
+                    #benignPerGene[gene].append([chrom, pos, ref, alt])
+                    benignPerGene[gene].append(v)
+
+            # see if variant is vus? or just call it a vus b/c it's not a known benign or pathogenic var?
+            #if v in unknownVariants:
+            else:
+                genes = getGenesForVariant(v)
+                if genes is None:
+                    continue
+                for gene in genes:
+                    #vusPerGene[gene].append([chrom, pos, ref, alt])
+                    vusPerGene[gene].append(v)
 
     return benignPerGene, pathogenicPerGene, vusPerGene
 
@@ -460,7 +373,9 @@ def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, unknown
                     variantsPerIndividual[individual]['benign'].append(varList)
                 elif varList in pathogenicVariants:
                     variantsPerIndividual[individual]['pathogenic'].append(varList)
-                elif varList in unknownVariants:
+                # if not a known VUS, should we call it unknown here?
+                #elif varList in unknownVariants:
+                else:
                     variantsPerIndividual[individual]['vus'].append(varList)
             except Exception as e:
                 print("exception for index " + str(variantIndex) + " of individual " + str(individual))
