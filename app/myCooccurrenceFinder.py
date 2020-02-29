@@ -211,7 +211,11 @@ def calculateLikelihood(pathCoocs, benCoocs, vusCoocs, p1):
     for vus in nk:
         n = nk[vus][0]
         k = nk[vus][1]
-        likelihoodRatios[vus] = ( (p2**k) * (1-p2)**(n-k)) / ((p1**k) * (1-p1)**(n-k))
+        denom = ((p1 ** k) * (1 - p1) ** (n - k))
+        if denom == 0:
+            likelihoodRatios[vus] = sys.float_info.min
+        else:
+            likelihoodRatios[vus] = ((p2 ** k) * (1 - p2) ** (n - k)) / ((p1 ** k) * (1 - p1) ** (n - k))
 
 
     # find all the pathogenic variants this vus co-occurred with
