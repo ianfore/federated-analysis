@@ -24,6 +24,7 @@ RUN add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-
 
 RUN DEBIAN_FRONTEND=noninteractive  apt-get install r-base -y
 
-RUN pyensembl install --release 75
+USER myuser
 
+#RUN pyensembl install --release 75
 

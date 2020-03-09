@@ -10,6 +10,8 @@ import ast
 import pyensembl
 import numpy as np
 from functools import partial
+import os
+
 
 
 clinvarVCFMetadataLines = 27
@@ -21,7 +23,9 @@ classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely ben
                  'Unknown': [ 'Uncertain significance', '-']}
 CHROMOSOMES=[13, 17]
 sigColName = 'Clinical_significance_ENIGMA'
-DATA_DIR='/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data'
+#DATA_DIR='/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data'
+DATA_DIR='/data'
+
 brcaFileName = DATA_DIR + '/brca-variants.tsv'
 vcfFileName = DATA_DIR + '/BreastCancer.shuffle.vcf'
 variantsPerIndividualFileName = DATA_DIR + '/variantsPerIndividual.json'
@@ -29,7 +33,8 @@ pathogenicCooccurrencesFileName = DATA_DIR + '/pathogenicCooccurrences.json'
 benignCooccurrencesFileName = DATA_DIR + '/benignCooccurrences.json'
 vusCooccurrencesFileName = DATA_DIR + '/vusCooccurrences.json'
 vusFinalDataFileName = DATA_DIR + '/vusFinalData.json'
-ensemblRelease=75
+os.environ['PYENSEMBL_CACHE_DIR'] = DATA_DIR + '/pyensembl-cache'
+
 
 p2 = 0.0001
 
@@ -85,7 +90,7 @@ def combo():
     t = time.time()
     benignPerGene, pathogenicPerGene, vusPerGene = findVariantsPerGene(variantsPerChromosome,
                                                                        benignVariants, pathogenicVariants,
-                                                                       unknownVariants, ensemblRelease)
+                                                                       unknownVariants, ensemblRelease=75)
     elapsed_time = time.time() - t
     print('elapsed time in variantsPerGene() ' + str(elapsed_time))
 
@@ -120,6 +125,7 @@ def combo():
         findIndividualsPerCooccurrence(variantsPerIndividual, benignPerGene, pathogenicPerGene, vusPerGene)
     elapsed_time = time.time() - t
     print('elapsed time in findIndividualsPerCooccurrence() ' + str(elapsed_time))
+
 
 
     # TODO make the program idempotent (save/read data frames and take cli arg to figure out)
@@ -233,10 +239,11 @@ def calculateLikelihood(pathCoocs, benCoocs, vusCoocs, p1):
     return dataPerVus
 
 def findVariantsPerGene(variantsPerChromosome, benignVariants, pathogenicVariants, unknownVariants, ensemblRelease):
-    ensembl_db = pyensembl.database.Database(gtf_path='/Users/jcasaletto/Library/Caches/pyensembl/GRCh37.75.gtf.db')
     vusPerGene = defaultdict(list)
     pathogenicPerGene = defaultdict(list)
     benignPerGene = defaultdict(list)
+
+    # TODO download ensembl db into docker container and build image from that (sometimes pyensembl install command fails)
 
     for chrom in variantsPerChromosome:
         x = variantsPerChromosome[chrom]
@@ -430,7 +437,6 @@ def findIndividualsPerCooccurrence(variantsPerIndividual, benPerGene, pathsPerGe
                     continue
                 elif benVar in benPerGene[ben_gene[0]] and vusVarList[i] in vusPerGene[vus_gene[0]]:
                     individualsPerBenignCooccurrence[repr((vusVarList[i],benVar))].append(individual)
-            #for j in range(i+1, len(vusVarList)):
             for j in range(len(vusVarList)):
                 if i == j:
                     continue
