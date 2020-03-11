@@ -42,13 +42,14 @@ def countColumnsAndMetaRows(fileName):
 nThreads=1
 classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely benign' ],
                  'Unknown': [ 'Uncertain significance', '-']}
-CHROMOSOMES=[13, 17]
+CHROMOSOMES=['chr13', 'chr17']
 sigColName = 'Clinical_significance_ENIGMA'
 
 #DATA_DIR='/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data'
 DATA_DIR='/data'
 brcaFileName = DATA_DIR + '/brca-variants.tsv'
-vcfFileName = DATA_DIR + '/BreastCancer.shuffle.vcf'
+#vcfFileName = DATA_DIR + '/BreastCancer.shuffle.vcf'
+vcfFileName = DATA_DIR + '/brca2-phased.vcf'
 variantsPerIndividualFileName = DATA_DIR + '/variantsPerIndividual.json'
 pathogenicCooccurrencesFileName = DATA_DIR + '/pathogenicCooccurrences.json'
 benignCooccurrencesFileName = DATA_DIR + '/benignCooccurrences.json'
@@ -272,7 +273,7 @@ def findVariantsPerGene(variantsPerChromosome, benignVariants, pathogenicVariant
     for chrom in variantsPerChromosome:
         x = variantsPerChromosome[chrom]
         for i in range(len(x)):
-            chrom = int(chrom)
+            #chrom = int(chrom)
             try:
                 pos = int(x.iloc[i][1])
                 ref = str(x.iloc[i][3])
@@ -325,7 +326,7 @@ def readVCFFile(fileName, numMetaDataLines):
     # 0/0 => does not have variant on either strand (homozygous negative)
     # 0/1  => has variant on 1 strand (heterozygous positive)
     # 1/1 =>  has variant on both strands (homozygous positive)
-    df = pandas.read_csv(fileName, sep='\t', skiprows=numMetaDataLines, dtype={'#CHROM':int, 'POS':int}, header=0)
+    df = pandas.read_csv(fileName, sep='\t', skiprows=numMetaDataLines, dtype={'POS':int}, header=0)
     # this creates a bug: df = df[df.apply(lambda r: r.str.contains('1/1').any() or r.str.contains('0/1').any(), axis=1)]
     # filter chromosomes in CHROMOSOMES here
     df.columns = df.columns.str.replace('#', '')
@@ -344,7 +345,8 @@ def findVariantsInBRCA(fileName, classStrings, sigColName):
     for index, row in brcaDF.iterrows():
         coord = row['Genomic_Coordinate_hg37']
         coord = coord.split(':')
-        chrom = int(coord[0].split('chr')[1])
+        #chrom = int(coord[0].split('chr')[1])
+        chrom = coord[0].split('chr')[1]
         pos = int(coord[1].split('g.')[1])
         ref, alt = coord[2].split('>')
         var = [chrom, pos, ref, alt]
