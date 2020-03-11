@@ -12,20 +12,41 @@ import numpy as np
 from functools import partial
 import os
 
+def countColumnsAndMetaRows(fileName):
+    '''The header line names the 8 fixed, mandatory columns.These columns are as follows:
+    1. # CHROM
+    2. POS
+    3. ID
+    4. REF
+    5. ALT
+    6. QUAL
+    7. FILTER
+    8. INFO
+    If genotype data is present in the file, these are followed by a FORMAT column header, then an arbitrary number
+    of sample IDs.Duplicate sample IDs are not allowed.The header line is tab - delimited.'''
+    metaRowCount = 0
+    with open(fileName, 'r') as f:
+        for line in f:
+            if line.startswith('##'):
+                metaRowCount += 1
+            elif line.startswith('#CHROM'):
+                if 'FORMAT' in line:
+                    preIDcolumnCount = 9
+                else:
+                    preIDcolumnCount = 8
+                break
+    f.close()
+    return metaRowCount, preIDcolumnCount
 
-
-clinvarVCFMetadataLines = 27
-myVCFMetadataLines = 8
-myVCFskipCols = 9
 #nThreads = cpu_count()
 nThreads=1
 classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely benign' ],
                  'Unknown': [ 'Uncertain significance', '-']}
 CHROMOSOMES=[13, 17]
 sigColName = 'Clinical_significance_ENIGMA'
+
 #DATA_DIR='/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data'
 DATA_DIR='/data'
-
 brcaFileName = DATA_DIR + '/brca-variants.tsv'
 vcfFileName = DATA_DIR + '/BreastCancer.shuffle.vcf'
 variantsPerIndividualFileName = DATA_DIR + '/variantsPerIndividual.json'
@@ -35,9 +56,10 @@ vusCooccurrencesFileName = DATA_DIR + '/vusCooccurrences.json'
 vusFinalDataFileName = DATA_DIR + '/vusFinalData.json'
 os.environ['PYENSEMBL_CACHE_DIR'] = DATA_DIR + '/pyensembl-cache'
 
+myVCFMetadataLines, myVCFskipCols = countColumnsAndMetaRows(vcfFileName)
+
 
 p2 = 0.0001
-
 
 class NpEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -94,7 +116,7 @@ def combo():
     elapsed_time = time.time() - t
     print('elapsed time in variantsPerGene() ' + str(elapsed_time))
 
-    '''print('finding variants per individual')
+    print('finding variants per individual')
     t = time.time()
     results = list()
     variantsPerIndividual = dict()
@@ -111,7 +133,7 @@ def combo():
     print('saving variantsPerIndividual to ' + variantsPerIndividualFileName)
     with open(variantsPerIndividualFileName, 'w') as f:
         json.dump(variantsPerIndividual, f, cls=NpEncoder)
-    f.close()'''
+    f.close()
 
     print('reading in variantsPerIndividual from ' + variantsPerIndividualFileName)
     with open(variantsPerIndividualFileName) as f:
@@ -141,7 +163,9 @@ def combo():
     with open(vusFinalDataFileName, 'w') as f:
         json.dump(dataPerVus, f, cls=NpEncoder)
     f.close()
-    print(dataPerVus)
+
+    # now do the report: only report the "interesting" ones that pass the tests
+    # data = [p1, p2, nk[vus][0], nk[vus][1], likelihoodRatios[vus], pathVarsPerVus[vus]]
 
 
 
@@ -256,7 +280,6 @@ def findVariantsPerGene(variantsPerChromosome, benignVariants, pathogenicVariant
                 v = [chrom, pos, ref, alt]
             except Exception as e:
                 print('exception at column ' + str(i))
-                #print('exception getting variant out of x.iloc[' + str(i) + ']: ' + str(x.iloc[i]))
                 continue
             #print(v)
 
@@ -267,7 +290,6 @@ def findVariantsPerGene(variantsPerChromosome, benignVariants, pathogenicVariant
                 if genes is None:
                     continue
                 for gene in genes:
-                    #pathogenicPerGene[gene].append([chrom, pos, ref, alt])
                     pathogenicPerGene[gene].append(v)
 
             # see if variant is benign
@@ -276,7 +298,6 @@ def findVariantsPerGene(variantsPerChromosome, benignVariants, pathogenicVariant
                 if genes is None:
                     continue
                 for gene in genes:
-                    #benignPerGene[gene].append([chrom, pos, ref, alt])
                     benignPerGene[gene].append(v)
 
             # see if variant is vus? or just call it a vus b/c it's not a known benign or pathogenic var?
@@ -286,7 +307,6 @@ def findVariantsPerGene(variantsPerChromosome, benignVariants, pathogenicVariant
                 if genes is None:
                     continue
                 for gene in genes:
-                    #vusPerGene[gene].append([chrom, pos, ref, alt])
                     vusPerGene[gene].append(v)
 
     return benignPerGene, pathogenicPerGene, vusPerGene
@@ -369,7 +389,7 @@ def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, unknown
         variantsPerIndividual[individual]['pathogenic'] = list()
         variantsPerIndividual[individual]['vus'] = list()
 
-        includeList = ['1/0', '0/1', '1/1']
+        includeList = ['1/0', '0/1', '1/1', '0|0', '1|0', '0|1', '1|1']
         listOfVariantIndices = list()
         for x in includeList:
             listOfVariantIndices += list(np.where(vcfDF[individual] == x)[0])
@@ -377,8 +397,6 @@ def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, unknown
         for variantIndex in listOfVariantIndices:
             try:
                 record = vcfDF.iloc[variantIndex]
-                #if record['#CHROM'] not in CHROMOSOMES:
-                #    continue
                 varList = [record['CHROM'], int(record['POS']), record['REF'], record['ALT']]
                 if varList in benignVariants:
                     variantsPerIndividual[individual]['benign'].append(varList)
