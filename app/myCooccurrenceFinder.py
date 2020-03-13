@@ -48,8 +48,8 @@ sigColName = 'Clinical_significance_ENIGMA'
 #DATA_DIR='/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data'
 DATA_DIR='/data'
 brcaFileName = DATA_DIR + '/brca-variants.tsv'
-vcfFileName = DATA_DIR + '/BreastCancer.shuffle.vcf'
-#vcfFileName = DATA_DIR + '/brca2-phased.vcf'
+#vcfFileName = DATA_DIR + '/BreastCancer.shuffle.vcf'
+vcfFileName = DATA_DIR + '/topmed-test.vcf'
 variantsPerIndividualFileName = DATA_DIR + '/variantsPerIndividual.json'
 pathogenicCooccurrencesFileName = DATA_DIR + '/pathogenicCooccurrences.json'
 benignCooccurrencesFileName = DATA_DIR + '/benignCooccurrences.json'
@@ -60,7 +60,7 @@ os.environ['PYENSEMBL_CACHE_DIR'] = DATA_DIR + '/pyensembl-cache'
 myVCFMetadataLines, myVCFskipCols = countColumnsAndMetaRows(vcfFileName)
 
 
-
+# p2 = P(VUS is pathogenic and patient carries a pathogenic variant in trans) (arbitrarily set by tavtigian et al)
 p2 = 0.0001
 
 class NpEncoder(json.JSONEncoder):
@@ -159,8 +159,8 @@ def combo(ensemblRelease, chromosomes):
 
 
     # TODO make the program idempotent (save/read data frames and take cli arg to figure out)
-    # now you can you do the math!
-    p1 = 0.5 * len(pathogenicVariants) / count
+    # p1 = P(VUS is benign and patient carries a pathogenic variant in trans)
+    p1 = 0.5 * len(benignVariants) / count
 
     print('putting all the data together per vus')
     dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, individualsPerBenignCooccurrence,
@@ -333,15 +333,16 @@ def findVariantsPerChromosome(variants, chromosomes):
 def readVCFFile(fileName, numMetaDataLines, chromosomes):
     # #CHROM  POS             ID      REF     ALT     QUAL    FILTER  INFO            FORMAT  0000057940      0000057950
     # 10      89624243        .       A       G       .       .       AF=1.622e-05    GT      0/0             0/0
-    # 0/0 => does not have variant on either strand (homozygous negative)
-    # 0/1  => has variant on 1 strand (heterozygous positive)
-    # 1/1 =>  has variant on both strands (homozygous positive)
+    # 0/0 => does not have variant on either chromosome (homozygous negative)
+    # 0/1  => has variant on 1 chromosome (heterozygous positive)
+    # 1/1 =>  has variant on both chromosomes (homozygous positive)
     df = pandas.read_csv(fileName, sep='\t', skiprows=numMetaDataLines, dtype={'POS':int}, header=0)
     # this creates a bug: df = df[df.apply(lambda r: r.str.contains('1/1').any() or r.str.contains('0/1').any(), axis=1)]
     # filter chromosomes in CHROMOSOMES here
     df.columns = df.columns.str.replace('#', '')
     if df.CHROM.dtype is not int:
         df['CHROM'] = df['CHROM'].str.replace('chr', '')
+        df['CHROM'] = pandas.to_numeric(df['CHROM'])
     chromsDF = df[df.CHROM.isin(chromosomes)]
 
     return chromsDF
