@@ -3,7 +3,7 @@
 if [ $# -ne 2 ] 
 then
 	echo "usage: $0 <ensembl-release> <chr-list>"
-	echo "example: $0 75 \"['chr13', 'chr17']\"" 
+	echo "example: $0 75 \"[13, 17]\"" 
 	exit 1
 fi
 

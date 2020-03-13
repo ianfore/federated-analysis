@@ -43,7 +43,6 @@ def countColumnsAndMetaRows(fileName):
 nThreads=1
 classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely benign' ],
                  'Unknown': [ 'Uncertain significance', '-']}
-CHROMOSOMES=['chr13', 'chr17']
 sigColName = 'Clinical_significance_ENIGMA'
 
 #DATA_DIR='/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data'
@@ -83,6 +82,13 @@ def main():
         sys.exit(1)
     ENSEMBL_RELEASE=sys.argv[1]
     CHROMOSOMES = ast.literal_eval(sys.argv[2])
+    for i in  range(len(CHROMOSOMES)):
+        try:
+            CHROMOSOMES[i] = int(CHROMOSOMES[i])
+        except Exception as e:
+            print('exception parsing chromosome list: ' + str(e))
+            sys.exit(2)
+
     combo(ENSEMBL_RELEASE, CHROMOSOMES)
 
 
@@ -90,6 +96,8 @@ def printUsage(args):
     sys.stderr.write('myCooccurrenceFinder.py <ensembl-release> "[chr list]"')
 
 def combo(ensemblRelease, chromosomes):
+    for c in chromosomes:
+        print('looking at chrom: ' + str(c))
     print('reading BRCA data from ' + brcaFileName)
     t = time.time()
     count, pathogenicVariants, benignVariants, unknownVariants = \
@@ -243,7 +251,9 @@ def calculateLikelihood(pathCoocs, benCoocs, vusCoocs, p1):
         n = nk[vus][0]
         k = nk[vus][1]
         denom = ((p1 ** k) * (1 - p1) ** (n - k))
-        if denom == 0:
+        if k == 0:
+            continue
+        elif denom == 0:
             likelihoodRatios[vus] = sys.float_info.min
         else:
             likelihoodRatios[vus] = ((p2 ** k) * (1 - p2) ** (n - k)) / ((p1 ** k) * (1 - p1) ** (n - k))
@@ -273,7 +283,7 @@ def findVariantsPerGene(variantsPerChromosome, benignVariants, pathogenicVariant
     for chrom in variantsPerChromosome:
         x = variantsPerChromosome[chrom]
         for i in range(len(x)):
-            #chrom = int(chrom)
+            chrom = int(chrom)
             try:
                 pos = int(x.iloc[i][1])
                 ref = str(x.iloc[i][3])
@@ -331,6 +341,9 @@ def readVCFFile(fileName, numMetaDataLines, chromosomes):
     # this creates a bug: df = df[df.apply(lambda r: r.str.contains('1/1').any() or r.str.contains('0/1').any(), axis=1)]
     # filter chromosomes in CHROMOSOMES here
     df.columns = df.columns.str.replace('#', '')
+    if df.CHROM.dtype is str:
+        df['CHROM'].replace({"chr":""})
+        df.astype({'CHROM':'int32'})
     chromsDF = df[df.CHROM.isin(chromosomes)]
 
     return chromsDF
@@ -346,8 +359,8 @@ def findVariantsInBRCA(fileName, classStrings, sigColName):
     for index, row in brcaDF.iterrows():
         coord = row['Genomic_Coordinate_hg37']
         coord = coord.split(':')
-        #chrom = int(coord[0].split('chr')[1])
-        chrom = coord[0].split('chr')[1]
+        chrom = int(coord[0].split('chr')[1])
+        #chrom = coord[0].split('chr')[1]
         pos = int(coord[1].split('g.')[1])
         ref, alt = coord[2].split('>')
         var = [chrom, pos, ref, alt]
@@ -418,9 +431,11 @@ def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, unknown
 
 
 def getGenesForVariant(variant, ensemblRelease):
-    ensembl_db = pyensembl.database.Database(gtf_path='/Users/jcasaletto/Library/Caches/pyensembl/GRCh37.75.gtf.db')
     ensembl = pyensembl.EnsemblRelease(release=ensemblRelease)
     chrom = variant[0]
+    if type(chrom) is str:
+        # TODO this isn't graceful at all
+        chrom = chrom.split('chr')[1]
     pos = variant[1]
     try:
         genes = ensembl.gene_names_at_locus(contig=int(chrom), position=int(pos))
