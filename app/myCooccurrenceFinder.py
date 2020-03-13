@@ -12,6 +12,8 @@ import numpy as np
 from functools import partial
 import os
 import ast
+from pandas.api.types import is_numeric_dtype
+
 
 def countColumnsAndMetaRows(fileName):
     '''The header line names the 8 fixed, mandatory columns.These columns are as follows:
@@ -48,8 +50,8 @@ sigColName = 'Clinical_significance_ENIGMA'
 #DATA_DIR='/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data'
 DATA_DIR='/data'
 brcaFileName = DATA_DIR + '/brca-variants.tsv'
-#vcfFileName = DATA_DIR + '/BreastCancer.shuffle.vcf'
-vcfFileName = DATA_DIR + '/topmed-test.vcf'
+vcfFileName = DATA_DIR + '/BreastCancer.shuffle.vcf'
+#vcfFileName = DATA_DIR + '/topmed-test.vcf'
 variantsPerIndividualFileName = DATA_DIR + '/variantsPerIndividual.json'
 pathogenicCooccurrencesFileName = DATA_DIR + '/pathogenicCooccurrences.json'
 benignCooccurrencesFileName = DATA_DIR + '/benignCooccurrences.json'
@@ -340,7 +342,9 @@ def readVCFFile(fileName, numMetaDataLines, chromosomes):
     # this creates a bug: df = df[df.apply(lambda r: r.str.contains('1/1').any() or r.str.contains('0/1').any(), axis=1)]
     # filter chromosomes in CHROMOSOMES here
     df.columns = df.columns.str.replace('#', '')
-    if df.CHROM.dtype is not int:
+
+    #if df.CHROM.dtype is not int:
+    if not is_numeric_dtype(df['CHROM']):
         df['CHROM'] = df['CHROM'].str.replace('chr', '')
         df['CHROM'] = pandas.to_numeric(df['CHROM'])
     chromsDF = df[df.CHROM.isin(chromosomes)]
