@@ -96,8 +96,7 @@ def printUsage(args):
     sys.stderr.write('myCooccurrenceFinder.py <ensembl-release> "[chr list]"')
 
 def combo(ensemblRelease, chromosomes):
-    for c in chromosomes:
-        print('looking at chrom: ' + str(c))
+
     print('reading BRCA data from ' + brcaFileName)
     t = time.time()
     count, pathogenicVariants, benignVariants, unknownVariants = \
@@ -341,9 +340,8 @@ def readVCFFile(fileName, numMetaDataLines, chromosomes):
     # this creates a bug: df = df[df.apply(lambda r: r.str.contains('1/1').any() or r.str.contains('0/1').any(), axis=1)]
     # filter chromosomes in CHROMOSOMES here
     df.columns = df.columns.str.replace('#', '')
-    if df.CHROM.dtype is str:
-        df['CHROM'].replace({"chr":""})
-        df.astype({'CHROM':'int32'})
+    if df.CHROM.dtype is not int:
+        df['CHROM'] = df['CHROM'].str.replace('chr', '')
     chromsDF = df[df.CHROM.isin(chromosomes)]
 
     return chromsDF
