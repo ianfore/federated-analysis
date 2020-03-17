@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ $# -ne 2 ] 
+if [ $# -ne 3 ] 
 then
 	echo "usage: $0 <hg-version> <ensembl-release> <chr-list>"
 	echo "example: $0 37 75 \"[13, 17]\"" 
