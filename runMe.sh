@@ -1,8 +1,8 @@
 #!/bin/bash
 
-if [ $# -ne 5 ] 
+if [ $# -ne 4 ] 
 then
-	echo "usage: $0 <hg-version> <ensembl-release> <chr-list>"
+	echo "usage: $0 <hg-version> <ensembl-release> <chr-list> <gene-list>"
 	echo "example: $0 37 75 \"[13, 17]\" \"['BRCA1', 'BRCA2']\"" 
 	exit 1
 fi
