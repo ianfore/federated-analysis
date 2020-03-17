@@ -46,11 +46,10 @@ nThreads=1
 classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely benign' ],
                  'Unknown': [ 'Uncertain significance', '-']}
 sigColName = 'Clinical_significance_ENIGMA'
-
 #DATA_DIR='/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data'
 DATA_DIR='/data'
 brcaFileName = DATA_DIR + '/brca-variants.tsv'
-vcfFileName = DATA_DIR + '/BreastCancer.shuffle.vcf'
+vcfFileName = DATA_DIR + '/13-BreastCancer.shuffle.vcf'
 #vcfFileName = DATA_DIR + '/topmed-test.vcf'
 variantsPerIndividualFileName = DATA_DIR + '/variantsPerIndividual.json'
 pathogenicCooccurrencesFileName = DATA_DIR + '/pathogenicCooccurrences.json'
@@ -78,12 +77,21 @@ class NpEncoder(json.JSONEncoder):
         else:
             return super(NpEncoder, self).default(obj)
 
+class NpDecoder(json.JSONDecoder):
+    def default(self, obj):
+        if isinstance(obj, list):
+            return set(obj)
+        else:
+            return super(NpDecoder, self).default(obj)
+
 def main():
-    if len(sys.argv) != 3:
+    if len(sys.argv) != 5:
         printUsage(sys.argv)
         sys.exit(1)
-    ENSEMBL_RELEASE=sys.argv[1]
-    CHROMOSOMES = ast.literal_eval(sys.argv[2])
+    GENOME_VERSION=sys.argv[1]
+    ENSEMBL_RELEASE=sys.argv[2]
+    CHROMOSOMES = ast.literal_eval(sys.argv[3])
+    GENES = ast.literal_eval(sys.argv[4])
     for i in  range(len(CHROMOSOMES)):
         try:
             CHROMOSOMES[i] = int(CHROMOSOMES[i])
@@ -91,18 +99,18 @@ def main():
             print('exception parsing chromosome list: ' + str(e))
             sys.exit(2)
 
-    combo(ENSEMBL_RELEASE, CHROMOSOMES)
+    combo(GENOME_VERSION, ENSEMBL_RELEASE, CHROMOSOMES, GENES)
 
 
 def printUsage(args):
-    sys.stderr.write('myCooccurrenceFinder.py <ensembl-release> "[chr list]"')
+    sys.stderr.write('myCooccurrenceFinder.py <ensembl-release> "[chr list]" "[gene list]')
 
-def combo(ensemblRelease, chromosomes):
+def combo(hgVersion, ensemblRelease, chromosomes, genes):
 
     print('reading BRCA data from ' + brcaFileName)
     t = time.time()
     count, pathogenicVariants, benignVariants, unknownVariants = \
-        findVariantsInBRCA(brcaFileName, classStrings, sigColName)
+        findVariantsInBRCA(brcaFileName, classStrings, sigColName, hgVersion)
     elapsed_time = time.time() - t
     print('elapsed time in findVariantsInBRCA() ' + str(elapsed_time))
 
@@ -122,7 +130,7 @@ def combo(ensemblRelease, chromosomes):
     t = time.time()
     benignPerGene, pathogenicPerGene, vusPerGene = findVariantsPerGene(variantsPerChromosome,
                                                                        benignVariants, pathogenicVariants,
-                                                                       unknownVariants, ensemblRelease)
+                                                                       unknownVariants, ensemblRelease, genes)
     elapsed_time = time.time() - t
     print('elapsed time in variantsPerGene() ' + str(elapsed_time))
 
@@ -147,7 +155,7 @@ def combo(ensemblRelease, chromosomes):
 
     '''print('reading in variantsPerIndividual from ' + variantsPerIndividualFileName)
     with open(variantsPerIndividualFileName) as f:
-        variantsPerIndividual = json.load(f)
+        variantsPerIndividual = json.load(f, cls=NpDecoder)
     f.close()'''
 
     # TODO make this multi-threaded (cpu is pegged at 99% for this method)
@@ -274,7 +282,7 @@ def calculateLikelihood(pathCoocs, benCoocs, vusCoocs, p1):
 
     return dataPerVus
 
-def findVariantsPerGene(variantsPerChromosome, benignVariants, pathogenicVariants, unknownVariants, ensemblRelease):
+def findVariantsPerGene(variantsPerChromosome, benignVariants, pathogenicVariants, unknownVariants, ensemblRelease, genesOfInterest):
     vusPerGene = defaultdict(list)
     pathogenicPerGene = defaultdict(list)
     benignPerGene = defaultdict(list)
@@ -287,9 +295,12 @@ def findVariantsPerGene(variantsPerChromosome, benignVariants, pathogenicVariant
             chrom = int(chrom)
             try:
                 pos = int(x.iloc[i][1])
+                #pos = int(x.loc[i, 1])
                 ref = str(x.iloc[i][3])
+                #ref = str(x.loc[i, 3])
                 alt = str(x.iloc[i][4])
-                v = [chrom, pos, ref, alt]
+                #alt = str(x.loc[i, 4])
+                v = (chrom, pos, ref, alt)
             except Exception as e:
                 print('exception at column ' + str(i))
                 continue
@@ -298,27 +309,27 @@ def findVariantsPerGene(variantsPerChromosome, benignVariants, pathogenicVariant
 
             # see if variant is pathogenic
             if v in pathogenicVariants:
-                genes = getGenesForVariant(v, ensemblRelease)
-                if genes is None:
+                gene = getGeneForVariant(v, ensemblRelease)
+                if gene is None or gene not in genesOfInterest:
                     continue
-                for gene in genes:
+                else:
                     pathogenicPerGene[gene].append(v)
 
             # see if variant is benign
             elif v in benignVariants:
-                genes = getGenesForVariant(v, ensemblRelease)
-                if genes is None:
+                gene = getGeneForVariant(v, ensemblRelease)
+                if gene is None or gene not in genesOfInterest:
                     continue
-                for gene in genes:
+                else:
                     benignPerGene[gene].append(v)
 
             # see if variant is vus? or just call it a vus b/c it's not a known benign or pathogenic var?
             #if v in unknownVariants:
             else:
-                genes = getGenesForVariant(v, ensemblRelease)
-                if genes is None:
+                gene = getGeneForVariant(v, ensemblRelease)
+                if gene is None or gene not in genesOfInterest:
                     continue
-                for gene in genes:
+                else:
                     vusPerGene[gene].append(v)
 
     return benignPerGene, pathogenicPerGene, vusPerGene
@@ -351,29 +362,25 @@ def readVCFFile(fileName, numMetaDataLines, chromosomes):
 
     return chromsDF
 
-def findVariantsInBRCA(fileName, classStrings, sigColName):
+def findVariantsInBRCA(fileName, classStrings, sigColName, hgVersion):
     brcaDF = pandas.read_csv(fileName, sep='\t', header=0, dtype=str)
     # Genomic_Coordinate_hg37
     # chr13:g.32972575:G>T
-    pathVars = list()
-    benignVars = list()
-    vusVars = list()
-
-    for index, row in brcaDF.iterrows():
-        coord = row['Genomic_Coordinate_hg37']
-        coord = coord.split(':')
+    pathVars = set()
+    benignVars = set()
+    vusVars = set()
+    for i in range(len(brcaDF)):
+        coord = brcaDF.loc[i, 'Genomic_Coordinate_hg' + hgVersion].split(':')
         chrom = int(coord[0].split('chr')[1])
-        #chrom = coord[0].split('chr')[1]
         pos = int(coord[1].split('g.')[1])
         ref, alt = coord[2].split('>')
-        var = [chrom, pos, ref, alt]
-
-        if str(row[sigColName]) in classStrings['Pathogenic']:
-            pathVars.append(var)
-        elif str(row[sigColName]) in classStrings['Benign']:
-            benignVars.append(var)
-        elif str(row[sigColName]) in classStrings['Unknown']:
-            vusVars.append(var)
+        var = (chrom, pos, ref, alt)
+        if str(brcaDF.loc[i, sigColName]) in classStrings['Pathogenic']:
+            pathVars.add(var)
+        elif str(brcaDF.loc[i, sigColName]) in classStrings['Benign']:
+            benignVars.add(var)
+        elif str(brcaDF.loc[i, sigColName]) in classStrings['Unknown']:
+            vusVars.add(var)
 
     return len(brcaDF), pathVars, benignVars, vusVars
 
@@ -408,15 +415,22 @@ def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, unknown
         variantsPerIndividual[individual]['pathogenic'] = list()
         variantsPerIndividual[individual]['vus'] = list()
 
-        includeList = ['1/0', '0/1', '1/1', '0|0', '1|0', '0|1', '1|1']
+        includeList = ['1/0', '0/1', '1/1', '1|0', '0|1', '1|1']
         listOfVariantIndices = list()
         for x in includeList:
             listOfVariantIndices += list(np.where(vcfDF[individual] == x)[0])
 
-        for variantIndex in listOfVariantIndices:
+        for i in listOfVariantIndices:
             try:
-                record = vcfDF.iloc[variantIndex]
-                varList = [record['CHROM'], int(record['POS']), record['REF'], record['ALT']]
+                '''record = vcfDF.iloc[i]
+                varList = [record['CHROM'], int(record['POS']), record['REF'], record['ALT']]'''
+                varList = (int(vcfDF.loc[i, 'CHROM']), int(vcfDF.loc[i, 'POS']), vcfDF.loc[i, 'REF'], vcfDF.loc[i, 'ALT'] )
+                '''c = int(vcfDF.loc[i, 'CHROM'])
+                p = int(vcfDF.loc[i, 'POS'])
+                r = vcfDF.loc[i, 'REF']
+                a = vcfDF.loc[i, 'ALT']
+                varList = (c, p, r, a)'''
+                #varList = [ int(vcfDF.loc[i, 'CHROM']), int(vcfDF.loc[i, 'POS']), vcfDF.loc[i, 'REF'], vcfDF.loc[i, 'ALT'] ]
                 if varList in benignVariants:
                     variantsPerIndividual[individual]['benign'].append(varList)
                 elif varList in pathogenicVariants:
@@ -426,14 +440,14 @@ def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, unknown
                 else:
                     variantsPerIndividual[individual]['vus'].append(varList)
             except Exception as e:
-                print("exception for index " + str(variantIndex) + " of individual " + str(individual))
+                print("exception for index " + str(i) + " of individual " + str(individual))
                 print("exception: " + str(e))
                 continue
 
     return variantsPerIndividual
 
 
-def getGenesForVariant(variant, ensemblRelease):
+def getGeneForVariant(variant, ensemblRelease):
     ensembl = pyensembl.EnsemblRelease(release=ensemblRelease)
     chrom = variant[0]
     if type(chrom) is str:
@@ -442,11 +456,12 @@ def getGenesForVariant(variant, ensemblRelease):
     pos = variant[1]
     try:
         genes = ensembl.gene_names_at_locus(contig=int(chrom), position=int(pos))
-        if genes:
-            return genes
+        if len(genes) == 1:
+            return genes[0]
         else:
             return None
     except Exception as e:
+        print('exception: ' + str(e))
         return None
 
 def findIndividualsPerCooccurrence(variantsPerIndividual, benPerGene, pathsPerGene, vusPerGene, ensemblRelease):
@@ -459,30 +474,29 @@ def findIndividualsPerCooccurrence(variantsPerIndividual, benPerGene, pathsPerGe
         vusVarList = list(variantsPerIndividual[individual]['vus'])
         pathVarList = list(variantsPerIndividual[individual]['pathogenic'])
         benignVarList = list(variantsPerIndividual[individual]['benign'])
-        #for i in range(len(vusVarList) - 1):
         for i in range(len(vusVarList)):
-            vus_gene = getGenesForVariant(vusVarList[i], ensemblRelease)
+            vus_gene = getGeneForVariant(vusVarList[i], ensemblRelease)
             if vus_gene is None:
                 continue
             for pathVar in pathVarList:
-                path_gene = getGenesForVariant(pathVar, ensemblRelease)
+                path_gene = getGeneForVariant(pathVar, ensemblRelease)
                 if vus_gene != path_gene or path_gene is None:
                     continue
-                elif pathVar in pathsPerGene[path_gene[0]] and vusVarList[i] in vusPerGene[vus_gene[0]]:
+                elif pathVar in pathsPerGene[path_gene] and vusVarList[i] in vusPerGene[vus_gene]:
                     individualsPerPathogenicCooccurrence[repr((vusVarList[i], pathVar))].append(individual)
             for benVar in benignVarList:
-                ben_gene = getGenesForVariant(benVar, ensemblRelease)
+                ben_gene = getGeneForVariant(benVar, ensemblRelease)
                 if vus_gene != ben_gene or ben_gene is None:
                     continue
-                elif benVar in benPerGene[ben_gene[0]] and vusVarList[i] in vusPerGene[vus_gene[0]]:
+                elif benVar in benPerGene[ben_gene] and vusVarList[i] in vusPerGene[vus_gene]:
                     individualsPerBenignCooccurrence[repr((vusVarList[i],benVar))].append(individual)
             for j in range(len(vusVarList)):
                 if i == j:
                     continue
-                vus_gene_2 = getGenesForVariant(vusVarList[j], ensemblRelease)
+                vus_gene_2 = getGeneForVariant(vusVarList[j], ensemblRelease)
                 if vus_gene != vus_gene_2 or vus_gene_2 is None:
                     continue
-                elif vusVarList[j] in vusPerGene[vus_gene_2[0]] and vusVarList[i] in vusPerGene[vus_gene[0]]:
+                elif vusVarList[j] in vusPerGene[vus_gene_2] and vusVarList[i] in vusPerGene[vus_gene]:
                     individualsPerVUSCooccurrence[repr((vusVarList[i], vusVarList[j]))].append(individual)
 
     return individualsPerBenignCooccurrence, individualsPerPathogenicCooccurrence, individualsPerVUSCooccurrence
