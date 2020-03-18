@@ -49,7 +49,7 @@ sigColName = 'Clinical_significance_ENIGMA'
 #DATA_DIR='/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data'
 DATA_DIR='/data'
 brcaFileName = DATA_DIR + '/brca-variants.tsv'
-vcfFileName = DATA_DIR + '/13-BreastCancer.shuffle.vcf'
+vcfFileName = DATA_DIR + '/BreastCancer.shuffle.vcf'
 #vcfFileName = DATA_DIR + '/topmed-test.vcf'
 #vcfFileName = DATA_DIR + '/bc100.vcf'
 variantsPerIndividualFileName = DATA_DIR + '/variantsPerIndividual.json'
@@ -294,6 +294,7 @@ def findVariantsPerGene(variantsPerChromosome, benignVariants, pathogenicVariant
     for chrom in variantsPerChromosome:
         # x is a dataframe (subset of orig that contains entries for this chrom)
         x = variantsPerChromosome[chrom]
+        x.index = np.arange(0, len(x))
         for i in range(len(x)):
             chrom = int(chrom)
             try:
@@ -302,8 +303,8 @@ def findVariantsPerGene(variantsPerChromosome, benignVariants, pathogenicVariant
                 alt = str(x.loc[i, 'ALT'])
                 v = (chrom, pos, ref, alt)
             except Exception as e:
-                print('exception at column ' + str(i))
-                continue
+                print('exception at column ' + str(i) + " with row: " + str(x.loc[i]))
+                break
 
             # see if variant is pathogenic
             if v in pathogenicVariants:
@@ -338,6 +339,7 @@ def findVariantsPerChromosome(variants, chromosomes):
     for chrom in variants['CHROM'].unique():
         if chrom in chromosomes:
             variantsPerChromosome[chrom] = variants.loc[variants['CHROM']==chrom]
+
     return variantsPerChromosome
 
 
@@ -358,6 +360,8 @@ def readVCFFile(fileName, numMetaDataLines, chromosomes):
         df['CHROM'] = df['CHROM'].str.replace('chr', '')
         df['CHROM'] = pandas.to_numeric(df['CHROM'])
     chromsDF = df[df.CHROM.isin(chromosomes)]
+    # the index in the above operation is no longer contiguous from 0, so we need to reset for future operations on df
+    chromsDF.index = np.arange(0, len(chromsDF))
 
     return chromsDF
 
@@ -420,7 +424,7 @@ def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, unknown
 
         for i in listOfVariantIndices:
             try:
-                var = (int(vcfDF.loc[i]['CHROM']), int(vcfDF.loc[i, 'POS']), str(vcfDF.loc[i, 'REF']), str(vcfDF.loc[i, 'ALT']))
+                var = (int(vcfDF.loc[i, 'CHROM']), int(vcfDF.loc[i, 'POS']), str(vcfDF.loc[i, 'REF']), str(vcfDF.loc[i, 'ALT']))
                 if var in benignVariants:
                     variantsPerIndividual[individual]['benign'].append(var)
                 elif var in pathogenicVariants:
@@ -429,6 +433,7 @@ def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, unknown
                 elif var in unknownVariants:
                     variantsPerIndividual[individual]['vus'].append(var)
                 else:
+                    print(vcfDF.loc[i])
                     continue
             except Exception as e:
                 print("exception for index " + str(i) + " of individual " + str(individual))
