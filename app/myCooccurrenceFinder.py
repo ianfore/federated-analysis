@@ -323,14 +323,13 @@ def findVariantsPerGene(variantsPerChromosome, benignVariants, pathogenicVariant
                     benignPerGene[gene].append(v)
 
             # see if variant is vus? or just call it a vus b/c it's not a known benign or pathogenic var?
-            elif v in unknownVariants:
+            #elif v in unknownVariants:
+            else:
                 gene = getGeneForVariant(v, ensemblRelease)
                 if gene is None or gene not in genesOfInterest:
                     continue
                 else:
                     vusPerGene[gene].append(v)
-            else:
-                continue
 
     return benignPerGene, pathogenicPerGene, vusPerGene
 
@@ -384,6 +383,8 @@ def findVariantsInBRCA(fileName, classStrings, sigColName, hgVersion):
             benignVars.add(var)
         elif str(brcaDF.loc[i, sigColName]) in classStrings['Unknown']:
             vusVars.add(var)
+        else:
+            continue
 
     return len(brcaDF), pathVars, benignVars, vusVars
 
@@ -430,10 +431,10 @@ def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, unknown
                 elif var in pathogenicVariants:
                     variantsPerIndividual[individual]['pathogenic'].append(var)
                 # if not a known VUS, should we call it unknown here?
-                elif var in unknownVariants:
-                    variantsPerIndividual[individual]['vus'].append(var)
+                #elif var in unknownVariants:
                 else:
-                    continue
+                    variantsPerIndividual[individual]['vus'].append(var)
+
             except Exception as e:
                 print("exception for index " + str(i) + " of individual " + str(individual))
                 continue
