@@ -304,7 +304,7 @@ def findVariantsPerGene(variantsPerChromosome, benignVariants, pathogenicVariant
                 v = (chrom, pos, ref, alt)
             except Exception as e:
                 print('exception at column ' + str(i) + " with row: " + str(x.loc[i]))
-                break
+                continue
 
             # see if variant is pathogenic
             if v in pathogenicVariants:
@@ -433,11 +433,9 @@ def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, unknown
                 elif var in unknownVariants:
                     variantsPerIndividual[individual]['vus'].append(var)
                 else:
-                    print(vcfDF.loc[i])
                     continue
             except Exception as e:
                 print("exception for index " + str(i) + " of individual " + str(individual))
-                print("exception: " + str(e))
                 continue
 
     return variantsPerIndividual
