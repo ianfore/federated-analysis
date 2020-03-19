@@ -49,8 +49,8 @@ sigColName = 'Clinical_significance_ENIGMA'
 #DATA_DIR='/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data'
 DATA_DIR='/data'
 brcaFileName = DATA_DIR + '/brca-variants.tsv'
-#vcfFileName = DATA_DIR + '/13-BreastCancer.shuffle.vcf'
-vcfFileName = DATA_DIR + '/topmed-test.vcf'
+vcfFileName = DATA_DIR + '/BreastCancer.shuffle.vcf'
+#vcfFileName = DATA_DIR + '/topmed-test.vcf'
 #vcfFileName = DATA_DIR + '/bc100.vcf'
 variantsPerIndividualFileName = DATA_DIR + '/variantsPerIndividual.json'
 pathogenicCooccurrencesFileName = DATA_DIR + '/pathogenicCooccurrences.json'
@@ -475,11 +475,18 @@ def findIndividualsPerCooccurrence(variantsPerIndividual, benPerGene, pathsPerGe
     individualsPerVUSCooccurrence = defaultdict(list)
 
 
+
     for individual in variantsPerIndividual:
         vusVarList = list(variantsPerIndividual[individual]['vus'])
         pathVarList = list(variantsPerIndividual[individual]['pathogenic'])
         benignVarList = list(variantsPerIndividual[individual]['benign'])
-        for i in range(len(vusVarList)):
+
+        vusCrossPath = list(itertools.product(vusVarList, pathVarList))
+        for cross in vusCrossPath:
+            #if inheritedFromSameParent(cross[0][1], cross[1][1]):
+            if sameGeneSameParent(cross[0], cross[1], phased, ensemblRelease):
+                individualsPerPathogenicCooccurrence[(cross[0][0], cross[1][0])].append(individual)
+        '''for i in range(len(vusVarList)):
             vvar = vusVarList[i][0]
             #vus_gene = getGeneForVariant(vusVarList[i], ensemblRelease)
             vus_gene = getGeneForVariant(vvar, ensemblRelease)
@@ -494,8 +501,6 @@ def findIndividualsPerCooccurrence(variantsPerIndividual, benPerGene, pathsPerGe
                 elif pvar in pathsPerGene[path_gene] and vvar in vusPerGene[vus_gene]:
                     if not phased or (phased and inheritedFromSameParent(vusVarList[i][1], pathVar[1])):
                         individualsPerPathogenicCooccurrence[repr((vvar, pvar))].append(individual)
-                '''elif pathVar in pathsPerGene[path_gene] and vusVarList[i] in vusPerGene[vus_gene]:
-                                    individualsPerPathogenicCooccurrence[repr((vusVarList[i], pathVar))].append(individual)'''
             for benVar in benignVarList:
                 bvar = benVar[0]
                 #ben_gene = getGeneForVariant(benVar, ensemblRelease)
@@ -505,8 +510,6 @@ def findIndividualsPerCooccurrence(variantsPerIndividual, benPerGene, pathsPerGe
                 elif bvar in benPerGene[ben_gene] and vvar in vusPerGene[vus_gene]:
                     if not phased or (phased and inheritedFromSameParent(vusVarList[i][1], benVar[1])):
                         individualsPerBenignCooccurrence[repr((vvar, bvar))].append(individual)
-                '''elif benVar in benPerGene[ben_gene] and vusVarList[i] in vusPerGene[vus_gene]:
-                    individualsPerBenignCooccurrence[repr((vusVarList[i],benVar))].append(individual)'''
             for j in range(len(vusVarList)):
                 if i == j:
                     continue
@@ -516,9 +519,7 @@ def findIndividualsPerCooccurrence(variantsPerIndividual, benPerGene, pathsPerGe
                     continue
                 elif vusVarList[j][0] in vusPerGene[vus_gene_2] and vusVarList[i][0] in vusPerGene[vus_gene]:
                     if not phased or (phased and inheritedFromSameParent(vusVarList[i][1], vusVarList[j][1])):
-                        individualsPerVUSCooccurrence[repr((vusVarList[i][0], vusVarList[j][0]))].append(individual)
-                '''elif vusVarList[j] in vusPerGene[vus_gene_2] and vusVarList[i] in vusPerGene[vus_gene]:
-                    individualsPerVUSCooccurrence[repr((vusVarList[i], vusVarList[j]))].append(individual)'''
+                        individualsPerVUSCooccurrence[repr((vusVarList[i][0], vusVarList[j][0]))].append(individual)'''
 
     return individualsPerBenignCooccurrence, individualsPerPathogenicCooccurrence, individualsPerVUSCooccurrence
 
@@ -530,6 +531,11 @@ def inheritedFromSameParent(alleles_1, alleles_2):
     else:
         return alleles_2 == '1|1' and (alleles_1 == '0|1' or alleles_2 == '1|0')
 
+def sameGeneSameParent(var1, var2, phased, ensemblRelease):
+    if not phased:
+        return getGeneForVariant(var1[0], ensemblRelease) == getGeneForVariant(var2[0], ensemblRelease)
+    else:
+        return (getGeneForVariant(var1[0]) == getGeneForVariant(var2[0])) and ((var1[1] == var2[1]) or (var1[1] == '1|1' and '1' in var2[1]) or (var2[1] == '1|1' and '1' in var1[1]))
 
 if __name__ == "__main__":
     main()
