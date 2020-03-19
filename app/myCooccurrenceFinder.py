@@ -132,7 +132,7 @@ def combo(hgVersion, ensemblRelease, chromosomes, genes, phased):
     t = time.time()
     benignPerGene, pathogenicPerGene, vusPerGene = findVariantsPerGene(variantsPerChromosome,
                                                                        benignVariants, pathogenicVariants,
-                                                                       unknownVariants, ensemblRelease, genes)
+                                                                       ensemblRelease, genes)
     elapsed_time = time.time() - t
     print('elapsed time in variantsPerGene() ' + str(elapsed_time))
 
@@ -143,7 +143,7 @@ def combo(hgVersion, ensemblRelease, chromosomes, genes, phased):
     pool = ThreadPool(processes=nThreads)
     for i in range(nThreads):
         results.append(pool.apply_async(findVariantsPerIndividual, args=(vcfData, benignVariants, pathogenicVariants,
-                                                                 unknownVariants, myVCFskipCols, nThreads, i, phased)))
+                                                                 myVCFskipCols, nThreads, i, phased)))
     for result in results:
         result.wait()
         variantsPerIndividual.update(result.get())
@@ -285,8 +285,7 @@ def calculateLikelihood(pathCoocs, benCoocs, vusCoocs, p1):
 
     return dataPerVus
 
-def findVariantsPerGene(variantsPerChromosome, benignVariants, pathogenicVariants, unknownVariants, ensemblRelease,
-                        genesOfInterest):
+def findVariantsPerGene(variantsPerChromosome, benignVariants, pathogenicVariants, ensemblRelease, genesOfInterest):
     vusPerGene = defaultdict(list)
     pathogenicPerGene = defaultdict(list)
     benignPerGene = defaultdict(list)
@@ -325,7 +324,6 @@ def findVariantsPerGene(variantsPerChromosome, benignVariants, pathogenicVariant
                     benignPerGene[gene].append(v)
 
             # see if variant is vus? or just call it a vus b/c it's not a known benign or pathogenic var?
-            #elif v in unknownVariants:
             else:
                 gene = getGeneForVariant(v, ensemblRelease)
                 if gene is None or gene not in genesOfInterest:
@@ -391,7 +389,7 @@ def findVariantsInBRCA(fileName, classStrings, sigColName, hgVersion):
     return len(brcaDF), pathVars, benignVars, vusVars
 
 
-def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, unknownVariants, skipCols, nThreads, threadID, phased):
+def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, skipCols, nThreads, threadID, phased):
 
     # find mutations
     # CHROM  POS             ID      REF     ALT     QUAL    FILTER  INFO            FORMAT  0000057940      0000057950
@@ -443,7 +441,6 @@ def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, unknown
                 elif var in pathogenicVariants:
                     variantsPerIndividual[individual]['pathogenic'].append((var, alleles))
                 # if not a known VUS, should we call it unknown here?
-                #elif var in unknownVariants:
                 else:
                     variantsPerIndividual[individual]['vus'].append((var, alleles))
 
