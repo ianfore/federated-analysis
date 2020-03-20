@@ -49,7 +49,7 @@ sigColName = 'Clinical_significance_ENIGMA'
 #DATA_DIR='/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data'
 DATA_DIR='/data'
 brcaFileName = DATA_DIR + '/brca-variants.tsv'
-vcfFileName = DATA_DIR + '/BreastCancer.shuffle.vcf'
+vcfFileName = DATA_DIR + '/bc100.vcf'
 #vcfFileName = DATA_DIR + '/topmed-test.vcf'
 #vcfFileName = DATA_DIR + '/bc100.vcf'
 variantsPerIndividualFileName = DATA_DIR + '/variantsPerIndividual.json'
@@ -124,7 +124,7 @@ def combo(hgVersion, ensemblRelease, chromosomes, genes, phased):
     elapsed_time = time.time() - t
     print('elapsed time in readVCFFile() ' + str(elapsed_time))
 
-    '''print('slicing up VCF data by chromosome')
+    print('slicing up VCF data by chromosome')
     t = time.time()
     variantsPerChromosome = findVariantsPerChromosome(vcfData, chromosomes)
     elapsed_time = time.time() - t
@@ -136,7 +136,7 @@ def combo(hgVersion, ensemblRelease, chromosomes, genes, phased):
                                                                        benignVariants, pathogenicVariants,
                                                                        ensemblRelease, genes)
     elapsed_time = time.time() - t
-    print('elapsed time in variantsPerGene() ' + str(elapsed_time))'''
+    print('elapsed time in variantsPerGene() ' + str(elapsed_time))
 
     print('finding variants per individual')
     t = time.time()
@@ -178,7 +178,11 @@ def combo(hgVersion, ensemblRelease, chromosomes, genes, phased):
     # TODO make the program idempotent (save/read data frames and take cli arg to figure out)
     # p1 = P(VUS is benign and patient carries a pathogenic variant in trans)
     #p1 = 0.5 * len(benignVariants) / count
-    p1 = 0.1
+    numBenignWithPath = 0
+    for cooc in individualsPerPathogenicCooccurrence:
+        numBenignWithPath += len(individualsPerPathogenicCooccurrence[cooc])
+    total = len(variantsPerIndividual)
+    p1 =  0.5 * numBenignWithPath / total
 
     print('putting all the data together per vus')
     dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, individualsPerBenignCooccurrence,
@@ -205,27 +209,33 @@ def calculateLikelihood(pathCoocs, benCoocs, vusCoocs, p1):
     # "([10, 89624298, 'C', 'T'], [10, 89624243, 'A', 'G')]": ["0000057950"],
     # "([10, 89624298, 'C', 'T'], [10, 89624304, 'C', 'T')]": ["0000057950"]}
 
+    # new version: {(vus, path):[individuals]}
+    # {
+    # ((13, 32906579, 'A', 'C'), (13, 32913597, 'CAGAA', 'C')): ['0000061858', '000061999'],
+    # ((13, 32906579, 'A', 'C'), (13, 32907420, 'GA', 'G')): ['0999937461']
+    # }
+
     #vusIndividuals = defaultdict(set)
     vusIndividuals = dict()
     for cooc in vusCoocs.keys():
-        vus = repr(cooc[0])
-        #vus = cooc[0]
+        #vus = repr(cooc[0])
+        vus = cooc[0]
         if vus not in vusIndividuals:
             vusIndividuals[vus] = set()
         for i in vusCoocs[cooc]:
             vusIndividuals[vus].add(i)
 
     for cooc in pathCoocs:
-        vus = repr(cooc[0])
-        #vus = cooc[0]
+        #vus = repr(cooc[0])
+        vus = cooc[0]
         if vus not in vusIndividuals:
             vusIndividuals[vus] = set()
         for i in pathCoocs[cooc]:
             vusIndividuals[vus].add(i)
 
     for cooc in benCoocs:
-        vus = repr(cooc[0])
-        #vus = cooc[0]
+        #vus = repr(cooc[0])
+        vus = cooc[0]
         if vus not in vusIndividuals:
             vusIndividuals[vus] = set()
         for i in benCoocs[cooc]:
@@ -241,6 +251,8 @@ def calculateLikelihood(pathCoocs, benCoocs, vusCoocs, p1):
     # "((10, 89624304, 'C', 'T'), (10, 89624248, 'A', 'G'))": ["0000057940", "0000057960"],
     # "((10, 89624298, 'C', 'T'), (10, 89624245, 'GA', 'G'))": ["0000057950"]
     # }
+
+
 
     # now we calculate k (total number of times it co-occurred with a pathogenic variant)
     vusPathIndividuals = dict()
@@ -292,7 +304,7 @@ def calculateLikelihood(pathCoocs, benCoocs, vusCoocs, p1):
     dataPerVus = dict()
     for vus in likelihoodRatios:
         data = [p1, p2, nk[vus][0], nk[vus][1], likelihoodRatios[vus], pathVarsPerVus[vus]]
-        dataPerVus[vus] = data
+        dataPerVus[str(vus)] = data
 
     return dataPerVus
 
@@ -500,7 +512,7 @@ def findIndividualsPerCooccurrence(variantsPerIndividual, ensemblRelease, phased
             if sameGeneSameParent(cross[0], cross[1], phased, ensemblRelease):
                 individualsPerPathogenicCooccurrence[(tuple(cross[0][0]), tuple(cross[1][0]))].append(individual)
 
-        '''vusCrossBen = list(itertools.product(vusVarList, benignVarList))
+        vusCrossBen = list(itertools.product(vusVarList, benignVarList))
         for cross in vusCrossBen:
             # if inheritedFromSameParent(cross[0][1], cross[1][1]):
             if sameGeneSameParent(cross[0], cross[1], phased, ensemblRelease):
@@ -510,7 +522,7 @@ def findIndividualsPerCooccurrence(variantsPerIndividual, ensemblRelease, phased
         for cross in vusCrossVus:
             # if inheritedFromSameParent(cross[0][1], cross[1][1]):
             if sameGeneSameParent(cross[0], cross[1], phased, ensemblRelease):
-                individualsPerVUSCooccurrence[(tuple(cross[0][0]), tuple(cross[1][0]))].append(individual)'''
+                individualsPerVUSCooccurrence[(tuple(cross[0][0]), tuple(cross[1][0]))].append(individual)
 
         '''for i in range(len(vusVarList)):
             vvar = vusVarList[i][0]
