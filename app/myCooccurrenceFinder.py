@@ -75,6 +75,8 @@ class NpEncoder(json.JSONEncoder):
             return obj.tolist()
         elif isinstance(obj, set):
             return list(obj)
+        elif isinstance(obj, tuple):
+            return list(obj)
         else:
             return super(NpEncoder, self).default(obj)
 
@@ -109,7 +111,7 @@ def printUsage(args):
 
 def combo(hgVersion, ensemblRelease, chromosomes, genes, phased):
 
-    '''print('reading BRCA data from ' + brcaFileName)
+    print('reading BRCA data from ' + brcaFileName)
     t = time.time()
     count, pathogenicVariants, benignVariants, unknownVariants = \
         findVariantsInBRCA(brcaFileName, classStrings, sigColName, hgVersion)
@@ -122,7 +124,7 @@ def combo(hgVersion, ensemblRelease, chromosomes, genes, phased):
     elapsed_time = time.time() - t
     print('elapsed time in readVCFFile() ' + str(elapsed_time))
 
-    print('slicing up VCF data by chromosome')
+    '''print('slicing up VCF data by chromosome')
     t = time.time()
     variantsPerChromosome = findVariantsPerChromosome(vcfData, chromosomes)
     elapsed_time = time.time() - t
@@ -134,7 +136,7 @@ def combo(hgVersion, ensemblRelease, chromosomes, genes, phased):
                                                                        benignVariants, pathogenicVariants,
                                                                        ensemblRelease, genes)
     elapsed_time = time.time() - t
-    print('elapsed time in variantsPerGene() ' + str(elapsed_time))
+    print('elapsed time in variantsPerGene() ' + str(elapsed_time))'''
 
     print('finding variants per individual')
     t = time.time()
@@ -153,12 +155,12 @@ def combo(hgVersion, ensemblRelease, chromosomes, genes, phased):
     print('saving variantsPerIndividual to ' + variantsPerIndividualFileName)
     with open(variantsPerIndividualFileName, 'w') as f:
         json.dump(variantsPerIndividual, f, cls=NpEncoder)
-    f.close()'''
+    f.close()
 
-    print('reading in variantsPerIndividual from ' + variantsPerIndividualFileName)
+    '''print('reading in variantsPerIndividual from ' + variantsPerIndividualFileName)
     with open(variantsPerIndividualFileName) as f:
         variantsPerIndividual = json.load(f, cls=NpDecoder)
-    f.close()
+    f.close()'''
 
     # TODO make this multi-threaded (cpu is pegged at 99% for this method)
     # TODO or figure out vectorization!
@@ -206,22 +208,24 @@ def calculateLikelihood(pathCoocs, benCoocs, vusCoocs, p1):
     #vusIndividuals = defaultdict(set)
     vusIndividuals = dict()
     for cooc in vusCoocs.keys():
-        vus = repr(eval(cooc)[0])
+        vus = repr(cooc[0])
+        #vus = cooc[0]
         if vus not in vusIndividuals:
             vusIndividuals[vus] = set()
         for i in vusCoocs[cooc]:
             vusIndividuals[vus].add(i)
 
     for cooc in pathCoocs:
-        #vus = repr(eval(cooc)[0])
-        vus = cooc[0]
+        vus = repr(cooc[0])
+        #vus = cooc[0]
         if vus not in vusIndividuals:
             vusIndividuals[vus] = set()
         for i in pathCoocs[cooc]:
             vusIndividuals[vus].add(i)
 
     for cooc in benCoocs:
-        vus = repr(eval(cooc)[0])
+        vus = repr(cooc[0])
+        #vus = cooc[0]
         if vus not in vusIndividuals:
             vusIndividuals[vus] = set()
         for i in benCoocs[cooc]:
@@ -496,7 +500,7 @@ def findIndividualsPerCooccurrence(variantsPerIndividual, ensemblRelease, phased
             if sameGeneSameParent(cross[0], cross[1], phased, ensemblRelease):
                 individualsPerPathogenicCooccurrence[(tuple(cross[0][0]), tuple(cross[1][0]))].append(individual)
 
-        vusCrossBen = list(itertools.product(vusVarList, benignVarList))
+        '''vusCrossBen = list(itertools.product(vusVarList, benignVarList))
         for cross in vusCrossBen:
             # if inheritedFromSameParent(cross[0][1], cross[1][1]):
             if sameGeneSameParent(cross[0], cross[1], phased, ensemblRelease):
@@ -506,7 +510,7 @@ def findIndividualsPerCooccurrence(variantsPerIndividual, ensemblRelease, phased
         for cross in vusCrossVus:
             # if inheritedFromSameParent(cross[0][1], cross[1][1]):
             if sameGeneSameParent(cross[0], cross[1], phased, ensemblRelease):
-                individualsPerVUSCooccurrence[(tuple(cross[0][0]), tuple(cross[1][0]))].append(individual)
+                individualsPerVUSCooccurrence[(tuple(cross[0][0]), tuple(cross[1][0]))].append(individual)'''
 
         '''for i in range(len(vusVarList)):
             vvar = vusVarList[i][0]
