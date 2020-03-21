@@ -4,6 +4,8 @@ HIPAA requires that medical records be kept private, yet scientists need this da
 
 This software repository contains scripts that achieve the above goal.  
 
+## Cooccurrence analysis
+
 To run a co-occurrence analysis, perform the following steps:
 1. Change directory to the top-level directory of the repository.
 
@@ -26,6 +28,7 @@ where:
 
 3. This will generate a report in federated-analysis/data called vusFinalData.json which contains a list of VUS, each in the following format:
 
+```json
 "(13, 32914461, 'A', 'C')": [ 	<-- VUS
         0.0005026755310523755,  <-- P(VUS is benign with a pathogenic variant in trans) 
         0.0001,			<-- P(VUS is pathogenic with another pathogenic variant in trans)
@@ -47,9 +50,10 @@ where:
             ]
         ]
     ],
+```json
 
 
-
+## Basic stats and validity checking
 
 Additionally, this software allows users to run a Docker container which has the necessary code to perform basic statistical analysis and validity checking.  There's a configuration file that the cooperating owner of the data must fill out in conjunction with the scientist to define the fields of interest in the data set.  
 There are three Python modules in this repository: one which performs default analysis (dataAnalyzer.py), one that performs custom analysis (customDataAnalyzer.py), and one that creates a table (supplementaryTable4.py).  
