@@ -18,6 +18,15 @@ CONF_PATH=${FDA_PATH}/config
 DATA_PATH=${FDA_PATH}/data
 DOCKER_IMAGE_NAME=brcachallenge/federated-analysis
 
+
+if [ ! -d ${DATA_PATH}/pyensembl-cache ]
+then
+        cd $DATA_PATH
+        cat pyens.?? > pyensembl.zip
+        unzip pyensembl.zip
+        cd -
+fi
+
 if [ $(uname) == "Darwin" ]
 then
 	PREV_PERMS=$(stat -f "%OLp" ${DATA_PATH})
