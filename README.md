@@ -50,7 +50,7 @@ where:
             ]
         ]
     ],
-```json
+```
 
 
 ## Basic stats and validity checking
