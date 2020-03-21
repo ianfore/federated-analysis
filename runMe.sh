@@ -3,7 +3,7 @@
 if [ $# -ne 5 ] 
 then
 	echo "usage: $0 <vcf-file> <hg-version> <ensembl-version> <chromosomes-of-interest> <phased-boolean>"
-	echo "example: $0 BreastCancer.shuffle.vcf --h 37 --e 75 --c [13,17] --p False"
+	echo "example: $0 BreastCancer.shuffle.vcf 37 75 [13,17] False"
 	exit 1
 fi
 
