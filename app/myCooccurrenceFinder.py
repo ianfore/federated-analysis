@@ -124,20 +124,6 @@ def combo(hgVersion, ensemblRelease, chromosomes, genes, phased):
     elapsed_time = time.time() - t
     print('elapsed time in readVCFFile() ' + str(elapsed_time))
 
-    print('slicing up VCF data by chromosome')
-    t = time.time()
-    variantsPerChromosome = findVariantsPerChromosome(vcfData, chromosomes)
-    elapsed_time = time.time() - t
-    print('elapsed time in variantsPerChromosome() ' + str(elapsed_time))
-
-    print('slicing up VCF data by gene')
-    t = time.time()
-    benignPerGene, pathogenicPerGene, vusPerGene = findVariantsPerGene(variantsPerChromosome,
-                                                                       benignVariants, pathogenicVariants,
-                                                                       ensemblRelease, genes)
-    elapsed_time = time.time() - t
-    print('elapsed time in variantsPerGene() ' + str(elapsed_time))
-
     print('finding variants per individual')
     t = time.time()
     results = list()
@@ -166,8 +152,7 @@ def combo(hgVersion, ensemblRelease, chromosomes, genes, phased):
     # TODO or figure out vectorization!
     print('finding individuals per cooc')
     t = time.time()
-    #individualsPerBenignCooccurrence, individualsPerPathogenicCooccurrence, individualsPerVUSCooccurrence = \
-    #    findIndividualsPerCooccurrence(variantsPerIndividual, benignPerGene, pathogenicPerGene, vusPerGene, ensemblRelease, phased)
+
     individualsPerPathogenicCooccurrence, n, k = findIndividualsPerCooccurrence(variantsPerIndividual, ensemblRelease, phased)
     elapsed_time = time.time() - t
     print('elapsed time in findIndividualsPerCooccurrence() ' + str(elapsed_time))
@@ -528,7 +513,7 @@ def sameGeneSameParent(var1, var2, phased, ensemblRelease):
     if not phased:
         return getGeneForVariant(var1[0], ensemblRelease) == getGeneForVariant(var2[0], ensemblRelease)
     else:
-        return (getGeneForVariant(var1[0]) == getGeneForVariant(var2[0])) and ((var1[1] == var2[1]) or (var1[1] == '1|1' and '1' in var2[1]) or (var2[1] == '1|1' and '1' in var1[1]))
+        return (getGeneForVariant(var1[0], ensemblRelease) == getGeneForVariant(var2[0], ensemblRelease)) and ((var1[1] == var2[1]) or (var1[1] == '1|1' and '1' in var2[1]) or (var2[1] == '1|1' and '1' in var1[1]))
 
 if __name__ == "__main__":
     main()
