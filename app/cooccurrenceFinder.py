@@ -9,8 +9,13 @@ from collections import defaultdict
 import pyensembl
 import numpy as np
 import os
-import ast
 from pandas.api.types import is_numeric_dtype
+import argparse
+import logging
+import ast
+logger = logging.getLogger()
+
+defaultLogLevel = "WARNING"
 
 
 def countColumnsAndMetaRows(fileName):
@@ -44,14 +49,12 @@ nThreads=1
 classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely benign' ],
                  'Unknown': [ 'Uncertain significance', '-']}
 sigColName = 'Clinical_significance_ENIGMA'
-DATA_DIR='/data'
-brcaFileName = DATA_DIR + '/brca-variants.tsv'
-vcfFileName = DATA_DIR + '/BreastCancer.shuffle.vcf'
-variantsPerIndividualFileName = DATA_DIR + '/variantsPerIndividual.json'
-vusFinalDataFileName = DATA_DIR + '/vusFinalData.json'
-os.environ['PYENSEMBL_CACHE_DIR'] = DATA_DIR + '/pyensembl-cache'
+DATA_DIR='/data/'
+brcaFileName = DATA_DIR + 'brca-variants.tsv'
+variantsPerIndividualFileName = DATA_DIR + 'variantsPerIndividual.json'
+vusFinalDataFileName = DATA_DIR + 'vusFinalData.json'
+os.environ['PYENSEMBL_CACHE_DIR'] = DATA_DIR + 'pyensembl-cache'
 
-myVCFMetadataLines, myVCFskipCols = countColumnsAndMetaRows(vcfFileName)
 
 
 # p2 = P(VUS is pathogenic and patient carries a pathogenic variant in trans) (arbitrarily set by tavtigian et al)
@@ -80,28 +83,55 @@ class NpDecoder(json.JSONDecoder):
             return super(NpDecoder, self).default(obj)
 
 def main():
-    if len(sys.argv) != 6:
-        printUsage(sys.argv)
-        sys.exit(1)
-    try:
-        GENOME_VERSION=str(sys.argv[1])
-        ENSEMBL_RELEASE=int(sys.argv[2])
-        CHROMOSOMES = list(ast.literal_eval(sys.argv[3]))
-        GENES = list(ast.literal_eval(sys.argv[4]))
-        PHASED = bool(ast.literal_eval(sys.argv[5]))
-        for i in  range(len(CHROMOSOMES)):
-            CHROMOSOMES[i] = int(CHROMOSOMES[i])
-    except Exception as e:
-        print('exception parsing arguments: ' + str(e))
-        sys.exit(2)
+    # main just parses the CLI and then calls the run() method with appropriate args
 
-    run(GENOME_VERSION, ENSEMBL_RELEASE, CHROMOSOMES, GENES, PHASED)
+    parser = argparse.ArgumentParser(usage="cooccurrenceFinder args [options]")
+
+    parser.add_argument("vcf_filename", type=str,
+                        help="name of file containing VCF data")
+
+    parser.add_argument("--h", dest="h", help="Human genome version (37 or 38). Default=37", default=37)
+
+    parser.add_argument("--e", dest="e", help="Ensembl version - 75 (for 37) or 99 (for 38). Default=75", default=75)
+
+    parser.add_argument("--c", dest="c", help="List of chromosomes of interest. Default=[13,17]", default=[13,17])
+
+    parser.add_argument("--p", dest="p", help="Phased (boolean). Default=False", default=False)
+
+    parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" %
+                                                       defaultLogLevel, default=defaultLogLevel)
+
+    options = parser.parse_args()
+
+    # Parse the log level
+    numeric_level = getattr(logging, options.logLevel.upper(), None)
+    if not isinstance(numeric_level, int):
+        raise ValueError('Invalid log level: %s' % options.logLevel)
+
+    # Setup a logger
+    logger.setLevel(numeric_level)
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(numeric_level)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+    logger.debug("Established logger")
+
+    run(int(options.h), int(options.e), list(ast.literal_eval(options.c)), bool(ast.literal_eval(options.p)), DATA_DIR + options.vcf_filename)
 
 
 def printUsage(args):
     sys.stderr.write('cooccurrenceFinder.py <genome-version> <ensembl-release> "[chr list]" "[gene list] True|False')
 
-def run(hgVersion, ensemblRelease, chromosomes, genes, phased):
+def run(hgVersion, ensemblRelease, chromosomes, phased, vcfFileName):
+
+    print('hgversion = ' + str(hgVersion))
+    print('ensembl = ' + str(ensemblRelease))
+    print('chroms = ' + str(chromosomes))
+    print('phased = ' + str(phased))
+
+
+    myVCFMetadataLines, myVCFskipCols = countColumnsAndMetaRows(vcfFileName)
 
     print('reading BRCA data from ' + brcaFileName)
     t = time.time()
@@ -245,7 +275,7 @@ def findVariantsInBRCA(fileName, classStrings, sigColName, hgVersion):
     benignVars = set()
     vusVars = set()
     for i in range(len(brcaDF)):
-        coord = brcaDF.loc[i, 'Genomic_Coordinate_hg' + hgVersion].split(':')
+        coord = brcaDF.loc[i, 'Genomic_Coordinate_hg' + str(hgVersion)].split(':')
         chrom = int(coord[0].split('chr')[1])
         pos = int(coord[1].split('g.')[1])
         ref, alt = coord[2].split('>')
