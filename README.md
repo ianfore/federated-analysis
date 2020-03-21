@@ -29,20 +29,20 @@ where:
 3. This will generate a report in federated-analysis/data called vusFinalData.json which contains a list of VUS, each in the following format:
 
 ```json
-"(13, 32914461, 'A', 'C')": [ 	<-- VUS
-        0.0005026755310523755,  <-- P(VUS is benign with a pathogenic variant in trans) 
-        0.0001,			<-- P(VUS is pathogenic with another pathogenic variant in trans)
-        82,			<-- n = number of times this VUS occurred in cohort
-        2,			<-- k = number of times this VUS co-occurred with pathogenic variants
-        0.04087136171331834,	<-- likelihood this variant is pathogenic = (p2^k)*(1-p2)^(n-k) / (p1^k)*(1-p1)^(n-k)
+"(13, 32914461, 'A', 'C')": [ 	//<-- VUS
+        0.0005026755310523755,  //<-- P(VUS is benign with a pathogenic variant in trans) 
+        0.0001,			//<-- P(VUS is pathogenic with another pathogenic variant in trans)
+        82,			//<-- n = number of times this VUS occurred in cohort
+        2,			//<-- k = number of times this VUS co-occurred with pathogenic variants
+        0.04087136171331834,	//<-- likelihood this variant is pathogenic = (p2^k)*(1-p2)^(n-k) / (p1^k)*(1-p1)^(n-k)
         [
-            [			<-- co-occurring pathogenic variant #1
+            [			//<-- co-occurring pathogenic variant #1
                 13,
                 32914936,
                 "TATTAA",
                 "T"
             ],
-            [			<-- co-occurring pathogenic variant #2
+            [			//<-- co-occurring pathogenic variant #2
                 13,
                 32920978,
                 "C",
