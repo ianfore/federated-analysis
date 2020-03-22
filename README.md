@@ -86,7 +86,7 @@ vi config/conf.json
 
 3. Run the runMe.sh script as follows:
 
-./runMe.sh
+./runMe.sh analyze
 
 
 To run the unit tests, perform the following steps:
