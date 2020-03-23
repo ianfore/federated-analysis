@@ -50,8 +50,9 @@ classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely ben
 sigColName = 'Clinical_significance_ENIGMA'
 DATA_DIR='/data/'
 brcaFileName = DATA_DIR + 'brca-variants.tsv'
-variantsPerIndividualFileName = DATA_DIR + 'variantsPerIndividual.json'
-vusFinalDataFileName = DATA_DIR + 'vusFinalData.json'
+#variantsPerIndividualFileName = DATA_DIR + 'variantsPerIndividual.json'
+#vusFinalDataFileName = DATA_DIR + 'vusFinalData.json'
+
 os.environ['PYENSEMBL_CACHE_DIR'] = DATA_DIR + 'pyensembl-cache'
 
 
@@ -89,6 +90,9 @@ def main():
     parser.add_argument("vcf_filename", type=str,
                         help="name of file containing VCF data")
 
+    parser.add_argument("output_filename", type=str,
+                        help="name of JSON-formatted output file")
+
     parser.add_argument("--h", dest="h", help="Human genome version (37 or 38). Default=37", default=37)
 
     parser.add_argument("--e", dest="e", help="Ensembl version - 75 (for 37) or 99 (for 38). Default=75", default=75)
@@ -116,13 +120,14 @@ def main():
     logger.addHandler(ch)
     logger.debug("Established logger")
 
-    run(int(options.h), int(options.e), list(ast.literal_eval(options.c)), bool(ast.literal_eval(options.p)), DATA_DIR + options.vcf_filename)
+    run(int(options.h), int(options.e), list(ast.literal_eval(options.c)), bool(ast.literal_eval(options.p)), DATA_DIR + options.vcf_filename,
+        DATA_DIR + options.output_filename)
 
 
 def printUsage(args):
     sys.stderr.write('cooccurrenceFinder.py <genome-version> <ensembl-release> "[chr list]" "[gene list] True|False')
 
-def run(hgVersion, ensemblRelease, chromosomes, phased, vcfFileName):
+def run(hgVersion, ensemblRelease, chromosomes, phased, vcfFileName, outputFileName):
 
     print('hgversion = ' + str(hgVersion))
     print('ensembl = ' + str(ensemblRelease))
@@ -173,7 +178,6 @@ def run(hgVersion, ensemblRelease, chromosomes, phased, vcfFileName):
     # TODO or figure out vectorization!
     print('finding individuals per cooc')
     t = time.time()
-
     individualsPerPathogenicCooccurrence, n, k = findIndividualsPerCooccurrence(variantsPerIndividual, ensemblRelease, phased)
     elapsed_time = time.time() - t
     print('elapsed time in findIndividualsPerCooccurrence() ' + str(elapsed_time))
@@ -190,8 +194,8 @@ def run(hgVersion, ensemblRelease, chromosomes, phased, vcfFileName):
     print('putting all the data together per vus')
     dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, p1, n, k)
 
-    print('saving final VUS data  to ' + vusFinalDataFileName)
-    with open(vusFinalDataFileName, 'w') as f:
+    print('saving final VUS data  to ' + outputFileName)
+    with open(outputFileName, 'w') as f:
         json.dump(dataPerVus, f, cls=NpEncoder)
     f.close()
 
