@@ -5,24 +5,53 @@ HIPAA requires that medical records be kept private, yet scientists need this da
 This software repository contains scripts that achieve the above goal.  
 
 ## Cooccurrence analysis
+Run the following steps to find variants of uncertain significance (VUS) in a VCF file that co-occur with known pathogenic variants in the BRCA Exchange database.
 
-To run a co-occurrence analysis, perform the following steps:
+###Prepare for co-occurrence 
+To prepare for a co-occurrence analysis, perform the following steps:
+
+1. Clone this github repository to your local system where the VCF file resides.
+
+```console
+$ git clone git@github.com:BRCAChallenge/federated-analysis.git
+```
+
+2. Put a copy of the VCF file in the federated-analysis/data directory.
+
+```console
+$ cp <your-vcf-file> federated-analysis/data
+```
+
+3. Make sure the VCF file has read permissions for the world.
+
+```console
+$ chmod a+r federated-analysis/data/*.vcf
+```
+ 
+
+### Run co-occurrence analysis
+To run the co-occurrence analysis, perform the following steps:
+
 1. Change directory to the top-level directory of the repository.
 
-cd federated-analysis/
+```console
+$ cd federated-analysis/
+```
 
 2. Run the runMe.sh script as follows:
 
-./runMe.sh BreastCancer.shuffle.vcf 37 75 [13,17] False
+```console
+$ nohup ./runMe.sh BreastCancer.shuffle.vcf 37 75 [13,17] False > stdout 2> stderr &
+```
 
 where:
 * BreastCancer.shuffle.vcf is the name of the VCF file in the federated/analysis/data directory
 
-* 37 is the version of the human genome for the coordinates in the VCF file
+* 37 is the version of the human genome for the coordinates in the VCF file (38 is also supported)
 
-* 75 is the build of ensembl for retrieving gene names for the coordinates
+* 75 is the build of ensembl for retrieving gene names for the coordinates (use 99 for hg38)
 
-* [13,17] is a list of chromosomes which contain the SNPs of interest
+* [13,17] is a list of chromosomes which contain the SNPs of interest (no spaces in string)
 
 * False is a boolean value for whether the VCF data is phased (True) or not (False)
 
@@ -78,23 +107,32 @@ In order to use this solution, perform the following steps.
 
 1. Change directory to the top-level directory of the repository.
 
+```console
 cd federated-analysis/
+```
 
 2. Optionally, edit the config/conf.json file to reflect the metadata regarding the data file (file name, header line, field delimiter) as well as the correct fields of interest.
 
+```console
 vi config/conf.json
+```
 
 3. Run the runMe.sh script as follows:
 
+```console
 ./runMe.sh analyze
-
+```
 
 To run the unit tests, perform the following steps:
 
 1. change directory to the top-level directory of the repository
 
+```console
 cd federated-analysis/
+```
 
 2. run the following command:
 
+```console
 python -m unittest tests.test_dataAnalyzer
+```
