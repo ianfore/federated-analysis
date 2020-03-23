@@ -41,7 +41,7 @@ $ cd federated-analysis/
 2. Run the runMe.sh script as follows:
 
 ```console
-$ nohup ./runMe.sh BreastCancer.shuffle.vcf 37 75 [13,17] False > stdout 2> stderr &
+$ nohup ./runMe.sh BreastCancer.shuffle.vcf 37 75 False > stdout 2> stderr &
 ```
 
 where:
@@ -50,8 +50,6 @@ where:
 * 37 is the version of the human genome for the coordinates in the VCF file (38 is also supported)
 
 * 75 is the build of ensembl for retrieving gene names for the coordinates (use 99 for hg38)
-
-* [13,17] is a list of chromosomes which contain the SNPs of interest (no spaces in string)
 
 * False is a boolean value for whether the VCF data is phased (True) or not (False)
 
