@@ -159,10 +159,10 @@ def run(hgVersion, ensemblRelease, chromosomes, phased, vcfFileName):
     elapsed_time = time.time() - t
     print('elapsed time in findVariantsPerIndividual() ' + str(elapsed_time))
 
-    print('saving variantsPerIndividual to ' + variantsPerIndividualFileName)
+    '''print('saving variantsPerIndividual to ' + variantsPerIndividualFileName)
     with open(variantsPerIndividualFileName, 'w') as f:
         json.dump(variantsPerIndividual, f, cls=NpEncoder)
-    f.close()
+    f.close()'''
 
     '''print('reading in variantsPerIndividual from ' + variantsPerIndividualFileName)
     with open(variantsPerIndividualFileName) as f:
