@@ -22,8 +22,8 @@ then
 elif [ $# -eq 6 ]
 then
 
-	OUTPUT_FILE=$1
-	VCF_FILE=$2
+	VCF_FILE=$1
+	OUTPUT_FILE=$2
 	HG_VERSION=$3
 	ENSEMBL_RELEASE=$4
 	CHR_LIST=$5
