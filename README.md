@@ -7,7 +7,7 @@ This software repository contains scripts that achieve the above goal.
 ## Cooccurrence analysis
 Run the following steps to find variants of uncertain significance (VUS) in a VCF file that co-occur with known pathogenic variants in the BRCA Exchange database.
 
-###Prepare for co-occurrence 
+### Prepare for co-occurrence 
 To prepare for a co-occurrence analysis, perform the following steps:
 
 1. Clone this github repository to your local system where the VCF file resides.
