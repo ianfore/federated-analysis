@@ -13,7 +13,7 @@ To prepare for a co-occurrence analysis, perform the following steps:
 1. Clone this github repository to your local system where the VCF file resides.
 
 ```console
-$ git clone git@github.com:BRCAChallenge/federated-analysis.git
+$ git clone https://github.com/BRCAChallenge/federated-analysis 
 ```
 
 2. Put a copy of the VCF file in the federated-analysis/data directory.
@@ -41,11 +41,13 @@ $ cd federated-analysis/
 2. Run the runMe.sh script as follows:
 
 ```console
-$ nohup ./runMe.sh BreastCancer.shuffle.vcf 37 75 False > stdout 2> stderr &
+$ nohup ./runMe.sh BreastCancer.shuffle.vcf myout.json 37 75 False > stdout 2> stderr &
 ```
 
 where:
 * BreastCancer.shuffle.vcf is the name of the VCF file in the federated/analysis/data directory
+
+* myout.json is the name of the JSON output file in the federated/analysis/data directory
 
 * 37 is the version of the human genome for the coordinates in the VCF file (38 is also supported)
 
@@ -53,7 +55,7 @@ where:
 
 * False is a boolean value for whether the VCF data is phased (True) or not (False)
 
-3. This will generate a report in federated-analysis/data called vusFinalData.json which contains a list of VUS, each in the following format:
+3. This will generate a report in federated-analysis/data called myout.json which contains a list of VUS, each in the following format:
 
 ```json
 "(13, 32914461, 'A', 'C')": [ 	<-- VUS
