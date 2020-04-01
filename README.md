@@ -41,7 +41,7 @@ $ cd federated-analysis/
 2. Run the runMe.sh script as follows:
 
 ```console
-$ nohup ./runMe.sh BreastCancer.shuffle.vcf myout.json 37 75 False > stdout 2> stderr &
+$ ./runMe.sh BreastCancer.shuffle.vcf myout.json 37 75 False 
 ```
 
 where:
