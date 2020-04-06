@@ -396,7 +396,12 @@ def sameGeneSameParent(var1, var2, phased, ensemblRelease):
     if not phased:
         return getGeneForVariant(var1[0], ensemblRelease) == getGeneForVariant(var2[0], ensemblRelease)
     else:
-        return (getGeneForVariant(var1[0], ensemblRelease) == getGeneForVariant(var2[0], ensemblRelease)) and ((var1[1] == var2[1]) or (var1[1] == '1|1' and '1' in var2[1]) or (var2[1] == '1|1' and '1' in var1[1]))
+        return (getGeneForVariant(var1[0], ensemblRelease) == getGeneForVariant(var2[0], ensemblRelease)) and \
+               ((var1[1] == '1|1' and var2[1] == '1|0') or \
+               (var1[1] == '1|1' and var2[1] == '0|1') or \
+               (var1[1] == '1|0' and var2[1] == '0|1') or \
+               (var1[1] == '0|1' and var2[1] == '1|0'))
+               #((var1[1] == var2[1]) or (var1[1] == '1|1' and '1' in var2[1]) or (var2[1] == '1|1' and '1' in var1[1]))
 
 if __name__ == "__main__":
     main()
