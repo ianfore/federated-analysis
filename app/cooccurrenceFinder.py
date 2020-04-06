@@ -392,16 +392,15 @@ def findIndividualsPerCooccurrence(variantsPerIndividual, ensemblRelease, phased
 
     return individualsPerPathogenicCooccurrence, n, k
 
-def sameGeneSameParent(var1, var2, phased, ensemblRelease):
+def sameGeneSameParent(vus, path, phased, ensemblRelease):
     if not phased:
-        return getGeneForVariant(var1[0], ensemblRelease) == getGeneForVariant(var2[0], ensemblRelease)
+        return getGeneForVariant(vus[0], ensemblRelease) == getGeneForVariant(path[0], ensemblRelease)
     else:
-        return (getGeneForVariant(var1[0], ensemblRelease) == getGeneForVariant(var2[0], ensemblRelease)) and \
-               ((var1[1] == '1|1' and var2[1] == '1|0') or \
-               (var1[1] == '1|1' and var2[1] == '0|1') or \
-               (var1[1] == '1|0' and var2[1] == '0|1') or \
-               (var1[1] == '0|1' and var2[1] == '1|0'))
-               #((var1[1] == var2[1]) or (var1[1] == '1|1' and '1' in var2[1]) or (var2[1] == '1|1' and '1' in var1[1]))
+        # looking for vus in cis with path
+        # if vus is 1|1, then it's either in cis or both in cis and in trans with path
+        # else if vus and path are on opposite chromosomes
+        return (getGeneForVariant(vus[0], ensemblRelease) == getGeneForVariant(path[0], ensemblRelease)) and \
+               ((vus[1] == '1|1') or ((vus[1] == '1|0' and path[1] == '0|1') or (vus[1] == '0|1' and path[1] == '1|0')))
 
 if __name__ == "__main__":
     main()
