@@ -57,8 +57,10 @@ os.environ['PYENSEMBL_CACHE_DIR'] = DATA_DIR + 'pyensembl-cache'
 
 
 
-# p2 = P(VUS is pathogenic and patient carries a pathogenic variant in trans) (arbitrarily set by tavtigian et al)
-p2 = 0.0001
+# p2 = P(VUS is pathogenic and patient carries a pathogenic variant in trans) (arbitrarily set by goldgar et al)
+# Integrated Evaluation of DNA Sequence Variants of Unknown Clinical Significance: Application to BRCA1 and BRCA2
+brca1_p2 = 0.0001
+brca2_p2 = 0.001
 
 class NpEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -220,6 +222,15 @@ def calculateLikelihood(pathCoocs, p1, n, k):
     # now calculate log likelihood ratios!
     likelihoodRatios = dict()
     for vus in n:
+        # decide whether to use brca1_p2 or brca2_p2
+        if vus[0][0] == 13:
+            p2 = brca1_p2
+        elif vus[0][0] == 17:
+            p2 = brca2_p2
+        else:
+            print("unknown chromosome: " + str(vus[0][0]))
+            continue
+
         n_ = n[vus]
         k_ = k[vus]
         denom = ((p1 ** k_) * (1 - p1) ** (n_ - k_))
