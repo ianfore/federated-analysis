@@ -50,7 +50,7 @@ classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely ben
 sigColName = 'Clinical_significance_ENIGMA'
 DATA_DIR='/data/'
 brcaFileName = DATA_DIR + 'brca-variants.tsv'
-#variantsPerIndividualFileName = DATA_DIR + 'variantsPerIndividual.json'
+variantsPerIndividualFileName = DATA_DIR + 'variantsPerIndividual.json'
 #vusFinalDataFileName = DATA_DIR + 'vusFinalData.json'
 
 os.environ['PYENSEMBL_CACHE_DIR'] = DATA_DIR + 'pyensembl-cache'
@@ -103,6 +103,8 @@ def main():
 
     parser.add_argument("--p", dest="p", help="Phased (boolean). Default=False", default=False)
 
+    parser.add_argument("--s", dest="s", help="Save variants per individual to file. Default=False", default=False)
+
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" %
                                                        defaultLogLevel, default=defaultLogLevel)
 
@@ -123,13 +125,13 @@ def main():
     logger.debug("Established logger")
 
     run(int(options.h), int(options.e), list(ast.literal_eval(options.c)), bool(ast.literal_eval(options.p)), DATA_DIR + options.vcf_filename,
-        DATA_DIR + options.output_filename)
+        DATA_DIR + options.output_filename, bool(ast.literal_eval(options.s)))
 
 
 def printUsage(args):
     sys.stderr.write('cooccurrenceFinder.py <genome-version> <ensembl-release> "[chr list]" "[gene list] True|False')
 
-def run(hgVersion, ensemblRelease, chromosomes, phased, vcfFileName, outputFileName):
+def run(hgVersion, ensemblRelease, chromosomes, phased, vcfFileName, outputFileName, saveVarsPerIndivid):
 
     print('hgversion = ' + str(hgVersion))
     print('ensembl = ' + str(ensemblRelease))
@@ -166,10 +168,11 @@ def run(hgVersion, ensemblRelease, chromosomes, phased, vcfFileName, outputFileN
     elapsed_time = time.time() - t
     print('elapsed time in findVariantsPerIndividual() ' + str(elapsed_time))
 
-    '''print('saving variantsPerIndividual to ' + variantsPerIndividualFileName)
-    with open(variantsPerIndividualFileName, 'w') as f:
-        json.dump(variantsPerIndividual, f, cls=NpEncoder)
-    f.close()'''
+    if saveVarsPerIndivid:
+        print('saving variantsPerIndividual to ' + variantsPerIndividualFileName)
+        with open(variantsPerIndividualFileName, 'w') as f:
+            json.dump(variantsPerIndividual, f, cls=NpEncoder)
+        f.close()
 
     '''print('reading in variantsPerIndividual from ' + variantsPerIndividualFileName)
     with open(variantsPerIndividualFileName) as f:
@@ -223,12 +226,12 @@ def calculateLikelihood(pathCoocs, p1, n, k):
     likelihoodRatios = dict()
     for vus in n:
         # decide whether to use brca1_p2 or brca2_p2
-        if vus[0][0] == 13:
+        if vus[0] == 13:
             p2 = brca1_p2
-        elif vus[0][0] == 17:
+        elif vus[0] == 17:
             p2 = brca2_p2
         else:
-            print("unknown chromosome: " + str(vus[0][0]))
+            print("unknown chromosome: " + str(vus[0]))
             continue
 
         n_ = n[vus]
@@ -253,6 +256,13 @@ def calculateLikelihood(pathCoocs, p1, n, k):
     # put it all together in a single dict
     dataPerVus = dict()
     for vus in likelihoodRatios:
+        if vus[0] == 13:
+            p2 = brca1_p2
+        elif vus[0] == 17:
+            p2 = brca2_p2
+        else:
+            print("unknown chromosome: " + str(vus[0]))
+            continue
         data = [p1, p2, n[vus], k[vus], likelihoodRatios[vus], pathVarsPerVus[vus]]
         dataPerVus[str(vus)] = data
 
