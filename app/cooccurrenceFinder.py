@@ -168,6 +168,7 @@ def run(hgVersion, ensemblRelease, chromosomes, phased, vcfFileName, outputFileN
     elapsed_time = time.time() - t
     print('elapsed time in findVariantsPerIndividual() ' + str(elapsed_time))
 
+
     if saveVarsPerIndivid:
         print('saving variantsPerIndividual to ' + variantsPerIndividualFileName)
         with open(variantsPerIndividualFileName, 'w') as f:
@@ -178,6 +179,10 @@ def run(hgVersion, ensemblRelease, chromosomes, phased, vcfFileName, outputFileN
     with open(variantsPerIndividualFileName) as f:
         variantsPerIndividual = json.load(f, cls=NpDecoder)
     f.close()'''
+
+    # find vus with genotype 1|1
+    print('finding vus per consangineous individuals')
+    vusPerConsangineous = findConsangineousVus(variantsPerIndividual)
 
     # TODO make this multi-threaded (cpu is pegged at 99% for this method)
     # TODO or figure out vectorization!
@@ -195,16 +200,24 @@ def run(hgVersion, ensemblRelease, chromosomes, phased, vcfFileName, outputFileN
     total = len(variantsPerIndividual)
     p1 =  0.5 * numBenignWithPath / total
 
-
     print('putting all the data together per vus')
     dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, p1, n, k)
 
+    jsonOutputList = [dataPerVus, vusPerConsangineous]
     print('saving final VUS data  to ' + outputFileName)
     with open(outputFileName, 'w') as f:
-        json.dump(dataPerVus, f, cls=NpEncoder)
+        json.dump(jsonOutputList, f, cls=NpEncoder)
     f.close()
 
 
+
+def findConsangineousVus(variantsPerIndividual):
+    consangineousVus = list()
+    for individual in variantsPerIndividual:
+        for vus in variantsPerIndividual[individual]['vus']:
+            if vus[1] == '1|1' or vus[1] == '1/1':
+                consangineousVus.append(vus)
+    return consangineousVus
 
 def calculateLikelihood(pathCoocs, p1, n, k):
 
@@ -227,9 +240,9 @@ def calculateLikelihood(pathCoocs, p1, n, k):
     for vus in n:
         # decide whether to use brca1_p2 or brca2_p2
         if vus[0] == 13:
-            p2 = brca1_p2
-        elif vus[0] == 17:
             p2 = brca2_p2
+        elif vus[0] == 17:
+            p2 = brca1_p2
         else:
             print("unknown chromosome: " + str(vus[0]))
             continue
@@ -257,9 +270,9 @@ def calculateLikelihood(pathCoocs, p1, n, k):
     dataPerVus = dict()
     for vus in likelihoodRatios:
         if vus[0] == 13:
-            p2 = brca1_p2
-        elif vus[0] == 17:
             p2 = brca2_p2
+        elif vus[0] == 17:
+            p2 = brca1_p2
         else:
             print("unknown chromosome: " + str(vus[0]))
             continue
@@ -267,7 +280,6 @@ def calculateLikelihood(pathCoocs, p1, n, k):
         dataPerVus[str(vus)] = data
 
     return dataPerVus
-
 
 
 def readVCFFile(fileName, numMetaDataLines, chromosomes):
@@ -299,6 +311,9 @@ def findVariantsInBRCA(fileName, classStrings, sigColName, hgVersion):
     benignVars = set()
     vusVars = set()
     for i in range(len(brcaDF)):
+        # TODO use HGVS? problem is indel representation
+        # TODO VCF has standard of using left-most pos where HGVS has standard of using right-most pos for indel
+        # if cDNA (3' side or 5'?) => standard is using 5' strand
         coord = brcaDF.loc[i, 'Genomic_Coordinate_hg' + str(hgVersion)].split(':')
         chrom = int(coord[0].split('chr')[1])
         pos = int(coord[1].split('g.')[1])
@@ -384,6 +399,7 @@ def getGeneForVariant(variant, ensemblRelease):
     pos = variant[1]
     try:
         genes = ensembl.gene_names_at_locus(contig=int(chrom), position=int(pos))
+        # TODO could get BRCA and other gene like ZARO?
         if len(genes) == 1:
             return genes[0]
         else:
