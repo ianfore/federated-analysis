@@ -181,8 +181,9 @@ def run(hgVersion, ensemblRelease, chromosomes, phased, vcfFileName, outputFileN
     f.close()'''
 
     # find vus with genotype 1|1
-    print('finding vus per consangineous individuals')
-    vusPerConsangineous = findConsangineousVus(variantsPerIndividual)
+    # TODO de-dup these!!
+    print('finding consanganeous individuals per vus')
+    consanganeousPerVus = countConsangineousPerVus(variantsPerIndividual)
 
     # TODO make this multi-threaded (cpu is pegged at 99% for this method)
     # TODO or figure out vectorization!
@@ -203,7 +204,7 @@ def run(hgVersion, ensemblRelease, chromosomes, phased, vcfFileName, outputFileN
     print('putting all the data together per vus')
     dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, p1, n, k)
 
-    jsonOutputList = [dataPerVus, vusPerConsangineous]
+    jsonOutputList = [dataPerVus, consanganeousPerVus]
     print('saving final VUS data  to ' + outputFileName)
     with open(outputFileName, 'w') as f:
         json.dump(jsonOutputList, f, cls=NpEncoder)
@@ -211,13 +212,13 @@ def run(hgVersion, ensemblRelease, chromosomes, phased, vcfFileName, outputFileN
 
 
 
-def findConsangineousVus(variantsPerIndividual):
-    consangineousVus = list()
+def countConsangineousPerVus(variantsPerIndividual):
+    consangineousPerVus = defaultdict(int)
     for individual in variantsPerIndividual:
         for vus in variantsPerIndividual[individual]['vus']:
             if vus[1] == '1|1' or vus[1] == '1/1':
-                consangineousVus.append(vus)
-    return consangineousVus
+                consangineousPerVus[str(vus)] += 1
+    return consangineousPerVus
 
 def calculateLikelihood(pathCoocs, p1, n, k):
 
