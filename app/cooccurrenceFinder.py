@@ -101,6 +101,9 @@ def main():
 
     parser.add_argument("--c", dest="c", help="List of chromosomes of interest. Default=[13,17]", default=[13,17])
 
+    parser.add_argument("--g", dest="g", help="List of genes of interest. Default=['BRCA1', 'BRCA2']", default=['BRCA1',
+                                                                                                                'BRCA2'])
+
     parser.add_argument("--p", dest="p", help="Phased (boolean). Default=False", default=False)
 
     parser.add_argument("--s", dest="s", help="Save variants per individual to file. Default=False", default=False)
@@ -124,14 +127,15 @@ def main():
     logger.addHandler(ch)
     logger.debug("Established logger")
 
-    run(int(options.h), int(options.e), list(ast.literal_eval(options.c)), bool(ast.literal_eval(options.p)), DATA_DIR + options.vcf_filename,
+    run(int(options.h), int(options.e), list(ast.literal_eval(options.c)), list(ast.literal_eval(options.c)),
+        bool(ast.literal_eval(options.p)), DATA_DIR + options.vcf_filename,
         DATA_DIR + options.output_filename, bool(ast.literal_eval(options.s)))
 
 
 def printUsage(args):
     sys.stderr.write('cooccurrenceFinder.py <genome-version> <ensembl-release> "[chr list]" "[gene list] True|False')
 
-def run(hgVersion, ensemblRelease, chromosomes, phased, vcfFileName, outputFileName, saveVarsPerIndivid):
+def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outputFileName, saveVarsPerIndivid):
 
     print('hgversion = ' + str(hgVersion))
     print('ensembl = ' + str(ensemblRelease))
@@ -189,7 +193,8 @@ def run(hgVersion, ensemblRelease, chromosomes, phased, vcfFileName, outputFileN
     # TODO or figure out vectorization!
     print('finding individuals per cooc')
     t = time.time()
-    individualsPerPathogenicCooccurrence, n, k = findIndividualsPerCooccurrence(variantsPerIndividual, ensemblRelease, phased)
+    individualsPerPathogenicCooccurrence, n, k = findIndividualsPerCooccurrence(variantsPerIndividual, ensemblRelease,
+                                                                                phased, genes)
     elapsed_time = time.time() - t
     print('elapsed time in findIndividualsPerCooccurrence() ' + str(elapsed_time))
 
@@ -392,7 +397,7 @@ def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, skipCol
     return variantsPerIndividual
 
 
-def getGeneForVariant(variant, ensemblRelease):
+def getGenesForVariant(variant, ensemblRelease, genesOfInterest):
     ensembl = pyensembl.EnsemblRelease(release=ensemblRelease)
     chrom = variant[0]
     if type(chrom) is str:
@@ -401,15 +406,23 @@ def getGeneForVariant(variant, ensemblRelease):
     try:
         genes = ensembl.gene_names_at_locus(contig=int(chrom), position=int(pos))
         # TODO could get BRCA and other gene like ZARO?
-        if len(genes) == 1:
+        g_of_i = set(genesOfInterest)
+        g = set(genes)
+        intersectingGenes = g_of_i.intersection(g)
+        if len(intersectingGenes) != 1:
+            return None
+        else:
+            # this is pythonic way of returning member of singleton set
+            return (intersectingGenes,)
+        '''if len(genes) == 1:
             return genes[0]
         else:
-            return None
+            return None'''
     except Exception as e:
         print('exception: ' + str(e))
         return None
 
-def findIndividualsPerCooccurrence(variantsPerIndividual, ensemblRelease, phased):
+def findIndividualsPerCooccurrence(variantsPerIndividual, ensemblRelease, phased, genes):
 
     individualsPerPathogenicCooccurrence = defaultdict(list)
     n = defaultdict(int)
@@ -424,20 +437,23 @@ def findIndividualsPerCooccurrence(variantsPerIndividual, ensemblRelease, phased
 
         vusCrossPath = list(itertools.product(vusVarList, pathVarList))
         for cross in vusCrossPath:
-            if sameGeneSameParent(cross[0], cross[1], phased, ensemblRelease):
+            if sameGeneSameParent(cross[0], cross[1], phased, ensemblRelease, genes):
                 k[tuple(cross[0][0])] += 1
                 individualsPerPathogenicCooccurrence[(tuple(cross[0][0]), tuple(cross[1][0]))].append(individual)
 
     return individualsPerPathogenicCooccurrence, n, k
 
-def sameGeneSameParent(vus, path, phased, ensemblRelease):
+def sameGeneSameParent(vus, path, phased, ensemblRelease, genes):
+
     if not phased:
-        return getGeneForVariant(vus[0], ensemblRelease) == getGeneForVariant(path[0], ensemblRelease)
+        return getGenesForVariant(vus[0], ensemblRelease, genes) == \
+               getGenesForVariant(path[0], ensemblRelease, genes)
     else:
         # looking for vus in cis with path
         # if vus is 1|1, then it's either in cis or both in cis and in trans with path
         # else if vus and path are on opposite chromosomes
-        return (getGeneForVariant(vus[0], ensemblRelease) == getGeneForVariant(path[0], ensemblRelease)) and \
+        return (getGenesForVariant(vus[0], ensemblRelease, genes) == getGenesForVariant(path[0], ensemblRelease, genes)) \
+               and \
                ((vus[1] == '1|1') or ((vus[1] == '1|0' and path[1] == '0|1') or (vus[1] == '0|1' and path[1] == '1|0')))
 
 if __name__ == "__main__":

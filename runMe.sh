@@ -30,6 +30,7 @@ then
 	SAVE_VARS=True
 
 	CHR_LIST=[13,17]
+	GENE_LIST=['BRCA1','BRCA2']
 
 	if [ ! -d ${DATA_PATH}/pyensembl-cache ]
 	then
@@ -52,7 +53,7 @@ then
 
 	docker build -t ${DOCKER_IMAGE_NAME} .
 
-	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 -w /home/myuser --user=1968:games -v ${APP_PATH}:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder.py  ${VCF_FILE} ${OUTPUT_FILE} --h $HG_VERSION --e $ENSEMBL_RELEASE --c $CHR_LIST --p $PHASED --s ${SAVE_VARS}
+	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 -w /home/myuser --user=1968:games -v ${APP_PATH}:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder.py  ${VCF_FILE} ${OUTPUT_FILE} --h $HG_VERSION --e $ENSEMBL_RELEASE --c $CHR_LIST --g $GENE_LIST --p $PHASED --s ${SAVE_VARS}
 
 	#docker run -it --rm --user=1968:1968 -w /home/myuser -v "$(pwd)":/app  -v "${DATA_PATH}":/data:rw --entrypoint /bin/bash  ${DOCKER_IMAGE_NAME}
 	#docker run -it --rm --user=0:0 -w /home/myuser -v "$(pwd)":/app  -v "${DATA_PATH}":/data:rw --entrypoint /bin/bash  ${DOCKER_IMAGE_NAME}
