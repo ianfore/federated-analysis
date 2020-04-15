@@ -101,7 +101,7 @@ def main():
 
     parser.add_argument("--c", dest="c", help="List of chromosomes of interest. Default=[13,17]", default=[13,17])
 
-    parser.add_argument("--g", dest="g", help="List of genes of interest. Default=['BRCA1', 'BRCA2']", default=['BRCA1',
+    parser.add_argument("--g", dest="g", help="List of genes of interest. Default=['BRCA1', 'BRCA2']", default=['BRCA1',\
                                                                                                                 'BRCA2'])
 
     parser.add_argument("--p", dest="p", help="Phased (boolean). Default=False", default=False)
@@ -131,7 +131,7 @@ def main():
     logger.addHandler(ch)
     logger.debug("Established logger")
 
-    run(int(options.h), int(options.e), list(ast.literal_eval(options.c)), list(ast.literal_eval(options.g)),
+    run(int(options.h), int(options.e), list(ast.literal_eval(options.c)), list(options.g),
         bool(ast.literal_eval(options.p)), DATA_DIR + options.vcf_filename,
         DATA_DIR + options.output_filename, bool(ast.literal_eval(options.s)), int(options.t))
 
