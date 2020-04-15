@@ -13,6 +13,7 @@ from pandas.api.types import is_numeric_dtype
 import argparse
 import logging
 import ast
+
 logger = logging.getLogger()
 
 defaultLogLevel = "WARNING"
@@ -43,15 +44,14 @@ def countColumnsAndMetaRows(fileName):
     f.close()
     return metaRowCount, preIDcolumnCount
 
-#nThreads = cpu_count()
-nThreads=1
+
 classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely benign' ],
                  'Unknown': [ 'Uncertain significance', '-']}
 sigColName = 'Clinical_significance_ENIGMA'
+alleleFrequencyName = 'Allele_frequency_ExAC'
 DATA_DIR='/data/'
 brcaFileName = DATA_DIR + 'brca-variants.tsv'
 variantsPerIndividualFileName = DATA_DIR + 'variantsPerIndividual.json'
-#vusFinalDataFileName = DATA_DIR + 'vusFinalData.json'
 
 os.environ['PYENSEMBL_CACHE_DIR'] = DATA_DIR + 'pyensembl-cache'
 
@@ -108,6 +108,10 @@ def main():
 
     parser.add_argument("--s", dest="s", help="Save variants per individual to file. Default=False", default=False)
 
+
+    parser.add_argument("--t", dest="t", help="Thread count. Default 1", default=1)
+
+
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" %
                                                        defaultLogLevel, default=defaultLogLevel)
 
@@ -127,19 +131,20 @@ def main():
     logger.addHandler(ch)
     logger.debug("Established logger")
 
-    run(int(options.h), int(options.e), list(ast.literal_eval(options.c)), list(ast.literal_eval(options.c)),
+    run(int(options.h), int(options.e), list(ast.literal_eval(options.c)), list(ast.literal_eval(options.g)),
         bool(ast.literal_eval(options.p)), DATA_DIR + options.vcf_filename,
-        DATA_DIR + options.output_filename, bool(ast.literal_eval(options.s)))
+        DATA_DIR + options.output_filename, bool(ast.literal_eval(options.s)), int(options.t))
 
 
 def printUsage(args):
     sys.stderr.write('cooccurrenceFinder.py <genome-version> <ensembl-release> "[chr list]" "[gene list] True|False')
 
-def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outputFileName, saveVarsPerIndivid):
+def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outputFileName, saveVarsPerIndivid, threadCount):
 
     print('hgversion = ' + str(hgVersion))
     print('ensembl = ' + str(ensemblRelease))
     print('chroms = ' + str(chromosomes))
+    print('genes = ' + str(genes))
     print('phased = ' + str(phased))
 
 
@@ -147,8 +152,8 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
 
     print('reading BRCA data from ' + brcaFileName)
     t = time.time()
-    count, pathogenicVariants, benignVariants, unknownVariants = \
-        findVariantsInBRCA(brcaFileName, classStrings, sigColName, hgVersion)
+    brcaDF, pathogenicVariants, benignVariants, unknownVariants = \
+        findVariantsInBRCA(brcaFileName, classStrings, hgVersion)
     elapsed_time = time.time() - t
     print('elapsed time in findVariantsInBRCA() ' + str(elapsed_time))
 
@@ -162,10 +167,10 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
     t = time.time()
     results = list()
     variantsPerIndividual = dict()
-    pool = ThreadPool(processes=nThreads)
-    for i in range(nThreads):
+    pool = ThreadPool(processes=threadCount)
+    for i in range(threadCount):
         results.append(pool.apply_async(findVariantsPerIndividual, args=(vcfData, benignVariants, pathogenicVariants,
-                                                                 myVCFskipCols, nThreads, i, phased)))
+                                                                 myVCFskipCols, threadCount, i, phased)))
     for result in results:
         result.wait()
         variantsPerIndividual.update(result.get())
@@ -187,7 +192,7 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
     # find vus with genotype 1|1
     # TODO de-dup these!!
     print('finding consanganeous individuals per vus')
-    consanganeousPerVus = countConsangineousPerVus(variantsPerIndividual)
+    consanganeousPerVus = countConsangineousPerVus(variantsPerIndividual, brcaDF, hgVersion)
 
     # TODO make this multi-threaded (cpu is pegged at 99% for this method)
     # TODO or figure out vectorization!
@@ -209,6 +214,7 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
     print('putting all the data together per vus')
     dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, p1, n, k)
 
+    print(consanganeousPerVus)
     jsonOutputList = [dataPerVus, consanganeousPerVus]
     print('saving final VUS data  to ' + outputFileName)
     with open(outputFileName, 'w') as f:
@@ -217,13 +223,20 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
 
 
 
-def countConsangineousPerVus(variantsPerIndividual):
-    consangineousPerVus = defaultdict(int)
+def countConsangineousPerVus(variantsPerIndividual, brcaDF, hgVersion):
+    consangineousPerVus = defaultdict(list)
     for individual in variantsPerIndividual:
         for vus in variantsPerIndividual[individual]['vus']:
             if vus[1] == '1|1' or vus[1] == '1/1':
-                consangineousPerVus[str(vus)] += 1
+                if str(vus) not in consangineousPerVus:
+                    consangineousPerVus[str(vus)].append(0)
+                    #consangineousPerVus[str(vus)].append(getExacData(vus[0]))
+                    hgString = str(vus[0][0]) + ':g.' + str(vus[0][1]) + ':' + str(vus[0][2]) + '>' + str(vus[0][3])
+                    exacData = brcaDF[brcaDF['Genomic_Coordinate_hg' + str(hgVersion)] == hgString]['Allele_frequency_ExAC']
+                    consangineousPerVus[str(vus)].append(list(exacData.items()))
+                consangineousPerVus[str(vus)][0] += 1
     return consangineousPerVus
+
 
 def calculateLikelihood(pathCoocs, p1, n, k):
 
@@ -309,7 +322,7 @@ def readVCFFile(fileName, numMetaDataLines, chromosomes):
 
     return chromsDF
 
-def findVariantsInBRCA(fileName, classStrings, sigColName, hgVersion):
+def findVariantsInBRCA(fileName, classStrings, hgVersion):
     brcaDF = pandas.read_csv(fileName, sep='\t', header=0, dtype=str)
     # Genomic_Coordinate_hg37
     # chr13:g.32972575:G>T
@@ -334,7 +347,7 @@ def findVariantsInBRCA(fileName, classStrings, sigColName, hgVersion):
         else:
             continue
 
-    return len(brcaDF), pathVars, benignVars, vusVars
+    return brcaDF, pathVars, benignVars, vusVars
 
 
 def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, skipCols, nThreads, threadID, phased):
