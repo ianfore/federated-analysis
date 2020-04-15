@@ -131,7 +131,7 @@ def main():
     logger.addHandler(ch)
     logger.debug("Established logger")
 
-    run(int(options.h), int(options.e), list(ast.literal_eval(options.c)), list(options.g),
+    run(int(options.h), int(options.e), list(ast.literal_eval(options.c)), list(ast.literal_eval(options.g)),
         bool(ast.literal_eval(options.p)), DATA_DIR + options.vcf_filename,
         DATA_DIR + options.output_filename, bool(ast.literal_eval(options.s)), int(options.t))
 
@@ -146,7 +146,6 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
     print('chroms = ' + str(chromosomes))
     print('genes = ' + str(genes))
     print('phased = ' + str(phased))
-
 
     myVCFMetadataLines, myVCFskipCols = countColumnsAndMetaRows(vcfFileName)
 
@@ -191,8 +190,8 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
 
     # find vus with genotype 1|1
     # TODO de-dup these!!
-    print('finding consanganeous individuals per vus')
-    consanganeousPerVus = countConsangineousPerVus(variantsPerIndividual, brcaDF, hgVersion)
+    print('finding homozygous  individuals per vus')
+    homozygousPerVus = countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, genes)
 
     # TODO make this multi-threaded (cpu is pegged at 99% for this method)
     # TODO or figure out vectorization!
@@ -214,28 +213,29 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
     print('putting all the data together per vus')
     dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, p1, n, k)
 
-    print(consanganeousPerVus)
-    jsonOutputList = [dataPerVus, consanganeousPerVus]
+    jsonOutputList = [dataPerVus, homozygousPerVus]
     print('saving final VUS data  to ' + outputFileName)
     with open(outputFileName, 'w') as f:
         json.dump(jsonOutputList, f, cls=NpEncoder)
     f.close()
 
+def getGnomadData(brcaDF, vus, hgVersion):
+    hgString = str(vus[0][0]) + ':g.' + str(vus[0][1]) + ':' + str(vus[0][2]) + '>' + str(vus[0][3])
+    gnomadData = brcaDF[brcaDF['Genomic_Coordinate_hg' + str(hgVersion)] == hgString]['Allele_frequency_genome_GnomAD']
 
+    return gnomadData
 
-def countConsangineousPerVus(variantsPerIndividual, brcaDF, hgVersion):
-    consangineousPerVus = defaultdict(list)
+def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, genesOfInterest, ensemblRelease):
+    homoZygousPerVus = defaultdict(list)
     for individual in variantsPerIndividual:
         for vus in variantsPerIndividual[individual]['vus']:
-            if vus[1] == '1|1' or vus[1] == '1/1':
-                if str(vus) not in consangineousPerVus:
-                    consangineousPerVus[str(vus)].append(0)
+            if vus[1] == '1|1' or vus[1] == '1/1' and getGenesForVariant(vus[0], ensemblRelease, genesOfInterest):
+                if str(vus) not in homoZygousPerVus:
+                    homoZygousPerVus[str(vus)].append(0)
                     #consangineousPerVus[str(vus)].append(getExacData(vus[0]))
-                    hgString = str(vus[0][0]) + ':g.' + str(vus[0][1]) + ':' + str(vus[0][2]) + '>' + str(vus[0][3])
-                    exacData = brcaDF[brcaDF['Genomic_Coordinate_hg' + str(hgVersion)] == hgString]['Allele_frequency_ExAC']
-                    consangineousPerVus[str(vus)].append(list(exacData.items()))
-                consangineousPerVus[str(vus)][0] += 1
-    return consangineousPerVus
+                    homoZygousPerVus[str(vus)].append(getGnomadData(brcaDF, vus, hgVersion))
+                homoZygousPerVus[str(vus)][0] += 1
+    return homoZygousPerVus
 
 
 def calculateLikelihood(pathCoocs, p1, n, k):
@@ -400,7 +400,7 @@ def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, skipCol
                     variantsPerIndividual[individual]['benign'].append((var, alleles))
                 elif var in pathogenicVariants:
                     variantsPerIndividual[individual]['pathogenic'].append((var, alleles))
-                # if not a known VUS, should we call it unknown here?
+                # if not a known VUS, it is a VUS now
                 else:
                     variantsPerIndividual[individual]['vus'].append((var, alleles))
             except Exception as e:
