@@ -131,9 +131,16 @@ def main():
     logger.addHandler(ch)
     logger.debug("Established logger")
 
-    run(int(options.h), int(options.e), list(ast.literal_eval(options.c)), list(ast.literal_eval(options.g)),
-        bool(ast.literal_eval(options.p)), DATA_DIR + options.vcf_filename,
-        DATA_DIR + options.output_filename, bool(ast.literal_eval(options.s)), int(options.t))
+    g_options = list(ast.literal_eval(options.g))
+    c_options = list(ast.literal_eval(options.c))
+    p_options = bool(ast.literal_eval(options.p))
+    s_options = bool(ast.literal_eval(options.s))
+    t_options = int(options.t)
+    h_options = int(options.h)
+    e_options = int(options.e)
+
+    run(h_options, e_options, c_options, g_options, p_options, DATA_DIR + options.vcf_filename,
+        DATA_DIR + options.output_filename, s_options, t_options)
 
 
 def printUsage(args):
