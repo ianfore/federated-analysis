@@ -221,11 +221,17 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
 
 def getGnomadData(brcaDF, vus, hgVersion):
     hgString = str(vus[0][0]) + ':g.' + str(vus[0][1]) + ':' + str(vus[0][2]) + '>' + str(vus[0][3])
+    # first, get frequencies across exomes and genomes for each ethnic group
+    #
+
+    # second, get count, number, and hom for max frequency ethnic group
+
+    # third, construct list and return it
     gnomadData = brcaDF[brcaDF['Genomic_Coordinate_hg' + str(hgVersion)] == hgString]['Allele_frequency_genome_GnomAD']
 
     return gnomadData
 
-def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, genesOfInterest, ensemblRelease):
+def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, genesOfInterest):
     homoZygousPerVus = defaultdict(list)
     for individual in variantsPerIndividual:
         for vus in variantsPerIndividual[individual]['vus']:
@@ -233,7 +239,7 @@ def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, genesOfInter
                 if str(vus) not in homoZygousPerVus:
                     homoZygousPerVus[str(vus)].append(0)
                     #consangineousPerVus[str(vus)].append(getExacData(vus[0]))
-                    homoZygousPerVus[str(vus)].append(getGnomadData(brcaDF, vus, hgVersion))
+                    #homoZygousPerVus[str(vus)].append(getGnomadData(brcaDF, vus, hgVersion))
                 homoZygousPerVus[str(vus)][0] += 1
     return homoZygousPerVus
 
