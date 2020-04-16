@@ -175,6 +175,7 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
     elapsed_time = time.time() - t
     print('elapsed time in readVCFFile() ' + str(elapsed_time))
 
+
     print('finding variants per individual')
     t = time.time()
     results = list()
@@ -189,6 +190,11 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
     elapsed_time = time.time() - t
     print('elapsed time in findVariantsPerIndividual() ' + str(elapsed_time))
 
+    # find vus with genotype 1|1
+    # TODO de-dup these!!
+    print('finding homozygous  individuals per vus')
+    homozygousPerVus = countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, genes)
+
 
     if saveVarsPerIndivid:
         print('saving variantsPerIndividual to ' + variantsPerIndividualFileName)
@@ -201,10 +207,6 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
         variantsPerIndividual = json.load(f, cls=NpDecoder)
     f.close()'''
 
-    # find vus with genotype 1|1
-    # TODO de-dup these!!
-    print('finding homozygous  individuals per vus')
-    homozygousPerVus = countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, genes)
 
     # TODO make this multi-threaded (cpu is pegged at 99% for this method)
     # TODO or figure out vectorization!
@@ -234,15 +236,26 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
 
 def getGnomadData(brcaDF, vus, hgVersion):
     hgString = str(vus[0][0]) + ':g.' + str(vus[0][1]) + ':' + str(vus[0][2]) + '>' + str(vus[0][3])
-    # first, get frequencies across exomes and genomes for each ethnic group
-    #
+    # first, get list of columns for GnomAD allleles
+    gnomad = [v for v in list(brcaDF.columns) if 'GnomAD' in v]
+    alleleFrequencies = [v for v in gnomad if 'Allele_frequency' in v]
 
-    # second, get count, number, and hom for max frequency ethnic group
+    # second, get frequencies across exomes and genomes to determine max
+    maxFrequency = 0.0
+    maxPopulation = None
+    for af in alleleFrequencies:
+        freq=0.0
+        gnomadData = brcaDF[brcaDF['Genomic_Coordinate_hg' + str(hgVersion)] == hgString][af].tolist()
+        if gnomadData:
+            try:
+                freq = float(gnomadData[0])
+            except ValueError:
+                continue
+            if freq > maxFrequency:
+                maxFrequency = freq
+                maxPopulation = af
 
-    # third, construct list and return it
-    gnomadData = brcaDF[brcaDF['Genomic_Coordinate_hg' + str(hgVersion)] == hgString]['Allele_frequency_genome_GnomAD']
-
-    return gnomadData
+    return (maxPopulation, maxFrequency)
 
 def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, genesOfInterest):
     homoZygousPerVus = defaultdict(list)
@@ -251,8 +264,8 @@ def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelea
             if (vus[1] == '1|1' or vus[1] == '1/1') and (getGenesForVariant(vus[0], ensemblRelease, genesOfInterest)):
                 if str(vus) not in homoZygousPerVus:
                     homoZygousPerVus[str(vus)].append(0)
-                    #consangineousPerVus[str(vus)].append(getExacData(vus[0]))
-                    #homoZygousPerVus[str(vus)].append(getGnomadData(brcaDF, vus, hgVersion))
+                    maxFreq = getGnomadData(brcaDF, vus, hgVersion)
+                    homoZygousPerVus[str(vus)].append(maxFreq)
                 homoZygousPerVus[str(vus)][0] += 1
     return homoZygousPerVus
 
