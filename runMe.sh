@@ -30,7 +30,7 @@ then
 	SAVE_VARS=True
 
 	CHR_LIST=[13,17]
-	GENE_LIST=['BRCA1','BRCA2']
+	GENE_LIST="['BRCA1','BRCA2']"
 
 	if [ ! -d ${DATA_PATH}/pyensembl-cache ]
 	then

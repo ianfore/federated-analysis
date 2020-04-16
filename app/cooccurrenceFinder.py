@@ -133,14 +133,14 @@ def main():
 
     # TODO for some reason the parsing of ['BRCA1','BRCA2'] works on brcaexchange-dev and my mac but not on crims
     # crimson complains it's a malformed string in eval
-    # so this is just extra logic for crimson
+    # so this is just extra logic for crimson (using eval vs ast.literal_eval to convert from string)
     if isinstance(options.g, str):
-        g_options = list(ast.literal_eval(options.g))
+        g_options = list(eval(options.g))
     else:
         g_options = list(options.g)
-    c_options = list(ast.literal_eval(options.c))
-    p_options = bool(ast.literal_eval(options.p))
-    s_options = bool(ast.literal_eval(options.s))
+    c_options = list(eval(options.c))
+    p_options = bool(eval(options.p))
+    s_options = bool(eval(options.s))
     t_options = int(options.t)
     h_options = int(options.h)
     e_options = int(options.e)
