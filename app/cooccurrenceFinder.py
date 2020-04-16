@@ -248,7 +248,7 @@ def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelea
     homoZygousPerVus = defaultdict(list)
     for individual in variantsPerIndividual:
         for vus in variantsPerIndividual[individual]['vus']:
-            if vus[1] == '1|1' or vus[1] == '1/1' and getGenesForVariant(vus[0], ensemblRelease, genesOfInterest):
+            if (vus[1] == '1|1' or vus[1] == '1/1') and (getGenesForVariant(vus[0], ensemblRelease, genesOfInterest)):
                 if str(vus) not in homoZygousPerVus:
                     homoZygousPerVus[str(vus)].append(0)
                     #consangineousPerVus[str(vus)].append(getExacData(vus[0]))
@@ -437,7 +437,7 @@ def getGenesForVariant(variant, ensemblRelease, genesOfInterest):
     pos = variant[1]
     try:
         genes = ensembl.gene_names_at_locus(contig=int(chrom), position=int(pos))
-        # TODO could get BRCA and other gene like ZARO?
+        # TODO could get BRCA and other gene like ZAR1L?
         g_of_i = set(genesOfInterest)
         g = set(genes)
         intersectingGenes = g_of_i.intersection(g)
