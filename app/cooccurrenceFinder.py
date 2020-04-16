@@ -131,7 +131,13 @@ def main():
     logger.addHandler(ch)
     logger.debug("Established logger")
 
-    g_options = list(ast.literal_eval(options.g))
+    # TODO for some reason the parsing of ['BRCA1','BRCA2'] works on brcaexchange-dev and my mac but not on crims
+    # crimson complains it's a malformed string in eval
+    # so this is just extra logic for crimson
+    if isinstance(options.g, str):
+        g_options = list(ast.literal_eval(options.g))
+    else:
+        g_options = list(options.g)
     c_options = list(ast.literal_eval(options.c))
     p_options = bool(ast.literal_eval(options.p))
     s_options = bool(ast.literal_eval(options.s))
