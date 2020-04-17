@@ -48,6 +48,7 @@ def countColumnsAndMetaRows(fileName):
 classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely benign' ],
                  'Unknown': [ 'Uncertain significance', '-']}
 sigColName = 'Clinical_significance_ENIGMA'
+coordinateColumnBase = 'Genomic_Coordinate_hg'
 alleleFrequencyName = 'Allele_frequency_ExAC'
 DATA_DIR='/data/'
 brcaFileName = DATA_DIR + 'brca-variants.tsv'
@@ -235,20 +236,25 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
     f.close()
 
 def getGnomadData(brcaDF, vus, hgVersion):
-    hgString = str(vus[0][0]) + ':g.' + str(vus[0][1]) + ':' + str(vus[0][2]) + '>' + str(vus[0][3])
+    # TODO write a unit test
+    # 13:g.32393468:C>CT
+    hgString = 'chr' + str(vus[0][0]) + ':g.' + str(vus[0][1]) + ':' + str(vus[0][2]) + '>' + str(vus[0][3])
     # first, get list of columns for GnomAD allleles
     gnomad = [v for v in list(brcaDF.columns) if 'GnomAD' in v]
     alleleFrequencies = [v for v in gnomad if 'Allele_frequency' in v]
 
     # second, get frequencies across exomes and genomes to determine max
+    # return population, frequency, count, and number
+    # replace "frequency" with "count" and "number" in Allele_frequency_genome_AFR_GnomAD
+
     maxFrequency = 0.0
     maxPopulation = None
     for af in alleleFrequencies:
         freq=0.0
-        gnomadData = brcaDF[brcaDF['Genomic_Coordinate_hg' + str(hgVersion)] == hgString][af].tolist()
-        if gnomadData:
+        alleleFreqList = brcaDF[brcaDF[coordinateColumnBase + str(hgVersion)] == hgString][af].tolist()
+        if alleleFreqList:
             try:
-                freq = float(gnomadData[0])
+                freq = float(alleleFreqList[0])
             except ValueError:
                 continue
             if freq > maxFrequency:
@@ -257,6 +263,7 @@ def getGnomadData(brcaDF, vus, hgVersion):
 
     return (maxPopulation, maxFrequency)
 
+# TODO merge this method with findVariantsPerIndividual()
 def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, genesOfInterest):
     homoZygousPerVus = defaultdict(list)
     for individual in variantsPerIndividual:
@@ -365,7 +372,7 @@ def findVariantsInBRCA(fileName, classStrings, hgVersion):
         # TODO use HGVS? problem is indel representation
         # TODO VCF has standard of using left-most pos where HGVS has standard of using right-most pos for indel
         # if cDNA (3' side or 5'?) => standard is using 5' strand
-        coord = brcaDF.loc[i, 'Genomic_Coordinate_hg' + str(hgVersion)].split(':')
+        coord = brcaDF.loc[i, coordinateColumnBase + str(hgVersion)].split(':')
         chrom = int(coord[0].split('chr')[1])
         pos = int(coord[1].split('g.')[1])
         ref, alt = coord[2].split('>')
@@ -459,10 +466,6 @@ def getGenesForVariant(variant, ensemblRelease, genesOfInterest):
         else:
             # this is pythonic way of returning member of singleton set
             return (intersectingGenes,)
-        '''if len(genes) == 1:
-            return genes[0]
-        else:
-            return None'''
     except Exception as e:
         print('exception: ' + str(e))
         return None
