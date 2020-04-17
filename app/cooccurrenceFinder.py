@@ -104,13 +104,13 @@ def main():
 
     parser.add_argument("--g", dest="g", help="List of genes. Default=['BRCA1', 'BRCA2']", default=['BRCA1','BRCA2'])
 
-    parser.add_argument("--p", dest="p", help="Phased (boolean). Default=False", default=False)
+    parser.add_argument("--p", dest="p", help="Phased (boolean). Default=False", default='False')
 
-    parser.add_argument("--s", dest="s", help="Save variants per individual to file. Default=False", default=False)
+    parser.add_argument("--s", dest="s", help="Save variants per individual to file. Default=False", default='False')
 
-    parser.add_argument("--i", dest="i", help="Include pathog vars per VUS in report. Default=False", default=False)
+    parser.add_argument("--i", dest="i", help="Include pathog vars per VUS in report. Default=False", default='False')
 
-    parser.add_argument("--a", dest="a", help="calculate allele freqs for homozygous. Default=False", default=False)
+    parser.add_argument("--a", dest="a", help="calculate allele freqs for homozygous. Default=False", default='False')
 
     parser.add_argument("--t", dest="t", help="Thread count. Default 1", default=1)
 
