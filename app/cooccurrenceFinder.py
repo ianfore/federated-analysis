@@ -102,16 +102,17 @@ def main():
 
     parser.add_argument("--c", dest="c", help="List of chromosomes of interest. Default=[13,17]", default=[13,17])
 
-    parser.add_argument("--g", dest="g", help="List of genes of interest. Default=['BRCA1', 'BRCA2']", default=['BRCA1',\
-                                                                                                                'BRCA2'])
+    parser.add_argument("--g", dest="g", help="List of genes. Default=['BRCA1', 'BRCA2']", default=['BRCA1','BRCA2'])
 
     parser.add_argument("--p", dest="p", help="Phased (boolean). Default=False", default=False)
 
     parser.add_argument("--s", dest="s", help="Save variants per individual to file. Default=False", default=False)
 
+    parser.add_argument("--i", dest="i", help="Include pathog vars per VUS in report. Default=False", default=False)
+
+    parser.add_argument("--a", dest="a", help="calculate allele freqs for homozygous. Default=False", default=False)
 
     parser.add_argument("--t", dest="t", help="Thread count. Default 1", default=1)
-
 
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" %
                                                        defaultLogLevel, default=defaultLogLevel)
@@ -142,24 +143,32 @@ def main():
     c_options = list(eval(options.c))
     p_options = bool(eval(options.p))
     s_options = bool(eval(options.s))
+    i_options = bool(eval(options.i))
+    a_options = bool(eval(options.a))
     t_options = int(options.t)
     h_options = int(options.h)
     e_options = int(options.e)
 
     run(h_options, e_options, c_options, g_options, p_options, DATA_DIR + options.vcf_filename,
-        DATA_DIR + options.output_filename, s_options, t_options)
+        DATA_DIR + options.output_filename, t_options, s_options, i_options, a_options)
 
 
 def printUsage(args):
     sys.stderr.write('cooccurrenceFinder.py <genome-version> <ensembl-release> "[chr list]" "[gene list] True|False')
 
-def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outputFileName, saveVarsPerIndivid, threadCount):
+def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outputFileName, threadCount,
+        saveVarsPerIndivid, includePaths, calculateAlleleFreqs):
 
     print('hgversion = ' + str(hgVersion))
     print('ensembl = ' + str(ensemblRelease))
     print('chroms = ' + str(chromosomes))
     print('genes = ' + str(genes))
     print('phased = ' + str(phased))
+    print('input vcf = ' + str(vcfFileName))
+    print('output json = ' + str(outputFileName))
+    print('thread count = ' + str(threadCount))
+    print('save variants per individ = ' + str(saveVarsPerIndivid))
+    print('include pathogenic variants in output = ' +  str(includePaths))
 
     myVCFMetadataLines, myVCFskipCols = countColumnsAndMetaRows(vcfFileName)
 
@@ -191,10 +200,14 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
     elapsed_time = time.time() - t
     print('elapsed time in findVariantsPerIndividual() ' + str(elapsed_time))
 
-    # find vus with genotype 1|1
-    # TODO de-dup these!!
-    print('finding homozygous  individuals per vus')
-    homozygousPerVus = countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, genes)
+    if calculateAlleleFreqs:
+        # find vus with genotype 1|1
+        # TODO de-dup these!!
+        print('finding homozygous  individuals per vus')
+        t = time.time()
+        homozygousPerVus = countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, genes)
+        elapsed_time = time.time() - t
+        print('elapsed time in countHomozygousPerVus() ' + str(elapsed_time))
 
 
     if saveVarsPerIndivid:
@@ -227,9 +240,12 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
     p1 =  0.5 * numBenignWithPath / total
 
     print('putting all the data together per vus')
-    dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, p1, n, k)
+    dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, p1, n, k, includePaths)
 
-    jsonOutputList = [dataPerVus, homozygousPerVus]
+    if calculateAlleleFreqs:
+        jsonOutputList = [dataPerVus, homozygousPerVus]
+    else:
+        jsonOutputList = dataPerVus
     print('saving final VUS data  to ' + outputFileName)
     with open(outputFileName, 'w') as f:
         json.dump(jsonOutputList, f, cls=NpEncoder)
@@ -277,7 +293,7 @@ def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelea
     return homoZygousPerVus
 
 
-def calculateLikelihood(pathCoocs, p1, n, k):
+def calculateLikelihood(pathCoocs, p1, n, k, includePathogenicVariants):
 
     # vus coocs data: {(vus1, vus2):[individuals]}
     # "([10, 89624243, 'A', 'G'], [10, 89624304, 'C', 'T')]": ["0000057940", "0000057950"],
@@ -334,7 +350,10 @@ def calculateLikelihood(pathCoocs, p1, n, k):
         else:
             print("unknown chromosome: " + str(vus[0]))
             continue
-        data = [p1, p2, n[vus], k[vus], likelihoodRatios[vus], pathVarsPerVus[vus]]
+        if includePathogenicVariants:
+            data = [p1, p2, n[vus], k[vus], likelihoodRatios[vus], pathVarsPerVus[vus]]
+        else:
+            data = [p1, p2, n[vus], k[vus], likelihoodRatios[vus]]
         dataPerVus[str(vus)] = data
 
     return dataPerVus
