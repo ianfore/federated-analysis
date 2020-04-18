@@ -379,19 +379,16 @@ def newReadVCFFile(fileName, numMetaDataLines, chromosomes, chunkSize, phased):
             chunk.replace('1|0', '2', inplace=True)
             chunk.replace('1|1', '3', inplace=True)
         else:
-            '''chunk[chunk == '0/0'] = '0'
-            chunk[chunk == '0/1'] = '1'
-            chunk[chunk == '1/0'] = '2'
-            chunk[chunk == '1/1'] = '3'''''
+            #chunk[chunk == '0/0'] = '0'
+            #chunk[chunk == '0/1'] = '1'
+            #chunk[chunk == '1/0'] = '2'
+            #chunk[chunk == '1/1'] = '3'
+
             chunk.replace('0/0', '0', inplace=True)
             chunk.replace('0/1', '1', inplace=True)
             chunk.replace('1/0', '2', inplace=True)
             chunk.replace('1/1', '3', inplace=True)
 
-        '''chunk[chunk == '0|0'] = '0'
-        chunk[chunk == '0|1'] = '1'
-        chunk[chunk == '1|0'] = '2'
-        chunk[chunk == '1|1'] = '3'''
 
         # Once the data filtering is done, append the chunk to list
         chunk_list.append(chunk)
@@ -401,11 +398,15 @@ def newReadVCFFile(fileName, numMetaDataLines, chromosomes, chunkSize, phased):
 
     # concat the list into dataframe
     df = pandas.concat(chunk_list)
+
     df.columns = df.columns.str.replace('#', '')
+
     if not is_numeric_dtype(df['CHROM']):
         df['CHROM'] = df['CHROM'].str.replace('chr', '')
         df['CHROM'] = pandas.to_numeric(df['CHROM'])
     chromsDF = df[df.CHROM.isin(chromosomes)]
+
+
     # the index in the above operation is no longer contiguous from 0, so we need to reset for future operations on df
     chromsDF.index = np.arange(0, len(chromsDF))
 
@@ -578,7 +579,9 @@ def sameGeneSameParent(vus, path, phased, ensemblRelease, genes):
         # else if vus and path are on opposite chromosomes
         return (getGenesForVariant(vus[0], ensemblRelease, genes) == getGenesForVariant(path[0], ensemblRelease, genes)) \
                and \
-               ((vus[1] == '1|1') or ((vus[1] == '1|0' and path[1] == '0|1') or (vus[1] == '0|1' and path[1] == '1|0')))
+                ((vus[1] == '3') or ((vus[1] == '2' and path[1] == '1') or (vus[1] == '1' and path[1] == '2')))
+
+                #((vus[1] == '1|1') or ((vus[1] == '1|0' and path[1] == '0|1') or (vus[1] == '0|1' and path[1] == '1|0')))
 
 if __name__ == "__main__":
     main()
