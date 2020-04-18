@@ -16,7 +16,7 @@ import ast
 
 logger = logging.getLogger()
 
-defaultLogLevel = "WARNING"
+defaultLogLevel = "DEBUG"
 
 def countColumnsAndMetaRows(fileName):
     '''The header line names the 8 fixed, mandatory columns.These columns are as follows:
