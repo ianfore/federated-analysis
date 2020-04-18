@@ -12,7 +12,7 @@ import os
 from pandas.api.types import is_numeric_dtype
 import argparse
 import logging
-import ast
+
 
 logger = logging.getLogger()
 
@@ -133,9 +133,6 @@ def main():
     logger.addHandler(ch)
     logger.debug("Established logger")
 
-    # TODO for some reason the parsing of ['BRCA1','BRCA2'] works on brcaexchange-dev and my mac but not on crims
-    # crimson complains it's a malformed string in eval
-    # so this is just extra logic for crimson (using eval vs ast.literal_eval to convert from string)
     if isinstance(options.g, str):
         g_options = list(eval(options.g))
     else:
@@ -181,7 +178,8 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
 
     logger.info('reading VCF data from ' + vcfFileName)
     t = time.time()
-    vcfData = readVCFFile(vcfFileName, myVCFMetadataLines, chromosomes)
+    #vcfData = readVCFFile(vcfFileName, myVCFMetadataLines, chromosomes)
+    vcfData = newReadVCFFile(vcfFileName, myVCFMetadataLines, chromosomes, 100, phased)
     elapsed_time = time.time() - t
     logger.info('elapsed time in readVCFFile() ' + str(elapsed_time))
 
@@ -358,6 +356,51 @@ def calculateLikelihood(pathCoocs, p1, n, k, includePathogenicVariants):
 
     return dataPerVus
 
+def newReadVCFFile(fileName, numMetaDataLines, chromosomes, chunkSize, phased):
+    # read in chunks of size chunkSize bytes
+    df_chunk = pandas.read_csv(fileName, sep='\t', skiprows=numMetaDataLines, header=0, na_filter=False, engine='c',
+    chunksize=chunkSize, iterator=True)
+
+    chunk_list = []  # append each chunk df here
+
+    # Each chunk is in df format
+    n = 0
+    for chunk in df_chunk:
+        # perform data filtering
+        logger.debug('reading chunk ' + str(n))
+        if phased:
+            chunk.replace('0|0', '0', inplace=True)
+            chunk.replace('0|1', '1', inplace=True)
+            chunk.replace('1|0', '2', inplace=True)
+            chunk.replace('1|1', '3', inplace=True)
+        else:
+            chunk.replace('0/0', '0', inplace=True)
+            chunk.replace('0/1', '1', inplace=True)
+            chunk.replace('1/0', '2', inplace=True)
+            chunk.replace('1/1', '3', inplace=True)
+
+        '''chunk[chunk == '0|0'] = '0'
+        chunk[chunk == '0|1'] = '1'
+        chunk[chunk == '1|0'] = '2'
+        chunk[chunk == '1|1'] = '3'''
+
+        # Once the data filtering is done, append the chunk to list
+        chunk_list.append(chunk)
+        n += 1
+
+    # concat the list into dataframe
+    df = pandas.concat(chunk_list)
+    df.columns = df.columns.str.replace('#', '')
+    if not is_numeric_dtype(df['CHROM']):
+        df['CHROM'] = df['CHROM'].str.replace('chr', '')
+        df['CHROM'] = pandas.to_numeric(df['CHROM'])
+    chromsDF = df[df.CHROM.isin(chromosomes)]
+    # the index in the above operation is no longer contiguous from 0, so we need to reset for future operations on df
+    chromsDF.index = np.arange(0, len(chromsDF))
+
+    return chromsDF
+
+
 
 def readVCFFile(fileName, numMetaDataLines, chromosomes):
     # #CHROM  POS             ID      REF     ALT     QUAL    FILTER  INFO            FORMAT  0000057940      0000057950
@@ -365,7 +408,9 @@ def readVCFFile(fileName, numMetaDataLines, chromosomes):
     # 0/0 => does not have variant on either chromosome (homozygous negative)
     # 0/1  => has variant on 1 chromosome (heterozygous positive)
     # 1/1 =>  has variant on both chromosomes (homozygous positive)
-    df = pandas.read_csv(fileName, sep='\t', skiprows=numMetaDataLines, dtype={'POS':int}, header=0)
+    # dtype={'POS':int}
+    df = pandas.read_csv(fileName, sep='\t', skiprows=numMetaDataLines, header=0, na_filter=False, engine='c')
+
     # this creates a bug: df = df[df.apply(lambda r: r.str.contains('1/1').any() or r.str.contains('0/1').any(), axis=1)]
     # filter chromosomes in CHROMOSOMES here
     df.columns = df.columns.str.replace('#', '')
