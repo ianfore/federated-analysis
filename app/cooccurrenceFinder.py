@@ -114,6 +114,8 @@ def main():
 
     parser.add_argument("--t", dest="t", help="Thread count. Default 1", default=1)
 
+    parser.add_argument("--l", dest="l", help="Number of lines to read at a time from VCF. Default 1000", default=1000)
+
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" %
                                                        defaultLogLevel, default=defaultLogLevel)
 
@@ -145,16 +147,17 @@ def main():
     t_options = int(options.t)
     h_options = int(options.h)
     e_options = int(options.e)
+    l_options = int(options.l)
 
     run(h_options, e_options, c_options, g_options, p_options, DATA_DIR + options.vcf_filename,
-        DATA_DIR + options.output_filename, t_options, s_options, i_options, a_options)
+        DATA_DIR + options.output_filename, t_options, s_options, i_options, a_options, l_options)
 
 
 def printUsage(args):
     sys.stderr.write('cooccurrenceFinder.py <genome-version> <ensembl-release> "[chr list]" "[gene list] True|False')
 
 def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outputFileName, threadCount,
-        saveVarsPerIndivid, includePaths, calculateAlleleFreqs):
+        saveVarsPerIndivid, includePaths, calculateAlleleFreqs, chunkSize):
 
     logger.info('hgversion = ' + str(hgVersion))
     logger.info('ensembl = ' + str(ensemblRelease))
@@ -164,6 +167,7 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
     logger.info('input vcf = ' + str(vcfFileName))
     logger.info('output json = ' + str(outputFileName))
     logger.info('thread count = ' + str(threadCount))
+    logger.info('chunk size = ' + str(chunkSize))
     logger.info('save variants per individ = ' + str(saveVarsPerIndivid))
     logger.info('include pathogenic variants in output = ' +  str(includePaths))
 
@@ -179,7 +183,7 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
     logger.info('reading VCF data from ' + vcfFileName)
     t = time.time()
     #vcfData = readVCFFile(vcfFileName, myVCFMetadataLines, chromosomes)
-    vcfData = newReadVCFFile(vcfFileName, myVCFMetadataLines, chromosomes, 100, phased)
+    vcfData = newReadVCFFile(vcfFileName, myVCFMetadataLines, chromosomes, chunkSize, phased)
     elapsed_time = time.time() - t
     logger.info('elapsed time in readVCFFile() ' + str(elapsed_time))
 
@@ -367,6 +371,7 @@ def newReadVCFFile(fileName, numMetaDataLines, chromosomes, chunkSize, phased):
     n = 0
     for chunk in df_chunk:
         # perform data filtering
+        startTime = time.time()
         logger.debug('reading chunk ' + str(n))
         if phased:
             chunk.replace('0|0', '0', inplace=True)
@@ -374,6 +379,10 @@ def newReadVCFFile(fileName, numMetaDataLines, chromosomes, chunkSize, phased):
             chunk.replace('1|0', '2', inplace=True)
             chunk.replace('1|1', '3', inplace=True)
         else:
+            '''chunk[chunk == '0/0'] = '0'
+            chunk[chunk == '0/1'] = '1'
+            chunk[chunk == '1/0'] = '2'
+            chunk[chunk == '1/1'] = '3'''''
             chunk.replace('0/0', '0', inplace=True)
             chunk.replace('0/1', '1', inplace=True)
             chunk.replace('1/0', '2', inplace=True)
@@ -387,6 +396,8 @@ def newReadVCFFile(fileName, numMetaDataLines, chromosomes, chunkSize, phased):
         # Once the data filtering is done, append the chunk to list
         chunk_list.append(chunk)
         n += 1
+        endTime = time.time()
+        logger.debug('chunk took ' + str(endTime - startTime))
 
     # concat the list into dataframe
     df = pandas.concat(chunk_list)
@@ -486,10 +497,11 @@ def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, skipCol
         variantsPerIndividual[individual]['pathogenic'] = list()
         variantsPerIndividual[individual]['vus'] = list()
 
-        if phased:
+        '''if phased:
             includeList = ['1|0', '0|1', '1|1']
         else:
-            includeList = ['1/0', '0/1', '1/1']
+            includeList = ['1/0', '0/1', '1/1']'''
+        includeList = ['1', '2','3']
 
         listOfVariantIndices = list()
         for x in includeList:
