@@ -36,13 +36,18 @@ def countColumnsAndMetaRows(fileName):
             if line.startswith('##'):
                 metaRowCount += 1
             elif line.startswith('#CHROM'):
+                # find number of cols before first sample ID
                 if 'FORMAT' in line:
                     preIDcolumnCount = 9
                 else:
                     preIDcolumnCount = 8
+                # count total columns
+                totalColumns = len(line.split('\t')) + 1
                 break
+
+
     f.close()
-    return metaRowCount, preIDcolumnCount
+    return metaRowCount, preIDcolumnCount, totalColumns
 
 
 classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely benign' ],
@@ -116,6 +121,8 @@ def main():
 
     parser.add_argument("--l", dest="l", help="Number of lines to read at a time from VCF. Default 1000", default=1000)
 
+    parser.add_argument("--w", dest="l", help="Number of columns to read at a time from VCF. Default 1000", default=1000)
+
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" %
                                                        defaultLogLevel, default=defaultLogLevel)
 
@@ -148,16 +155,14 @@ def main():
     h_options = int(options.h)
     e_options = int(options.e)
     l_options = int(options.l)
+    w_options = int(options.w)
 
     run(h_options, e_options, c_options, g_options, p_options, DATA_DIR + options.vcf_filename,
-        DATA_DIR + options.output_filename, t_options, s_options, i_options, a_options, l_options)
+        DATA_DIR + options.output_filename, t_options, s_options, i_options, a_options, l_options, w_options)
 
-
-def printUsage(args):
-    sys.stderr.write('cooccurrenceFinder.py <genome-version> <ensembl-release> "[chr list]" "[gene list] True|False')
 
 def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outputFileName, threadCount,
-        saveVarsPerIndivid, includePaths, calculateAlleleFreqs, chunkSize):
+        saveVarsPerIndivid, includePaths, calculateAlleleFreqs, chunkSize, width):
 
     logger.info('hgversion = ' + str(hgVersion))
     logger.info('ensembl = ' + str(ensemblRelease))
@@ -171,7 +176,7 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
     logger.info('save variants per individ = ' + str(saveVarsPerIndivid))
     logger.info('include pathogenic variants in output = ' +  str(includePaths))
 
-    myVCFMetadataLines, myVCFskipCols = countColumnsAndMetaRows(vcfFileName)
+    skipLines, skipCols, totalCols = countColumnsAndMetaRows(vcfFileName)
 
     logger.info('reading BRCA data from ' + brcaFileName)
     t = time.time()
@@ -183,7 +188,15 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
     logger.info('reading VCF data from ' + vcfFileName)
     t = time.time()
     #vcfData = readVCFFile(vcfFileName, myVCFMetadataLines, chromosomes)
-    vcfData = newReadVCFFile(vcfFileName, myVCFMetadataLines, chromosomes, chunkSize, phased)
+    numIterations = int((totalCols - skipCols) / width)
+    for i in range(numIterations):
+        logger.debug('iteration ' + str(i))
+        if i == 0:
+            vcfData = newReadVCFFile(vcfFileName, skipLines, chromosomes, chunkSize, phased, skipCols, i, width, totalCols)
+        else:
+            vcfData = pandas.merge(vcfData, newReadVCFFile(vcfFileName, skipLines, chromosomes, chunkSize, phased,
+                                                         skipCols, i, width, totalCols))
+
     elapsed_time = time.time() - t
     logger.info('elapsed time in readVCFFile() ' + str(elapsed_time))
 
@@ -195,7 +208,7 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
     pool = ThreadPool(processes=threadCount)
     for i in range(threadCount):
         results.append(pool.apply_async(findVariantsPerIndividual, args=(vcfData, benignVariants, pathogenicVariants,
-                                                                 myVCFskipCols, threadCount, i, phased)))
+                                                                 skipCols, threadCount, i, phased)))
     for result in results:
         result.wait()
         variantsPerIndividual.update(result.get())
@@ -360,17 +373,32 @@ def calculateLikelihood(pathCoocs, p1, n, k, includePathogenicVariants):
 
     return dataPerVus
 
-def newReadVCFFile(fileName, numMetaDataLines, chromosomes, chunkSize, phased):
+def newReadVCFFile(fileName, numMetaDataLines, chromosomes, chunkSize, phased, skipCols, iteration, width, totalCols):
     # read in chunks of size chunkSize bytes
+
+    # TODO parallelize by usecols = [0, 1, 2, 3, 4, 5, 6, ..., n/2], [0, 1, 2, 3, 4, 5, 6, n/2 + 1, n/2 + 2, ..., n]
+    print('total cols = ' + str(totalCols))
+    if width != 0:
+        start = (skipCols) + iteration * width
+        if start > totalCols - skipCols:
+            return None
+        end = start + width
+        if end >= totalCols:
+            end = totalCols-1
+        thisIterationCols = [i for i in range(skipCols)] + [j for j in range(start, end)]
+    else:
+        start = 0
+        end = totalCols
+        thisIterationCols = [i for i in range(end-1)]
+
     df_chunk = pandas.read_csv(fileName, sep='\t', skiprows=numMetaDataLines, header=0, na_filter=False, engine='c',
-    chunksize=chunkSize, iterator=True)
+    chunksize=chunkSize, iterator=True, usecols=thisIterationCols)
 
-    chunk_list = []  # append each chunk df here
 
-    # Each chunk is in df format
+    df = pandas.DataFrame()
+
     n = 0
     for chunk in df_chunk:
-        # perform data filtering
         startTime = time.time()
         logger.debug('reading chunk ' + str(n))
         if phased:
@@ -379,38 +407,38 @@ def newReadVCFFile(fileName, numMetaDataLines, chromosomes, chunkSize, phased):
             chunk.replace('1|0', '2', inplace=True)
             chunk.replace('1|1', '3', inplace=True)
         else:
-            #chunk[chunk == '0/0'] = '0'
-            #chunk[chunk == '0/1'] = '1'
-            #chunk[chunk == '1/0'] = '2'
-            #chunk[chunk == '1/1'] = '3'
 
             chunk.replace('0/0', '0', inplace=True)
             chunk.replace('0/1', '1', inplace=True)
             chunk.replace('1/0', '2', inplace=True)
             chunk.replace('1/1', '3', inplace=True)
 
+        df = pandas.concat([df, chunk])
 
-        # Once the data filtering is done, append the chunk to list
-        chunk_list.append(chunk)
         n += 1
         endTime = time.time()
         logger.debug('chunk took ' + str(endTime - startTime))
-
-    # concat the list into dataframe
-    df = pandas.concat(chunk_list)
 
     df.columns = df.columns.str.replace('#', '')
 
     if not is_numeric_dtype(df['CHROM']):
         df['CHROM'] = df['CHROM'].str.replace('chr', '')
-        df['CHROM'] = pandas.to_numeric(df['CHROM'])
-    chromsDF = df[df.CHROM.isin(chromosomes)]
+        #df['CHROM'] = pandas.to_numeric(df['CHROM'])
 
+    df = df[df.CHROM.isin(chromosomes)]
+
+    df.drop(columns=['ID', 'QUAL', 'FILTER', 'INFO', 'FORMAT'], inplace=True)
 
     # the index in the above operation is no longer contiguous from 0, so we need to reset for future operations on df
-    chromsDF.index = np.arange(0, len(chromsDF))
+    df.index = np.arange(0, len(df))
 
-    return chromsDF
+    # add id field to this DF
+    df.insert(0, 'myid', [i for i in range(len(df))], True)
+
+    # if this is first df, then return all of it.  if it is subsequent df's, only return the new columns
+    return df
+
+
 
 
 
