@@ -121,7 +121,7 @@ def main():
 
     parser.add_argument("--l", dest="l", help="Number of lines to read at a time from VCF. Default 1000", default=1000)
 
-    parser.add_argument("--w", dest="l", help="Number of columns to read at a time from VCF. Default 1000", default=1000)
+    parser.add_argument("--w", dest="w", help="Number of columns to read at a time from VCF. Default 1000", default=1000)
 
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" %
                                                        defaultLogLevel, default=defaultLogLevel)
@@ -188,7 +188,7 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
     logger.info('reading VCF data from ' + vcfFileName)
     t = time.time()
     #vcfData = readVCFFile(vcfFileName, myVCFMetadataLines, chromosomes)
-    numIterations = int((totalCols - skipCols) / width)
+    numIterations = max(int((totalCols - skipCols) / width), 1)
     for i in range(numIterations):
         logger.debug('iteration ' + str(i))
         if i == 0:
@@ -196,14 +196,15 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
         else:
             vcfData = pandas.merge(vcfData, newReadVCFFile(vcfFileName, skipLines, chromosomes, chunkSize, phased,
                                                          skipCols, i, width, totalCols))
-
+    # update skipCols -> dropped 5 columns and added 1 in newReadVCFFile()
+    skipCols = skipCols - 4
     elapsed_time = time.time() - t
     logger.info('elapsed time in readVCFFile() ' + str(elapsed_time))
 
 
     logger.info('finding variants per individual')
     t = time.time()
-    results = list()
+    '''results = list()
     variantsPerIndividual = dict()
     pool = ThreadPool(processes=threadCount)
     for i in range(threadCount):
@@ -211,7 +212,8 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
                                                                  skipCols, threadCount, i, phased)))
     for result in results:
         result.wait()
-        variantsPerIndividual.update(result.get())
+        variantsPerIndividual.update(result.get())'''
+    variantsPerIndividual = findVariantsPerIndividual(vcfData, benignVariants, pathogenicVariants, skipCols, threadCount, i, phased)
     elapsed_time = time.time() - t
     logger.info('elapsed time in findVariantsPerIndividual() ' + str(elapsed_time))
 
@@ -377,11 +379,8 @@ def newReadVCFFile(fileName, numMetaDataLines, chromosomes, chunkSize, phased, s
     # read in chunks of size chunkSize bytes
 
     # TODO parallelize by usecols = [0, 1, 2, 3, 4, 5, 6, ..., n/2], [0, 1, 2, 3, 4, 5, 6, n/2 + 1, n/2 + 2, ..., n]
-    print('total cols = ' + str(totalCols))
     if width != 0:
         start = (skipCols) + iteration * width
-        if start > totalCols - skipCols:
-            return None
         end = start + width
         if end >= totalCols:
             end = totalCols-1
