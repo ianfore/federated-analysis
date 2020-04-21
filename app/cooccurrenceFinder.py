@@ -115,7 +115,7 @@ def main():
 
     parser.add_argument("--i", dest="i", help="Include pathog vars per VUS in report. Default=False", default='False')
 
-    parser.add_argument("--a", dest="a", help="calculate allele freqs for homozygous. Default=False", default='Truev')
+    parser.add_argument("--a", dest="a", help="calculate allele freqs for homozygous. Default=False", default='True')
 
     parser.add_argument("--t", dest="t", help="Thread count. Default 1", default=1)
 
