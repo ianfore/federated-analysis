@@ -115,7 +115,7 @@ def main():
 
     parser.add_argument("--i", dest="i", help="Include pathog vars per VUS in report. Default=False", default='False')
 
-    parser.add_argument("--a", dest="a", help="calculate allele freqs for homozygous. Default=False", default='False')
+    parser.add_argument("--a", dest="a", help="calculate allele freqs for homozygous. Default=False", default='Truev')
 
     parser.add_argument("--t", dest="t", help="Thread count. Default 1", default=1)
 
@@ -291,7 +291,9 @@ def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelea
     homoZygousPerVus = defaultdict(list)
     for individual in variantsPerIndividual:
         for vus in variantsPerIndividual[individual]['vus']:
-            if (vus[1] == '1|1' or vus[1] == '1/1') and (getGenesForVariant(vus[0], ensemblRelease, genesOfInterest)):
+            #if (vus[1] == '1|1' or vus[1] == '1/1') and (getGenesForVariant(vus[0], ensemblRelease, genesOfInterest)):
+            if (vus[1] == '3' or vus[1] == '3') and (getGenesForVariant(vus[0], ensemblRelease, genesOfInterest)):
+
                 if str(vus) not in homoZygousPerVus:
                     homoZygousPerVus[str(vus)].append(0)
                     maxFreq = getGnomadData(brcaDF, vus, hgVersion)
@@ -497,16 +499,16 @@ def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, skipCol
     # 0|0 => neither paternal nor maternal have variant
     variantsPerIndividual = dict()
     numColumns = len(vcfDF.columns)
-    numIndividuals = len(vcfDF.columns) - skipCols
+    '''numIndividuals = len(vcfDF.columns) - skipCols
     partitionSize = int(numIndividuals / nThreads)
     start = threadID * partitionSize + skipCols
     if threadID == nThreads - 1:
         end = numColumns
     else:
-        end = skipCols + start + partitionSize
+        end = skipCols + start + partitionSize'''
 
     # get list of individuals
-    individuals = vcfDF.columns[start:end]
+    individuals = vcfDF.columns[skipCols:]
 
     # iterate through columns (not rows! iterows() takes 20x longer b/c pandas are stored column-major)
     for individual in individuals:
@@ -528,14 +530,14 @@ def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, skipCol
         for i in listOfVariantIndices:
             try:
                 var = (int(vcfDF.loc[i, 'CHROM']), int(vcfDF.loc[i, 'POS']), str(vcfDF.loc[i, 'REF']), str(vcfDF.loc[i, 'ALT']))
-                alleles = vcfDF.loc[i, individual]
+                genotype = vcfDF.loc[i, individual]
                 if var in benignVariants:
-                    variantsPerIndividual[individual]['benign'].append((var, alleles))
+                    variantsPerIndividual[individual]['benign'].append((var, genotype))
                 elif var in pathogenicVariants:
-                    variantsPerIndividual[individual]['pathogenic'].append((var, alleles))
+                    variantsPerIndividual[individual]['pathogenic'].append((var, genotype))
                 # if not a known VUS, it is a VUS now
                 else:
-                    variantsPerIndividual[individual]['vus'].append((var, alleles))
+                    variantsPerIndividual[individual]['vus'].append((var, genotype))
             except Exception as e:
                 logger.error("exception for index " + str(i) + " of individual " + str(individual))
                 continue
