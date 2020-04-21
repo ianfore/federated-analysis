@@ -157,24 +157,14 @@ def main():
     l_options = int(options.l)
     w_options = int(options.w)
 
+    print(options)
+
     run(h_options, e_options, c_options, g_options, p_options, DATA_DIR + options.vcf_filename,
         DATA_DIR + options.output_filename, t_options, s_options, i_options, a_options, l_options, w_options)
 
 
 def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outputFileName, threadCount,
         saveVarsPerIndivid, includePaths, calculateAlleleFreqs, chunkSize, width):
-
-    logger.info('hgversion = ' + str(hgVersion))
-    logger.info('ensembl = ' + str(ensemblRelease))
-    logger.info('chroms = ' + str(chromosomes))
-    logger.info('genes = ' + str(genes))
-    logger.info('phased = ' + str(phased))
-    logger.info('input vcf = ' + str(vcfFileName))
-    logger.info('output json = ' + str(outputFileName))
-    logger.info('thread count = ' + str(threadCount))
-    logger.info('chunk size = ' + str(chunkSize))
-    logger.info('save variants per individ = ' + str(saveVarsPerIndivid))
-    logger.info('include pathogenic variants in output = ' +  str(includePaths))
 
     skipLines, skipCols, totalCols = countColumnsAndMetaRows(vcfFileName)
 
@@ -422,7 +412,7 @@ def newReadVCFFile(fileName, numMetaDataLines, chromosomes, chunkSize, phased, s
 
     if not is_numeric_dtype(df['CHROM']):
         df['CHROM'] = df['CHROM'].str.replace('chr', '')
-        #df['CHROM'] = pandas.to_numeric(df['CHROM'])
+        df['CHROM'] = pandas.to_numeric(df['CHROM'])
 
     df = df[df.CHROM.isin(chromosomes)]
 
