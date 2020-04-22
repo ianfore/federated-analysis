@@ -175,9 +175,11 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
     elapsed_time = time.time() - t
     logger.info('elapsed time in findVariantsInBRCA() ' + str(elapsed_time))
 
+
+    # TODO consider writing each iteration output to disk rather than merging in memory, and then read from all
+    # the output files to reconstruct the df
     logger.info('reading VCF data from ' + vcfFileName)
     t = time.time()
-    #vcfData = readVCFFile(vcfFileName, myVCFMetadataLines, chromosomes)
     numIterations = max(int((totalCols - skipCols) / width), 1)
     for i in range(numIterations):
         logger.debug('iteration ' + str(i))
@@ -203,7 +205,7 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
     for result in results:
         result.wait()
         variantsPerIndividual.update(result.get())'''
-    variantsPerIndividual = findVariantsPerIndividual(vcfData, benignVariants, pathogenicVariants, skipCols, threadCount, i, phased)
+    variantsPerIndividual = findVariantsPerIndividual(vcfData, benignVariants, pathogenicVariants, skipCols, threadCount, i)
     elapsed_time = time.time() - t
     logger.info('elapsed time in findVariantsPerIndividual() ' + str(elapsed_time))
 
@@ -292,7 +294,7 @@ def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelea
     for individual in variantsPerIndividual:
         for vus in variantsPerIndividual[individual]['vus']:
             #if (vus[1] == '1|1' or vus[1] == '1/1') and (getGenesForVariant(vus[0], ensemblRelease, genesOfInterest)):
-            if (vus[1] == '3' or vus[1] == '3') and (getGenesForVariant(vus[0], ensemblRelease, genesOfInterest)):
+            if (vus[1] == '3') and (getGenesForVariant(vus[0], ensemblRelease, genesOfInterest)):
 
                 if str(vus) not in homoZygousPerVus:
                     homoZygousPerVus[str(vus)].append(0)
@@ -410,15 +412,21 @@ def newReadVCFFile(fileName, numMetaDataLines, chromosomes, chunkSize, phased, s
         endTime = time.time()
         logger.debug('chunk took ' + str(endTime - startTime))
 
+
+    df.drop(columns=['ID', 'QUAL', 'FILTER', 'INFO', 'FORMAT'], inplace=True)
+
     df.columns = df.columns.str.replace('#', '')
 
     if not is_numeric_dtype(df['CHROM']):
         df['CHROM'] = df['CHROM'].str.replace('chr', '')
-        df['CHROM'] = pandas.to_numeric(df['CHROM'])
-
+        # df['CHROM'] = pandas.to_numeric(df['CHROM'])
+    df['CHROM'] = pandas.to_numeric(df['CHROM'], downcast='integer')
+    df['POS'] = pandas.to_numeric(df['POS'], downcast='integer')
     df = df[df.CHROM.isin(chromosomes)]
 
-    df.drop(columns=['ID', 'QUAL', 'FILTER', 'INFO', 'FORMAT'], inplace=True)
+    #df = df.astype({'CHROM': 'int8'})
+    #df = df.astype({'POS': 'int32'})
+
 
     # the index in the above operation is no longer contiguous from 0, so we need to reset for future operations on df
     df.index = np.arange(0, len(df))
@@ -449,12 +457,15 @@ def readVCFFile(fileName, numMetaDataLines, chromosomes):
     #if df.CHROM.dtype is not int:
     if not is_numeric_dtype(df['CHROM']):
         df['CHROM'] = df['CHROM'].str.replace('chr', '')
-        df['CHROM'] = pandas.to_numeric(df['CHROM'])
-    chromsDF = df[df.CHROM.isin(chromosomes)]
+        #df['CHROM'] = pandas.to_numeric(df['CHROM'])
+    df['CHROM'] = pandas.to_numeric(df['CHROM'])
+    df = df[df.CHROM.isin(chromosomes)]
+    df.astype({'CHROM': 'int8'})
+    df.astype({'POS': 'int32'})
     # the index in the above operation is no longer contiguous from 0, so we need to reset for future operations on df
-    chromsDF.index = np.arange(0, len(chromsDF))
+    df.index = np.arange(0, len(df))
 
-    return chromsDF
+    return df
 
 def findVariantsInBRCA(fileName, classStrings, hgVersion):
     brcaDF = pandas.read_csv(fileName, sep='\t', header=0, dtype=str)
@@ -484,7 +495,7 @@ def findVariantsInBRCA(fileName, classStrings, hgVersion):
     return brcaDF, pathVars, benignVars, vusVars
 
 
-def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, skipCols, nThreads, threadID, phased):
+def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, skipCols, nThreads, threadID):
 
     # find mutations
     # CHROM  POS             ID      REF     ALT     QUAL    FILTER  INFO            FORMAT  0000057940      0000057950
@@ -517,10 +528,6 @@ def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, skipCol
         variantsPerIndividual[individual]['pathogenic'] = list()
         variantsPerIndividual[individual]['vus'] = list()
 
-        '''if phased:
-            includeList = ['1|0', '0|1', '1|1']
-        else:
-            includeList = ['1/0', '0/1', '1/1']'''
         includeList = ['1', '2','3']
 
         listOfVariantIndices = list()
