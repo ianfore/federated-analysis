@@ -119,9 +119,9 @@ def main():
 
     parser.add_argument("--t", dest="t", help="Thread count. Default 1", default=1)
 
-    parser.add_argument("--l", dest="l", help="Number of lines to read at a time from VCF. Default 1000", default=100)
+    parser.add_argument("--l", dest="l", help="Number of lines to read at a time from VCF. Default 1000", default=0)
 
-    parser.add_argument("--w", dest="w", help="Number of columns to read at a time from VCF. Default 1000", default=0)
+    parser.add_argument("--w", dest="w", help="Number of columns to read at a time from VCF. Default 1000", default=100)
 
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" %
                                                        defaultLogLevel, default=defaultLogLevel)
