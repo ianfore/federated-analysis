@@ -452,14 +452,16 @@ def readVCFFile(fileName, numMetaDataLines, chromosomes):
 
 def readVCF(fileName, chromosomes):
     # first read vcf into dict
-    logger.info('reading VCF data from  ' + fileName)
     callset = allel.read_vcf(fileName)
 
     # create df with no columns
     df = pandas.DataFrame()
 
+    logger.debug('adding chrom,pos,ref,alt to df')
     # create list of CHROM from vcf
     chroms = list(callset['variants/CHROM'])
+    chroms = [c.replace('chr','') for c in chroms]
+
     chroms = [int(c) for c in chroms]
 
     # insert CHROM list as col 0
@@ -549,8 +551,6 @@ def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, skipCol
         listOfVariantIndices = list()
         for x in includeList:
             listOfVariantIndices += list(np.where(vcfDF[individual] == x)[0])
-
-        logger.debug('number of  variants = ' + str(len(listOfVariantIndices)))
 
         for i in listOfVariantIndices:
             try:
