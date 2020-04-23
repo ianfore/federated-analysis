@@ -12,6 +12,7 @@ import os
 from pandas.api.types import is_numeric_dtype
 import argparse
 import logging
+import allel
 
 
 logger = logging.getLogger()
@@ -176,10 +177,13 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
     logger.info('elapsed time in findVariantsInBRCA() ' + str(elapsed_time))
 
 
-    # TODO consider writing each iteration output to disk rather than merging in memory, and then read from all
     # the output files to reconstruct the df
     logger.info('reading VCF data from ' + vcfFileName)
     t = time.time()
+
+    # set to arbitrarily high number if set to 0
+    '''if width == 0:
+        width=1000000
     numIterations = max(int((totalCols - skipCols) / width), 1)
     for i in range(numIterations):
         logger.debug('iteration ' + str(i))
@@ -189,9 +193,11 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
             vcfData = pandas.merge(vcfData, newReadVCFFile(vcfFileName, skipLines, chromosomes, chunkSize, phased,
                                                          skipCols, i, width, totalCols))
     # update skipCols -> dropped 5 columns and added 1 in newReadVCFFile()
-    skipCols = skipCols - 4
+    skipCols = skipCols - 4'''
+    vcfData = readVCF(vcfFileName, chromosomes)
     elapsed_time = time.time() - t
     logger.info('elapsed time in readVCFFile() ' + str(elapsed_time))
+
 
 
     logger.info('finding variants per individual')
@@ -230,9 +236,6 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
         variantsPerIndividual = json.load(f, cls=NpDecoder)
     f.close()'''
 
-
-    # TODO make this multi-threaded (cpu is pegged at 99% for this method)
-    # TODO or figure out vectorization!
     logger.info('finding individuals per cooc')
     t = time.time()
     individualsPerPathogenicCooccurrence, n, k = findIndividualsPerCooccurrence(variantsPerIndividual, ensemblRelease,
@@ -240,7 +243,6 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
     elapsed_time = time.time() - t
     logger.info('elapsed time in findIndividualsPerCooccurrence() ' + str(elapsed_time))
 
-    # TODO make the program idempotent (save/read data frames and take cli arg to figure out)
     # p1 = P(VUS is benign and patient carries a pathogenic variant in trans)
     numBenignWithPath = 0
     for cooc in individualsPerPathogenicCooccurrence:
@@ -291,6 +293,7 @@ def getGnomadData(brcaDF, vus, hgVersion):
 # TODO merge this method with findVariantsPerIndividual()
 def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, genesOfInterest):
     homoZygousPerVus = defaultdict(list)
+
     for individual in variantsPerIndividual:
         for vus in variantsPerIndividual[individual]['vus']:
             #if (vus[1] == '1|1' or vus[1] == '1/1') and (getGenesForVariant(vus[0], ensemblRelease, genesOfInterest)):
@@ -466,6 +469,43 @@ def readVCFFile(fileName, numMetaDataLines, chromosomes):
     df.astype({'CHROM': 'int8'})
     df.astype({'POS': 'int32'})
     # the index in the above operation is no longer contiguous from 0, so we need to reset for future operations on df
+    df.index = np.arange(0, len(df))
+
+    return df
+
+
+def readVCF(fileName, chromosomes):
+    # first read vcf into dict
+    callset = allel.read_vcf(fileName)
+
+    # create df with no columns
+    df = pandas.DataFrame()
+
+    # create list of CHROM from vcf
+    chroms = list(callset['variants/CHROM'])
+
+    # insert CHROM list as col 0
+    df.insert(0, 'CHROM', chroms)
+
+    # repeat for POS, REF, ALT
+    df.insert(1, 'POS', list(callset['variants/POS']))
+    df.insert(2, 'REF', list(callset['variants/REF']))
+
+    alts=list()
+    for i in range(len(callset['variants/ALT'])):
+        alts.append(callset['variants/ALT'][i][0])
+    df.insert(3, 'ALT', alts)
+
+    # now add genotype data
+    for sample in range(len(callset['calldata/GT'][0])):
+        col = list()
+        name = callset['samples'][sample]
+        for variant in range(len(callset['calldata/GT'])):
+            col.append(str(callset['calldata/GT'][variant][sample][0] + callset['calldata/GT'][variant][sample][1]))
+        df.insert(sample + 4, name, col)
+
+    # now filter as before
+    df = df[df.CHROM.isin(chromosomes)]
     df.index = np.arange(0, len(df))
 
     return df

@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y \
     python3-dev 
 
 
-RUN pip3 install --no-cache-dir numpy pandas pandasql sklearn tabulate scipy pyensembl 
+RUN pip3 install --no-cache-dir numpy pandas pandasql sklearn tabulate scipy pyensembl scikit-allel
 
 RUN apt-get install software-properties-common -y
 
