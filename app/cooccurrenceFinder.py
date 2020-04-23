@@ -113,15 +113,15 @@ def main():
 
     parser.add_argument("--s", dest="s", help="Save variants per individual to file. Default=False", default='False')
 
-    parser.add_argument("--i", dest="i", help="Include pathog vars per VUS in report. Default=False", default='False')
+    parser.add_argument("--i", dest="i", help="Include pathog vars per VUS in report. Default=False", default='True')
 
     parser.add_argument("--a", dest="a", help="calculate allele freqs for homozygous. Default=False", default='True')
 
     parser.add_argument("--t", dest="t", help="Thread count. Default 1", default=1)
 
-    parser.add_argument("--l", dest="l", help="Number of lines to read at a time from VCF. Default 1000", default=1000)
+    parser.add_argument("--l", dest="l", help="Number of lines to read at a time from VCF. Default 1000", default=100)
 
-    parser.add_argument("--w", dest="w", help="Number of columns to read at a time from VCF. Default 1000", default=1000)
+    parser.add_argument("--w", dest="w", help="Number of columns to read at a time from VCF. Default 1000", default=0)
 
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" %
                                                        defaultLogLevel, default=defaultLogLevel)
@@ -384,33 +384,39 @@ def newReadVCFFile(fileName, numMetaDataLines, chromosomes, chunkSize, phased, s
         end = totalCols
         thisIterationCols = [i for i in range(end-1)]
 
-    df_chunk = pandas.read_csv(fileName, sep='\t', skiprows=numMetaDataLines, header=0, na_filter=False, engine='c',
-    chunksize=chunkSize, iterator=True, usecols=thisIterationCols)
+
+    if chunkSize == 0:
+        df = pandas.read_csv(fileName, sep='\t', skiprows=numMetaDataLines, header=0, na_filter=False, engine='c',
+                    usecols=thisIterationCols)
+
+    else:
+        df_chunk = pandas.read_csv(fileName, sep='\t', skiprows=numMetaDataLines, header=0, na_filter=False, engine='c',
+        chunksize=chunkSize, iterator=True, usecols=thisIterationCols)
 
 
-    df = pandas.DataFrame()
+        df = pandas.DataFrame()
 
-    n = 0
-    for chunk in df_chunk:
-        startTime = time.time()
-        logger.debug('reading chunk ' + str(n))
-        if phased:
-            chunk.replace('0|0', '0', inplace=True)
-            chunk.replace('0|1', '1', inplace=True)
-            chunk.replace('1|0', '2', inplace=True)
-            chunk.replace('1|1', '3', inplace=True)
-        else:
+        n = 0
+        for chunk in df_chunk:
+            startTime = time.time()
+            logger.debug('reading chunk ' + str(n))
+            if phased:
+                chunk.replace('0|0', '0', inplace=True)
+                chunk.replace('0|1', '1', inplace=True)
+                chunk.replace('1|0', '2', inplace=True)
+                chunk.replace('1|1', '3', inplace=True)
+            else:
 
-            chunk.replace('0/0', '0', inplace=True)
-            chunk.replace('0/1', '1', inplace=True)
-            chunk.replace('1/0', '2', inplace=True)
-            chunk.replace('1/1', '3', inplace=True)
+                chunk.replace('0/0', '0', inplace=True)
+                chunk.replace('0/1', '1', inplace=True)
+                chunk.replace('1/0', '2', inplace=True)
+                chunk.replace('1/1', '3', inplace=True)
 
-        df = pandas.concat([df, chunk])
+            df = pandas.concat([df, chunk])
 
-        n += 1
-        endTime = time.time()
-        logger.debug('chunk took ' + str(endTime - startTime))
+            n += 1
+            endTime = time.time()
+            logger.debug('chunk took ' + str(endTime - startTime))
 
 
     df.drop(columns=['ID', 'QUAL', 'FILTER', 'INFO', 'FORMAT'], inplace=True)
@@ -436,9 +442,6 @@ def newReadVCFFile(fileName, numMetaDataLines, chromosomes, chunkSize, phased, s
 
     # if this is first df, then return all of it.  if it is subsequent df's, only return the new columns
     return df
-
-
-
 
 
 def readVCFFile(fileName, numMetaDataLines, chromosomes):
