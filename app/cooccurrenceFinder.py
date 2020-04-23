@@ -177,23 +177,8 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
     logger.info('elapsed time in findVariantsInBRCA() ' + str(elapsed_time))
 
 
-    # the output files to reconstruct the df
     logger.info('reading VCF data from ' + vcfFileName)
     t = time.time()
-
-    # set to arbitrarily high number if set to 0
-    '''if width == 0:
-        width=1000000
-    numIterations = max(int((totalCols - skipCols) / width), 1)
-    for i in range(numIterations):
-        logger.debug('iteration ' + str(i))
-        if i == 0:
-            vcfData = newReadVCFFile(vcfFileName, skipLines, chromosomes, chunkSize, phased, skipCols, i, width, totalCols)
-        else:
-            vcfData = pandas.merge(vcfData, newReadVCFFile(vcfFileName, skipLines, chromosomes, chunkSize, phased,
-                                                         skipCols, i, width, totalCols))
-    # update skipCols -> dropped 5 columns and added 1 in newReadVCFFile()
-    skipCols = skipCols - 4'''
     vcfData = readVCF(vcfFileName, chromosomes)
     elapsed_time = time.time() - t
     logger.info('elapsed time in readVCFFile() ' + str(elapsed_time))
@@ -202,22 +187,13 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
 
     logger.info('finding variants per individual')
     t = time.time()
-    '''results = list()
-    variantsPerIndividual = dict()
-    pool = ThreadPool(processes=threadCount)
-    for i in range(threadCount):
-        results.append(pool.apply_async(findVariantsPerIndividual, args=(vcfData, benignVariants, pathogenicVariants,
-                                                                 skipCols, threadCount, i, phased)))
-    for result in results:
-        result.wait()
-        variantsPerIndividual.update(result.get())'''
-    variantsPerIndividual = findVariantsPerIndividual(vcfData, benignVariants, pathogenicVariants, skipCols, threadCount, i)
+    variantsPerIndividual = findVariantsPerIndividual(vcfData, benignVariants, pathogenicVariants, skipCols)
     elapsed_time = time.time() - t
     logger.info('elapsed time in findVariantsPerIndividual() ' + str(elapsed_time))
 
     if calculateAlleleFreqs:
         # find vus with genotype 1|1
-        # TODO de-dup these!!
+        # TODO de-dup these?
         logger.info('finding homozygous  individuals per vus')
         t = time.time()
         homozygousPerVus = countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, genes)
@@ -476,6 +452,7 @@ def readVCFFile(fileName, numMetaDataLines, chromosomes):
 
 def readVCF(fileName, chromosomes):
     # first read vcf into dict
+    logger.info('reading VCF data from  ' + fileName)
     callset = allel.read_vcf(fileName)
 
     # create df with no columns
@@ -483,6 +460,7 @@ def readVCF(fileName, chromosomes):
 
     # create list of CHROM from vcf
     chroms = list(callset['variants/CHROM'])
+    chroms = [int(c) for c in chroms]
 
     # insert CHROM list as col 0
     df.insert(0, 'CHROM', chroms)
@@ -497,6 +475,8 @@ def readVCF(fileName, chromosomes):
     df.insert(3, 'ALT', alts)
 
     # now add genotype data
+    logger.info('adding genotype data to df')
+
     for sample in range(len(callset['calldata/GT'][0])):
         col = list()
         name = callset['samples'][sample]
@@ -538,7 +518,7 @@ def findVariantsInBRCA(fileName, classStrings, hgVersion):
     return brcaDF, pathVars, benignVars, vusVars
 
 
-def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, skipCols, nThreads, threadID):
+def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, skipCols):
 
     # find mutations
     # CHROM  POS             ID      REF     ALT     QUAL    FILTER  INFO            FORMAT  0000057940      0000057950
@@ -552,14 +532,7 @@ def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, skipCol
     # 1|1 => both paternal and maternal have variant
     # 0|0 => neither paternal nor maternal have variant
     variantsPerIndividual = dict()
-    numColumns = len(vcfDF.columns)
-    '''numIndividuals = len(vcfDF.columns) - skipCols
-    partitionSize = int(numIndividuals / nThreads)
-    start = threadID * partitionSize + skipCols
-    if threadID == nThreads - 1:
-        end = numColumns
-    else:
-        end = skipCols + start + partitionSize'''
+
 
     # get list of individuals
     individuals = vcfDF.columns[skipCols:]
@@ -576,6 +549,8 @@ def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, skipCol
         listOfVariantIndices = list()
         for x in includeList:
             listOfVariantIndices += list(np.where(vcfDF[individual] == x)[0])
+
+        logger.debug('number of  variants = ' + str(len(listOfVariantIndices)))
 
         for i in listOfVariantIndices:
             try:
