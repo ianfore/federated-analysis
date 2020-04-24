@@ -110,7 +110,7 @@ def main():
 
     parser.add_argument("--g", dest="g", help="List of genes. Default=['BRCA1', 'BRCA2']", default=['BRCA1','BRCA2'])
 
-    parser.add_argument("--p", dest="p", help="Phased (boolean). Default=False", default='False')
+    parser.add_argument("--p", dest="p", help="Phased (boolean). Default=False", default='True')
 
     parser.add_argument("--s", dest="s", help="Save variants per individual to file. Default=False", default='False')
 
@@ -185,10 +185,10 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
 
 
 
-    logger.info('finding variants per individual')
+    logger.info('finding variants per individual in ' + vcfFileName)
     t = time.time()
     #variantsPerIndividual = findVariantsPerIndividual(vcfData, benignVariants, pathogenicVariants, skipCols=4)
-    variantsPerIndividual = findVarsPerIndividual(allel.read_vcf(vcfFileName), benignVariants, pathogenicVariants, chromosomes)
+    variantsPerIndividual = findVarsPerIndividual(vcfFileName, benignVariants, pathogenicVariants, chromosomes)
     elapsed_time = time.time() - t
     logger.info('elapsed time in findVariantsPerIndividual() ' + str(elapsed_time))
 
@@ -522,12 +522,16 @@ def readVCF(fileName, chromosomes):
 
     return df
 
-def findVarsPerIndividual(vcf, benignVariants, pathogenicVariants, chromosomes):
+def findVarsPerIndividual(vcfFileName, benignVariants, pathogenicVariants, chromosomes):
+    logger.debug('reading VCF file ' + vcfFileName)
+    vcf = allel.read_vcf(vcfFileName)
     variantsPerIndividual = dict()
 
     individuals = list(vcf['samples'])
 
+    logger.debug('looping through samples in VCF')
     for i in range(len(individuals)):
+        logger.debug('looking at individual ' + str(individuals[i]))
         variantsPerIndividual[individuals[i]] = dict()
         variantsPerIndividual[individuals[i]] = dict()
         variantsPerIndividual[individuals[i]]['benign'] = list()
