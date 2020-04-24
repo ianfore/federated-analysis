@@ -187,7 +187,8 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
 
     logger.info('finding variants per individual')
     t = time.time()
-    variantsPerIndividual = findVariantsPerIndividual(vcfData, benignVariants, pathogenicVariants, skipCols)
+    #variantsPerIndividual = findVariantsPerIndividual(vcfData, benignVariants, pathogenicVariants, skipCols=4)
+    variantsPerIndividual = findVarsPerIndividual(allel.read_vcf(vcfFileName), benignVariants, pathogenicVariants)
     elapsed_time = time.time() - t
     logger.info('elapsed time in findVariantsPerIndividual() ' + str(elapsed_time))
 
@@ -237,6 +238,34 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
     with open(outputFileName, 'w') as f:
         json.dump(jsonOutputList, f, cls=NpEncoder)
     f.close()
+
+def findVariantsInBRCA(fileName, classStrings, hgVersion):
+    brcaDF = pandas.read_csv(fileName, sep='\t', header=0, dtype=str)
+    # Genomic_Coordinate_hg37
+    # chr13:g.32972575:G>T
+    pathVars = set()
+    benignVars = set()
+    vusVars = set()
+    for i in range(len(brcaDF)):
+        # TODO use HGVS? problem is indel representation
+        # TODO VCF has standard of using left-most pos where HGVS has standard of using right-most pos for indel
+        # if cDNA (3' side or 5'?) => standard is using 5' strand
+        coord = brcaDF.loc[i, coordinateColumnBase + str(hgVersion)].split(':')
+        chrom = int(coord[0].split('chr')[1])
+        pos = int(coord[1].split('g.')[1])
+        ref, alt = coord[2].split('>')
+        var = (chrom, pos, ref, alt)
+        if str(brcaDF.loc[i, sigColName]) in classStrings['Pathogenic']:
+            pathVars.add(var)
+        elif str(brcaDF.loc[i, sigColName]) in classStrings['Benign']:
+            benignVars.add(var)
+        elif str(brcaDF.loc[i, sigColName]) in classStrings['Unknown']:
+            vusVars.add(var)
+        else:
+            continue
+
+    return brcaDF, pathVars, benignVars, vusVars
+
 
 def getGnomadData(brcaDF, vus, hgVersion):
     # TODO write a unit test
@@ -461,14 +490,15 @@ def readVCF(fileName, chromosomes):
     # create list of CHROM from vcf
     chroms = list(callset['variants/CHROM'])
     chroms = [c.replace('chr','') for c in chroms]
+    chromosomes = [str(c) for c in chromosomes]
 
-    chroms = [int(c) for c in chroms]
+    chroms = [str(c) for c in chroms]
 
     # insert CHROM list as col 0
     df.insert(0, 'CHROM', chroms)
 
     # repeat for POS, REF, ALT
-    df.insert(1, 'POS', list(callset['variants/POS']))
+    df.insert(1, 'POS', callset['variants/POS'])
     df.insert(2, 'REF', list(callset['variants/REF']))
 
     alts=list()
@@ -492,32 +522,34 @@ def readVCF(fileName, chromosomes):
 
     return df
 
-def findVariantsInBRCA(fileName, classStrings, hgVersion):
-    brcaDF = pandas.read_csv(fileName, sep='\t', header=0, dtype=str)
-    # Genomic_Coordinate_hg37
-    # chr13:g.32972575:G>T
-    pathVars = set()
-    benignVars = set()
-    vusVars = set()
-    for i in range(len(brcaDF)):
-        # TODO use HGVS? problem is indel representation
-        # TODO VCF has standard of using left-most pos where HGVS has standard of using right-most pos for indel
-        # if cDNA (3' side or 5'?) => standard is using 5' strand
-        coord = brcaDF.loc[i, coordinateColumnBase + str(hgVersion)].split(':')
-        chrom = int(coord[0].split('chr')[1])
-        pos = int(coord[1].split('g.')[1])
-        ref, alt = coord[2].split('>')
-        var = (chrom, pos, ref, alt)
-        if str(brcaDF.loc[i, sigColName]) in classStrings['Pathogenic']:
-            pathVars.add(var)
-        elif str(brcaDF.loc[i, sigColName]) in classStrings['Benign']:
-            benignVars.add(var)
-        elif str(brcaDF.loc[i, sigColName]) in classStrings['Unknown']:
-            vusVars.add(var)
-        else:
-            continue
+def findVarsPerIndividual(vcf, benignVariants, pathogenicVariants):
+    variantsPerIndividual = dict()
 
-    return brcaDF, pathVars, benignVars, vusVars
+    individuals = list(vcf['samples'])
+
+    for i in range(len(individuals)):
+        variantsPerIndividual[individuals[i]] = dict()
+        variantsPerIndividual[individuals[i]] = dict()
+        variantsPerIndividual[individuals[i]]['benign'] = list()
+        variantsPerIndividual[individuals[i]]['pathogenic'] = list()
+        variantsPerIndividual[individuals[i]]['vus'] = list()
+
+        for variant in range(len(vcf['calldata/GT'])):
+            if 1 in vcf['calldata/GT'][variant][i]:
+                #var = (int(vcfDF.loc[i, 'CHROM']), int(vcfDF.loc[i, 'POS']), str(vcfDF.loc[i, 'REF']), str(vcfDF.loc[i, 'ALT']))
+                c = int(vcf['variants/CHROM'][variant].replace('chr', ''))
+                p = int(vcf['variants/POS'][variant])
+                r = str(vcf['variants/REF'][variant])
+                a = str(vcf['variants/ALT'][variant][0])
+                genotype = str(vcf['calldata/GT'][variant][i][0] + vcf['calldata/GT'][variant][i][1])
+                if (c, p, r, a) in benignVariants:
+                    variantsPerIndividual[individuals[i]]['benign'].append(((c, p, r, a), genotype))
+                elif (c, p, r, a) in pathogenicVariants:
+                    variantsPerIndividual[individuals[i]]['pathogenic'].append(((c, p, r, a), genotype))
+                # if not a known VUS, it is a VUS now
+                else:
+                    variantsPerIndividual[individuals[i]]['vus'].append(((c, p, r, a), genotype))
+    return variantsPerIndividual
 
 
 def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, skipCols):
