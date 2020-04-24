@@ -1,7 +1,5 @@
 import pandas
 import itertools
-from multiprocessing.pool import ThreadPool
-from multiprocessing import cpu_count
 import time
 import sys
 import json
@@ -9,47 +7,19 @@ from collections import defaultdict
 import pyensembl
 import numpy as np
 import os
-from pandas.api.types import is_numeric_dtype
 import argparse
 import logging
 import allel
+from multiprocessing import Process, Queue
 
 
 logger = logging.getLogger()
-
 defaultLogLevel = "DEBUG"
 
-def countColumnsAndMetaRows(fileName):
-    '''The header line names the 8 fixed, mandatory columns.These columns are as follows:
-    1. # CHROM
-    2. POS
-    3. ID
-    4. REF
-    5. ALT
-    6. QUAL
-    7. FILTER
-    8. INFO
-    If genotype data is present in the file, these are followed by a FORMAT column header, then an arbitrary number
-    of sample IDs.Duplicate sample IDs are not allowed.The header line is tab - delimited.'''
-    metaRowCount = 0
-    with open(fileName, 'r') as f:
-        for line in f:
-            if line.startswith('##'):
-                metaRowCount += 1
-            elif line.startswith('#CHROM'):
-                # find number of cols before first sample ID
-                if 'FORMAT' in line:
-                    preIDcolumnCount = 9
-                else:
-                    preIDcolumnCount = 8
-                # count total columns
-                totalColumns = len(line.split('\t')) + 1
-                break
-
-
-    f.close()
-    return metaRowCount, preIDcolumnCount, totalColumns
-
+# p2 = P(VUS is pathogenic and patient carries a pathogenic variant in trans) (arbitrarily set by goldgar et al)
+# Integrated Evaluation of DNA Sequence Variants of Unknown Clinical Significance: Application to BRCA1 and BRCA2
+brca1_p2 = 0.0001
+brca2_p2 = 0.001
 
 classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely benign' ],
                  'Unknown': [ 'Uncertain significance', '-']}
@@ -61,13 +31,6 @@ brcaFileName = DATA_DIR + 'brca-variants.tsv'
 variantsPerIndividualFileName = DATA_DIR + 'variantsPerIndividual.json'
 
 os.environ['PYENSEMBL_CACHE_DIR'] = DATA_DIR + 'pyensembl-cache'
-
-
-
-# p2 = P(VUS is pathogenic and patient carries a pathogenic variant in trans) (arbitrarily set by goldgar et al)
-# Integrated Evaluation of DNA Sequence Variants of Unknown Clinical Significance: Application to BRCA1 and BRCA2
-brca1_p2 = 0.0001
-brca2_p2 = 0.001
 
 class NpEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -118,12 +81,6 @@ def main():
 
     parser.add_argument("--a", dest="a", help="calculate allele freqs for homozygous. Default=False", default='True')
 
-    parser.add_argument("--t", dest="t", help="Thread count. Default 1", default=1)
-
-    parser.add_argument("--l", dest="l", help="Number of lines to read at a time from VCF. Default 1000", default=0)
-
-    parser.add_argument("--w", dest="w", help="Number of columns to read at a time from VCF. Default 1000", default=100)
-
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" %
                                                        defaultLogLevel, default=defaultLogLevel)
 
@@ -152,54 +109,60 @@ def main():
     s_options = bool(eval(options.s))
     i_options = bool(eval(options.i))
     a_options = bool(eval(options.a))
-    t_options = int(options.t)
     h_options = int(options.h)
     e_options = int(options.e)
-    l_options = int(options.l)
-    w_options = int(options.w)
 
     print(options)
 
     run(h_options, e_options, c_options, g_options, p_options, DATA_DIR + options.vcf_filename,
-        DATA_DIR + options.output_filename, t_options, s_options, i_options, a_options, l_options, w_options)
+        DATA_DIR + options.output_filename, s_options, i_options, a_options)
 
-
-def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outputFileName, threadCount,
-        saveVarsPerIndivid, includePaths, calculateAlleleFreqs, chunkSize, width):
-
-    skipLines, skipCols, totalCols = countColumnsAndMetaRows(vcfFileName)
+def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outputFileName, saveVarsPerIndivid, includePaths, calculateAlleleFreqs):
 
     logger.info('reading BRCA data from ' + brcaFileName)
     t = time.time()
-    brcaDF, pathogenicVariants, benignVariants, unknownVariants = \
-        findVariantsInBRCA(brcaFileName, classStrings, hgVersion)
-    elapsed_time = time.time() - t
-    logger.info('elapsed time in findVariantsInBRCA() ' + str(elapsed_time))
+    brcaDF, pathogenicVariants, benignVariants, unknownVariants = findVariantsInBRCA(brcaFileName, classStrings, hgVersion)
+    logger.info('elapsed time in findVariantsInBRCA() ' + str(time.time() -t))
 
-
-    '''logger.info('VCF data from ' + vcfFileName)
+    logger.info('reading VCF file ' + vcfFileName)
     t = time.time()
-    vcfData = readVCF(vcfFileName, chromosomes)
-    elapsed_time = time.time() - t
-    logger.info('elapsed time in readVCFFile() ' + str(elapsed_time))'''
-
-
+    vcf = readVCFFile(vcfFileName)
+    logger.info('elapsed time in readVCFFile() ' + str(time.time() -t))
 
     logger.info('finding variants per individual in ' + vcfFileName)
     t = time.time()
-    #variantsPerIndividual = findVariantsPerIndividual(vcfData, benignVariants, pathogenicVariants, skipCols=4)
-    variantsPerIndividual = findVarsPerIndividual(vcfFileName, benignVariants, pathogenicVariants, chromosomes)
-    elapsed_time = time.time() - t
-    logger.info('elapsed time in findVariantsPerIndividual() ' + str(elapsed_time))
+    numProcs = 2
+    q = Queue()
+    p1 = Process(target=findVarsPerIndividual, args=(q, vcf, benignVariants, pathogenicVariants, chromosomes, 0, numProcs,))
+    p1.start()
+    p2 = Process(target=findVarsPerIndividual, args=(q, vcf, benignVariants, pathogenicVariants, chromosomes, 1, numProcs,))
+    p2.start()
+
+
+    logger.info('joining results from forked threads')
+    variantsPerIndividual = dict()
+
+    # collect from p1
+    variantsPerIndividual.update(q.get())
+    p1.join()
+
+    # collect from p2
+    variantsPerIndividual.update(q.get())
+    p2.join()
+
+
+
+    #for threadID in range(numProcs):
+        #variantsPerIndividual = findVarsPerIndividual(vcf, benignVariants, pathogenicVariants, chromosomes, threadID, numProcs)
+
+    logger.info('elapsed time in findVariantsPerIndividual() ' + str(time.time() -t))
 
     if calculateAlleleFreqs:
-        # find vus with genotype 1|1
         # TODO de-dup these?
         logger.info('finding homozygous  individuals per vus')
         t = time.time()
         homozygousPerVus = countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, genes)
-        elapsed_time = time.time() - t
-        logger.info('elapsed time in countHomozygousPerVus() ' + str(elapsed_time))
+        logger.info('elapsed time in countHomozygousPerVus() ' + str(time.time() -t))
 
 
     if saveVarsPerIndivid:
@@ -208,18 +171,13 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
             json.dump(variantsPerIndividual, f, cls=NpEncoder)
         f.close()
 
-    '''logger.info('reading in variantsPerIndividual from ' + variantsPerIndividualFileName)
-    with open(variantsPerIndividualFileName) as f:
-        variantsPerIndividual = json.load(f, cls=NpDecoder)
-    f.close()'''
-
     logger.info('finding individuals per cooc')
     t = time.time()
     individualsPerPathogenicCooccurrence, n, k = findIndividualsPerCooccurrence(variantsPerIndividual, ensemblRelease,
                                                                                 phased, genes)
-    elapsed_time = time.time() - t
-    logger.info('elapsed time in findIndividualsPerCooccurrence() ' + str(elapsed_time))
+    logger.info('elapsed time in findIndividualsPerCooccurrence() ' + str(time.time() -t))
 
+    logger.info('calculating p1')
     # p1 = P(VUS is benign and patient carries a pathogenic variant in trans)
     numBenignWithPath = 0
     for cooc in individualsPerPathogenicCooccurrence:
@@ -266,7 +224,6 @@ def findVariantsInBRCA(fileName, classStrings, hgVersion):
 
     return brcaDF, pathVars, benignVars, vusVars
 
-
 def getGnomadData(brcaDF, vus, hgVersion):
     # TODO write a unit test
     # 13:g.32393468:C>CT
@@ -295,7 +252,6 @@ def getGnomadData(brcaDF, vus, hgVersion):
 
     return (maxPopulation, maxFrequency)
 
-# TODO merge this method with findVariantsPerIndividual()
 def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, genesOfInterest):
     homoZygousPerVus = defaultdict(list)
 
@@ -310,7 +266,6 @@ def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelea
                     homoZygousPerVus[str(vus)].append(maxFreq)
                 homoZygousPerVus[str(vus)][0] += 1
     return homoZygousPerVus
-
 
 def calculateLikelihood(pathCoocs, p1, n, k, includePathogenicVariants):
 
@@ -377,16 +332,48 @@ def calculateLikelihood(pathCoocs, p1, n, k, includePathogenicVariants):
 
     return dataPerVus
 
-def findVarsPerIndividual(vcfFileName, benignVariants, pathogenicVariants, chromosomes):
-    logger.debug('reading VCF file ' + vcfFileName)
-    vcf = allel.read_vcf(vcfFileName)
+def readVCFFile(vcfFileName):
+    return allel.read_vcf(vcfFileName)
+
+def divide(n, d):
+   res = list()
+   qu = int(n/d)
+   rm = n%d
+   for i in range(d):
+       if i < rm:
+           res.append(qu + 1)
+       else:
+           res.append(qu)
+   return res
+
+def getStartAndEnd(partitionSizes, d, threadID):
+    start = 0
+    for i in range(threadID):
+        start += partitionSizes[i]
+
+    end = start + partitionSizes[threadID]
+
+    return start, end
+
+def findVarsPerIndividual(q, vcf, benignVariants, pathogenicVariants, chromosomes, threadID, numProcesses):
+
     variantsPerIndividual = dict()
 
     individuals = list(vcf['samples'])
 
+    # calculate start and stop samples per threadID
+    n = len(individuals)
+    partitionSizes = divide(n, numProcesses)
+    start,end = getStartAndEnd(partitionSizes, numProcesses, threadID)
+
+    logger.info('threadID = ' + str(threadID) + ' processing from ' + str(start) + ' to ' + str(end))
+
+
+
     logger.debug('looping through ' + str(len(individuals)) + ' in samples in VCF')
-    for i in range(len(individuals)):
-        logger.debug('looking at individual ' + str(individuals[i]))
+    #for i in range(len(individuals)):
+    for i in range(start, end):
+        #logger.debug('looking at individual ' + str(individuals[i]))
         variantsPerIndividual[individuals[i]] = dict()
         variantsPerIndividual[individuals[i]] = dict()
         variantsPerIndividual[individuals[i]]['benign'] = list()
@@ -409,8 +396,8 @@ def findVarsPerIndividual(vcfFileName, benignVariants, pathogenicVariants, chrom
                 # if not a known VUS, it is a VUS now
                 else:
                     variantsPerIndividual[individuals[i]]['vus'].append(((c, p, r, a), genotype))
-    return variantsPerIndividual
-
+    #return variantsPerIndividual
+    q.put(variantsPerIndividual)
 
 def getGenesForVariant(variant, ensemblRelease, genesOfInterest):
     ensembl = pyensembl.EnsemblRelease(release=ensemblRelease)
