@@ -377,151 +377,6 @@ def calculateLikelihood(pathCoocs, p1, n, k, includePathogenicVariants):
 
     return dataPerVus
 
-def newReadVCFFile(fileName, numMetaDataLines, chromosomes, chunkSize, phased, skipCols, iteration, width, totalCols):
-    # read in chunks of size chunkSize bytes
-
-    # TODO parallelize by usecols = [0, 1, 2, 3, 4, 5, 6, ..., n/2], [0, 1, 2, 3, 4, 5, 6, n/2 + 1, n/2 + 2, ..., n]
-    if width != 0:
-        start = (skipCols) + iteration * width
-        end = start + width
-        if end >= totalCols:
-            end = totalCols-1
-        thisIterationCols = [i for i in range(skipCols)] + [j for j in range(start, end)]
-    else:
-        start = 0
-        end = totalCols
-        thisIterationCols = [i for i in range(end-1)]
-
-
-    if chunkSize == 0:
-        df = pandas.read_csv(fileName, sep='\t', skiprows=numMetaDataLines, header=0, na_filter=False, engine='c',
-                    usecols=thisIterationCols)
-
-    else:
-        df_chunk = pandas.read_csv(fileName, sep='\t', skiprows=numMetaDataLines, header=0, na_filter=False, engine='c',
-        chunksize=chunkSize, iterator=True, usecols=thisIterationCols)
-
-
-        df = pandas.DataFrame()
-
-        n = 0
-        for chunk in df_chunk:
-            startTime = time.time()
-            logger.debug('reading chunk ' + str(n))
-            if phased:
-                chunk.replace('0|0', '0', inplace=True)
-                chunk.replace('0|1', '1', inplace=True)
-                chunk.replace('1|0', '2', inplace=True)
-                chunk.replace('1|1', '3', inplace=True)
-            else:
-
-                chunk.replace('0/0', '0', inplace=True)
-                chunk.replace('0/1', '1', inplace=True)
-                chunk.replace('1/0', '2', inplace=True)
-                chunk.replace('1/1', '3', inplace=True)
-
-            df = pandas.concat([df, chunk])
-
-            n += 1
-            endTime = time.time()
-            logger.debug('chunk took ' + str(endTime - startTime))
-
-
-    df.drop(columns=['ID', 'QUAL', 'FILTER', 'INFO', 'FORMAT'], inplace=True)
-
-    df.columns = df.columns.str.replace('#', '')
-
-    if not is_numeric_dtype(df['CHROM']):
-        df['CHROM'] = df['CHROM'].str.replace('chr', '')
-        # df['CHROM'] = pandas.to_numeric(df['CHROM'])
-    df['CHROM'] = pandas.to_numeric(df['CHROM'], downcast='integer')
-    df['POS'] = pandas.to_numeric(df['POS'], downcast='integer')
-    df = df[df.CHROM.isin(chromosomes)]
-
-    #df = df.astype({'CHROM': 'int8'})
-    #df = df.astype({'POS': 'int32'})
-
-
-    # the index in the above operation is no longer contiguous from 0, so we need to reset for future operations on df
-    df.index = np.arange(0, len(df))
-
-    # add id field to this DF
-    df.insert(0, 'myid', [i for i in range(len(df))], True)
-
-    # if this is first df, then return all of it.  if it is subsequent df's, only return the new columns
-    return df
-
-
-def readVCFFile(fileName, numMetaDataLines, chromosomes):
-    # #CHROM  POS             ID      REF     ALT     QUAL    FILTER  INFO            FORMAT  0000057940      0000057950
-    # 10      89624243        .       A       G       .       .       AF=1.622e-05    GT      0/0             0/0
-    # 0/0 => does not have variant on either chromosome (homozygous negative)
-    # 0/1  => has variant on 1 chromosome (heterozygous positive)
-    # 1/1 =>  has variant on both chromosomes (homozygous positive)
-    # dtype={'POS':int}
-    df = pandas.read_csv(fileName, sep='\t', skiprows=numMetaDataLines, header=0, na_filter=False, engine='c')
-
-    # this creates a bug: df = df[df.apply(lambda r: r.str.contains('1/1').any() or r.str.contains('0/1').any(), axis=1)]
-    # filter chromosomes in CHROMOSOMES here
-    df.columns = df.columns.str.replace('#', '')
-
-    #if df.CHROM.dtype is not int:
-    if not is_numeric_dtype(df['CHROM']):
-        df['CHROM'] = df['CHROM'].str.replace('chr', '')
-        #df['CHROM'] = pandas.to_numeric(df['CHROM'])
-    df['CHROM'] = pandas.to_numeric(df['CHROM'])
-    df = df[df.CHROM.isin(chromosomes)]
-    df.astype({'CHROM': 'int8'})
-    df.astype({'POS': 'int32'})
-    # the index in the above operation is no longer contiguous from 0, so we need to reset for future operations on df
-    df.index = np.arange(0, len(df))
-
-    return df
-
-
-def readVCF(fileName, chromosomes):
-    # first read vcf into dict
-    callset = allel.read_vcf(fileName)
-
-    # create df with no columns
-    df = pandas.DataFrame()
-
-    logger.debug('adding chrom,pos,ref,alt to df')
-    # create list of CHROM from vcf
-    chroms = list(callset['variants/CHROM'])
-    chroms = [c.replace('chr','') for c in chroms]
-    chromosomes = [str(c) for c in chromosomes]
-
-    chroms = [str(c) for c in chroms]
-
-    # insert CHROM list as col 0
-    df.insert(0, 'CHROM', chroms)
-
-    # repeat for POS, REF, ALT
-    df.insert(1, 'POS', callset['variants/POS'])
-    df.insert(2, 'REF', list(callset['variants/REF']))
-
-    alts=list()
-    for i in range(len(callset['variants/ALT'])):
-        alts.append(callset['variants/ALT'][i][0])
-    df.insert(3, 'ALT', alts)
-
-    # now add genotype data
-    logger.info('adding genotype data to df')
-
-    for sample in range(len(callset['calldata/GT'][0])):
-        col = list()
-        name = callset['samples'][sample]
-        for variant in range(len(callset['calldata/GT'])):
-            col.append(str(callset['calldata/GT'][variant][sample][0] + callset['calldata/GT'][variant][sample][1]))
-        df.insert(sample + 4, name, col)
-
-    # now filter as before
-    df = df[df.CHROM.isin(chromosomes)]
-    df.index = np.arange(0, len(df))
-
-    return df
-
 def findVarsPerIndividual(vcfFileName, benignVariants, pathogenicVariants, chromosomes):
     logger.debug('reading VCF file ' + vcfFileName)
     vcf = allel.read_vcf(vcfFileName)
@@ -529,7 +384,7 @@ def findVarsPerIndividual(vcfFileName, benignVariants, pathogenicVariants, chrom
 
     individuals = list(vcf['samples'])
 
-    logger.debug('looping through samples in VCF')
+    logger.debug('looping through ' + str(len(individuals)) + ' in samples in VCF')
     for i in range(len(individuals)):
         logger.debug('looking at individual ' + str(individuals[i]))
         variantsPerIndividual[individuals[i]] = dict()
@@ -546,7 +401,7 @@ def findVarsPerIndividual(vcfFileName, benignVariants, pathogenicVariants, chrom
                 p = int(vcf['variants/POS'][variant])
                 r = str(vcf['variants/REF'][variant])
                 a = str(vcf['variants/ALT'][variant][0])
-                genotype = str(vcf['calldata/GT'][variant][i][0] + vcf['calldata/GT'][variant][i][1])
+                genotype = str(int(str(vcf['calldata/GT'][variant][i][0]) + str(vcf['calldata/GT'][variant][i][1]), 2))
                 if (c, p, r, a) in benignVariants:
                     variantsPerIndividual[individuals[i]]['benign'].append(((c, p, r, a), genotype))
                 elif (c, p, r, a) in pathogenicVariants:
@@ -554,57 +409,6 @@ def findVarsPerIndividual(vcfFileName, benignVariants, pathogenicVariants, chrom
                 # if not a known VUS, it is a VUS now
                 else:
                     variantsPerIndividual[individuals[i]]['vus'].append(((c, p, r, a), genotype))
-    return variantsPerIndividual
-
-
-def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, skipCols):
-
-    # find mutations
-    # CHROM  POS             ID      REF     ALT     QUAL    FILTER  INFO            FORMAT  0000057940      0000057950
-    # 10      89624243        .       A       G       .       .       AF=1.622e-05    GT      0/0             0/0
-    # 0/0 => does not have variant on either strand (homozygous negative)
-    # 0/1  => has variant on 1 strand (heterozygous positive)
-    # 1/1 =>  has variant on both strands (homozygous positive)
-
-    # 1|0 => paternal has variant, maternal does not
-    # 0|1 => paternal does not have variant, maternal does
-    # 1|1 => both paternal and maternal have variant
-    # 0|0 => neither paternal nor maternal have variant
-    variantsPerIndividual = dict()
-
-
-
-    # get list of individuals
-    individuals = vcfDF.columns[skipCols:]
-
-    # iterate through columns (not rows! iterows() takes 20x longer b/c pandas are stored column-major)
-    for individual in individuals:
-        variantsPerIndividual[individual] = dict()
-        variantsPerIndividual[individual]['benign'] = list()
-        variantsPerIndividual[individual]['pathogenic'] = list()
-        variantsPerIndividual[individual]['vus'] = list()
-
-        includeList = ['1', '2','3']
-
-        listOfVariantIndices = list()
-        for x in includeList:
-            listOfVariantIndices += list(np.where(vcfDF[individual] == x)[0])
-
-        for i in listOfVariantIndices:
-            try:
-                var = (int(vcfDF.loc[i, 'CHROM']), int(vcfDF.loc[i, 'POS']), str(vcfDF.loc[i, 'REF']), str(vcfDF.loc[i, 'ALT']))
-                genotype = vcfDF.loc[i, individual]
-                if var in benignVariants:
-                    variantsPerIndividual[individual]['benign'].append((var, genotype))
-                elif var in pathogenicVariants:
-                    variantsPerIndividual[individual]['pathogenic'].append((var, genotype))
-                # if not a known VUS, it is a VUS now
-                else:
-                    variantsPerIndividual[individual]['vus'].append((var, genotype))
-            except Exception as e:
-                logger.error("exception for index " + str(i) + " of individual " + str(individual))
-                continue
-
     return variantsPerIndividual
 
 
