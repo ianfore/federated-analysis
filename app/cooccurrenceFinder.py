@@ -177,18 +177,18 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
     logger.info('elapsed time in findVariantsInBRCA() ' + str(elapsed_time))
 
 
-    logger.info('reading VCF data from ' + vcfFileName)
+    '''logger.info('VCF data from ' + vcfFileName)
     t = time.time()
     vcfData = readVCF(vcfFileName, chromosomes)
     elapsed_time = time.time() - t
-    logger.info('elapsed time in readVCFFile() ' + str(elapsed_time))
+    logger.info('elapsed time in readVCFFile() ' + str(elapsed_time))'''
 
 
 
     logger.info('finding variants per individual')
     t = time.time()
     #variantsPerIndividual = findVariantsPerIndividual(vcfData, benignVariants, pathogenicVariants, skipCols=4)
-    variantsPerIndividual = findVarsPerIndividual(allel.read_vcf(vcfFileName), benignVariants, pathogenicVariants)
+    variantsPerIndividual = findVarsPerIndividual(allel.read_vcf(vcfFileName), benignVariants, pathogenicVariants, chromosomes)
     elapsed_time = time.time() - t
     logger.info('elapsed time in findVariantsPerIndividual() ' + str(elapsed_time))
 
@@ -522,7 +522,7 @@ def readVCF(fileName, chromosomes):
 
     return df
 
-def findVarsPerIndividual(vcf, benignVariants, pathogenicVariants):
+def findVarsPerIndividual(vcf, benignVariants, pathogenicVariants, chromosomes):
     variantsPerIndividual = dict()
 
     individuals = list(vcf['samples'])
@@ -535,8 +535,9 @@ def findVarsPerIndividual(vcf, benignVariants, pathogenicVariants):
         variantsPerIndividual[individuals[i]]['vus'] = list()
 
         for variant in range(len(vcf['calldata/GT'])):
+            if int(vcf['variants/CHROM'][variant].replace('chr', '')) not in chromosomes:
+                continue
             if 1 in vcf['calldata/GT'][variant][i]:
-                #var = (int(vcfDF.loc[i, 'CHROM']), int(vcfDF.loc[i, 'POS']), str(vcfDF.loc[i, 'REF']), str(vcfDF.loc[i, 'ALT']))
                 c = int(vcf['variants/CHROM'][variant].replace('chr', ''))
                 p = int(vcf['variants/POS'][variant])
                 r = str(vcf['variants/REF'][variant])
@@ -566,6 +567,7 @@ def findVariantsPerIndividual(vcfDF, benignVariants, pathogenicVariants, skipCol
     # 1|1 => both paternal and maternal have variant
     # 0|0 => neither paternal nor maternal have variant
     variantsPerIndividual = dict()
+
 
 
     # get list of individuals
