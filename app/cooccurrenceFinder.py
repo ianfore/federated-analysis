@@ -142,29 +142,14 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
         p.start()
         processList.append(p)
 
-    for i in range(numProcs):
-        processList[i].join()
-
-    '''p1 = Process(target=findVarsPerIndividual, args=(q, vcf, benignVariants, pathogenicVariants, chromosomes, 0, numProcs,))
-    p2 = Process(target=findVarsPerIndividual, args=(q, vcf, benignVariants, pathogenicVariants, chromosomes, 1, numProcs,))
-    p1.start()
-    p2.start()
-    p1.join()
-    p2.join()'''
 
     logger.info('joining results from forked threads')
     variantsPerIndividual = dict()
+    for i in range(numProcs):
+        processList[i].join()
+        variantsPerIndividual.update(q.get())
 
-    # collect from p1
-    #p1.join()
-    variantsPerIndividual.update(q.get())
 
-    # collect from p2
-    #p2.join()
-    variantsPerIndividual.update(q.get())
-
-    #for threadID in range(numProcs):
-        #variantsPerIndividual = findVarsPerIndividual(vcf, benignVariants, pathogenicVariants, chromosomes, threadID, numProcs)
 
     logger.info('elapsed time in findVariantsPerIndividual() ' + str(time.time() -t))
 
