@@ -10,7 +10,7 @@ import os
 import argparse
 import logging
 import allel
-from multiprocessing import Process, Queue, Manager
+from multiprocessing import Process, Queue, cpu_count
 
 
 logger = logging.getLogger()
@@ -81,7 +81,7 @@ def main():
 
     parser.add_argument("--a", dest="a", help="calculate allele freqs for homozygous. Default=False", default='True')
 
-    parser.add_argument("--n", dest="n", help="Number of processes. Default=1", default=1)
+    parser.add_argument("--n", dest="n", help="Number of processes. Default=1", default=cpu_count())
 
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" %
                                                        defaultLogLevel, default=defaultLogLevel)
@@ -160,6 +160,7 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
         logger.info('finding homozygous  individuals per vus')
         t = time.time()
         homozygousPerVus = countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, genes)
+        # calculate frequency per homozygous vus
         logger.info('elapsed time in countHomozygousPerVus() ' + str(time.time() -t))
 
 
@@ -175,6 +176,8 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
                                                                                 phased, genes)
     logger.info('elapsed time in findIndividualsPerCooccurrence() ' + str(time.time() -t))
 
+
+    # TODO this math is wrong! and we need frequencies in homozygousPerVus
     logger.info('calculating p1')
     # p1 = P(VUS is benign and patient carries a pathogenic variant in trans)
     numBenignWithPath = 0
@@ -263,6 +266,7 @@ def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelea
                     maxFreq = getGnomadData(brcaDF, vus, hgVersion)
                     homoZygousPerVus[str(vus)].append(maxFreq)
                 homoZygousPerVus[str(vus)][0] += 1
+
     return homoZygousPerVus
 
 def calculateLikelihood(pathCoocs, p1, n, k, includePathogenicVariants):
