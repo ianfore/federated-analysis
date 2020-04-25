@@ -10,7 +10,7 @@ import os
 import argparse
 import logging
 import allel
-from multiprocessing import Process, Queue
+from multiprocessing import Process, Queue, Manager
 
 
 logger = logging.getLogger()
@@ -81,6 +81,8 @@ def main():
 
     parser.add_argument("--a", dest="a", help="calculate allele freqs for homozygous. Default=False", default='True')
 
+    parser.add_argument("--n", dest="n", help="Number of processes. Default=1", default=1)
+
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" %
                                                        defaultLogLevel, default=defaultLogLevel)
 
@@ -111,13 +113,15 @@ def main():
     a_options = bool(eval(options.a))
     h_options = int(options.h)
     e_options = int(options.e)
+    n_options = int(options.n)
 
     print(options)
 
     run(h_options, e_options, c_options, g_options, p_options, DATA_DIR + options.vcf_filename,
-        DATA_DIR + options.output_filename, s_options, i_options, a_options)
+        DATA_DIR + options.output_filename, s_options, i_options, a_options, n_options)
 
-def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outputFileName, saveVarsPerIndivid, includePaths, calculateAlleleFreqs):
+def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outputFileName, saveVarsPerIndivid,
+        includePaths, calculateAlleleFreqs, numProcs):
 
     logger.info('reading BRCA data from ' + brcaFileName)
     t = time.time()
@@ -131,26 +135,33 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
 
     logger.info('finding variants per individual in ' + vcfFileName)
     t = time.time()
-    numProcs = 2
     q = Queue()
-    p1 = Process(target=findVarsPerIndividual, args=(q, vcf, benignVariants, pathogenicVariants, chromosomes, 0, numProcs,))
-    p1.start()
-    p2 = Process(target=findVarsPerIndividual, args=(q, vcf, benignVariants, pathogenicVariants, chromosomes, 1, numProcs,))
-    p2.start()
+    processList = list()
+    for i in range(numProcs):
+        p = Process(target=findVarsPerIndividual, args=(q, vcf, benignVariants, pathogenicVariants, chromosomes, 0, numProcs,))
+        p.start()
+        processList.append(p)
 
+    for i in range(numProcs):
+        processList[i].join()
+
+    '''p1 = Process(target=findVarsPerIndividual, args=(q, vcf, benignVariants, pathogenicVariants, chromosomes, 0, numProcs,))
+    p2 = Process(target=findVarsPerIndividual, args=(q, vcf, benignVariants, pathogenicVariants, chromosomes, 1, numProcs,))
+    p1.start()
+    p2.start()
+    p1.join()
+    p2.join()'''
 
     logger.info('joining results from forked threads')
     variantsPerIndividual = dict()
 
     # collect from p1
+    #p1.join()
     variantsPerIndividual.update(q.get())
-    p1.join()
 
     # collect from p2
+    #p2.join()
     variantsPerIndividual.update(q.get())
-    p2.join()
-
-
 
     #for threadID in range(numProcs):
         #variantsPerIndividual = findVarsPerIndividual(vcf, benignVariants, pathogenicVariants, chromosomes, threadID, numProcs)
@@ -346,7 +357,7 @@ def divide(n, d):
            res.append(qu)
    return res
 
-def getStartAndEnd(partitionSizes, d, threadID):
+def getStartAndEnd(partitionSizes, threadID):
     start = 0
     for i in range(threadID):
         start += partitionSizes[i]
@@ -364,17 +375,14 @@ def findVarsPerIndividual(q, vcf, benignVariants, pathogenicVariants, chromosome
     # calculate start and stop samples per threadID
     n = len(individuals)
     partitionSizes = divide(n, numProcesses)
-    start,end = getStartAndEnd(partitionSizes, numProcesses, threadID)
+    start,end = getStartAndEnd(partitionSizes, threadID)
 
     logger.info('threadID = ' + str(threadID) + ' processing from ' + str(start) + ' to ' + str(end))
-
-
 
     logger.debug('looping through ' + str(len(individuals)) + ' in samples in VCF')
     #for i in range(len(individuals)):
     for i in range(start, end):
         #logger.debug('looking at individual ' + str(individuals[i]))
-        variantsPerIndividual[individuals[i]] = dict()
         variantsPerIndividual[individuals[i]] = dict()
         variantsPerIndividual[individuals[i]]['benign'] = list()
         variantsPerIndividual[individuals[i]]['pathogenic'] = list()
