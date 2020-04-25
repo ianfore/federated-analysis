@@ -138,7 +138,7 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
     q = Queue()
     processList = list()
     for i in range(numProcs):
-        p = Process(target=findVarsPerIndividual, args=(q, vcf, benignVariants, pathogenicVariants, chromosomes, 0, numProcs,))
+        p = Process(target=findVarsPerIndividual, args=(q, vcf, benignVariants, pathogenicVariants, chromosomes, i, numProcs,))
         p.start()
         processList.append(p)
 
