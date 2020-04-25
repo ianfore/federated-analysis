@@ -146,8 +146,10 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
     logger.info('joining results from forked threads')
     variantsPerIndividual = dict()
     for i in range(numProcs):
-        processList[i].join()
         variantsPerIndividual.update(q.get())
+
+    for i in range(numProcs):
+        processList[i].join()
 
 
 
@@ -367,7 +369,7 @@ def findVarsPerIndividual(q, vcf, benignVariants, pathogenicVariants, chromosome
     logger.debug('looping through ' + str(len(individuals)) + ' in samples in VCF')
     #for i in range(len(individuals)):
     for i in range(start, end):
-        #logger.debug('looking at individual ' + str(individuals[i]))
+        logger.debug('looking at individual ' + str(individuals[i]))
         variantsPerIndividual[individuals[i]] = dict()
         variantsPerIndividual[individuals[i]]['benign'] = list()
         variantsPerIndividual[individuals[i]]['pathogenic'] = list()
