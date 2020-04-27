@@ -32,6 +32,8 @@ variantsPerIndividualFileName = DATA_DIR + 'variantsPerIndividual.json'
 
 os.environ['PYENSEMBL_CACHE_DIR'] = DATA_DIR + 'pyensembl-cache'
 
+COMMON_VARIANT_CUTOFF_FREQUENCY=0.01
+
 class NpEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, np.integer):
@@ -142,7 +144,6 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
         p.start()
         processList.append(p)
 
-
     logger.info('joining results from forked threads')
     variantsPerIndividual = dict()
     for i in range(numProcs):
@@ -151,16 +152,12 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
     for i in range(numProcs):
         processList[i].join()
 
-
-
     logger.info('elapsed time in findVariantsPerIndividual() ' + str(time.time() -t))
 
     if calculateAlleleFreqs:
-        # TODO de-dup these?
         logger.info('finding homozygous  individuals per vus')
         t = time.time()
         homozygousPerVus = countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, genes)
-        # calculate frequency per homozygous vus
         logger.info('elapsed time in countHomozygousPerVus() ' + str(time.time() -t))
 
 
@@ -177,17 +174,17 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
     logger.info('elapsed time in findIndividualsPerCooccurrence() ' + str(time.time() -t))
 
 
-    # TODO this math is wrong! and we need frequencies in homozygousPerVus
+    # TODO check this math!
     logger.info('calculating p1')
     # p1 = P(VUS is benign and patient carries a pathogenic variant in trans)
     numBenignWithPath = 0
     for cooc in individualsPerPathogenicCooccurrence:
         numBenignWithPath += len(individualsPerPathogenicCooccurrence[cooc])
-    total = len(variantsPerIndividual)
-    p1 =  0.5 * numBenignWithPath / total
+    cohortSize = len(variantsPerIndividual)
+    p1 =  0.5 * numBenignWithPath / cohortSize
 
     logger.info('putting all the data together per vus')
-    dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, p1, n, k, includePaths)
+    dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, p1, n, k, includePaths, brcaDF, hgVersion, cohortSize)
 
     if calculateAlleleFreqs:
         jsonOutputList = [dataPerVus, homozygousPerVus]
@@ -258,18 +255,24 @@ def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelea
 
     for individual in variantsPerIndividual:
         for vus in variantsPerIndividual[individual]['vus']:
-            #if (vus[1] == '1|1' or vus[1] == '1/1') and (getGenesForVariant(vus[0], ensemblRelease, genesOfInterest)):
             if (vus[1] == '3') and (getGenesForVariant(vus[0], ensemblRelease, genesOfInterest)):
-
                 if str(vus) not in homoZygousPerVus:
                     homoZygousPerVus[str(vus)].append(0)
                     maxFreq = getGnomadData(brcaDF, vus, hgVersion)
                     homoZygousPerVus[str(vus)].append(maxFreq)
                 homoZygousPerVus[str(vus)][0] += 1
 
+    cohortSize = len(variantsPerIndividual)
+    for vus in homoZygousPerVus:
+        maxPopFreq = homoZygousPerVus[vus][0]
+        cohortFreq = float(maxFreq)/ float(cohortSize)
+        homoZygousPerVus[vus].append(float(cohortFreq))
+        if cohortFreq > COMMON_VARIANT_CUTOFF_FREQUENCY or maxPopFreq > COMMON_VARIANT_CUTOFF_FREQUENCY:
+            homoZygousPerVus[vus].append('COMMON')
+
     return homoZygousPerVus
 
-def calculateLikelihood(pathCoocs, p1, n, k, includePathogenicVariants):
+def calculateLikelihood(pathCoocs, p1, n, k, includePathogenicVariants, brcaDF, hgVersion, cohortSize):
 
     # vus coocs data: {(vus1, vus2):[individuals]}
     # "([10, 89624243, 'A', 'G'], [10, 89624304, 'C', 'T')]": ["0000057940", "0000057950"],
@@ -326,10 +329,14 @@ def calculateLikelihood(pathCoocs, p1, n, k, includePathogenicVariants):
         else:
             logger.error("unknown chromosome: " + str(vus[0]))
             continue
+        maxPop, maxPopFreq = getGnomadData(brcaDF, vus, hgVersion)
+        cohortFreq = float(n[vus]) / float(cohortSize)
         if includePathogenicVariants:
-            data = [p1, p2, n[vus], k[vus], likelihoodRatios[vus], pathVarsPerVus[vus]]
+            data = [p1, p2, n[vus], k[vus], likelihoodRatios[vus], maxPop, maxPopFreq, cohortFreq, pathVarsPerVus[vus]]
         else:
-            data = [p1, p2, n[vus], k[vus], likelihoodRatios[vus]]
+            data = [p1, p2, n[vus], k[vus], likelihoodRatios[vus], maxPop, maxPopFreq, cohortFreq]
+        if maxPopFreq > COMMON_VARIANT_CUTOFF_FREQUENCY or cohortFreq > COMMON_VARIANT_CUTOFF_FREQUENCY:
+            data.append('COMMON')
         dataPerVus[str(vus)] = data
 
     return dataPerVus
@@ -373,7 +380,7 @@ def findVarsPerIndividual(q, vcf, benignVariants, pathogenicVariants, chromosome
     logger.debug('looping through ' + str(len(individuals)) + ' in samples in VCF')
     #for i in range(len(individuals)):
     for i in range(start, end):
-        logger.debug('looking at individual ' + str(individuals[i]))
+        #logger.debug('looking at individual ' + str(individuals[i]))
         variantsPerIndividual[individuals[i]] = dict()
         variantsPerIndividual[individuals[i]]['benign'] = list()
         variantsPerIndividual[individuals[i]]['pathogenic'] = list()
