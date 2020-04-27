@@ -263,8 +263,8 @@ def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelea
 
     cohortSize = len(variantsPerIndividual)
     for vus in homoZygousPerVus:
-        maxPopFreq = homoZygousPerVus[vus][0]
-        cohortFreq = float(maxFreq)/ float(cohortSize)
+        maxPopFreq = homoZygousPerVus[vus][1][1]
+        cohortFreq = float(homoZygousPerVus[vus][0])/ float(cohortSize)
         homoZygousPerVus[vus].append(float(cohortFreq))
         if cohortFreq < COMMON_VARIANT_CUTOFF_FREQUENCY or maxPopFreq < COMMON_VARIANT_CUTOFF_FREQUENCY:
             homoZygousPerVus[vus].append('RARE')
