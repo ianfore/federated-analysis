@@ -258,7 +258,7 @@ def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelea
             if (vus[1] == '3') and (getGenesForVariant(vus[0], ensemblRelease, genesOfInterest)):
                 if str(vus) not in homoZygousPerVus:
                     homoZygousPerVus[str(vus)].append(0)
-                    maxFreq = getGnomadData(brcaDF, vus, hgVersion)
+                    maxPop, maxFreq = getGnomadData(brcaDF, vus, hgVersion)
                     homoZygousPerVus[str(vus)].append(maxFreq)
                 homoZygousPerVus[str(vus)][0] += 1
 
@@ -314,9 +314,7 @@ def calculateLikelihood(pathCoocs, p1, n, k, includePathogenicVariants, brcaDF, 
     # find all the pathogenic variants this vus co-occurred with
     pathVarsPerVus = defaultdict(list)
     for cooc in pathCoocs:
-        #vus = repr(eval(cooc)[0])
         vus = cooc[0]
-        #pathVarsPerVus[vus].append(eval(cooc)[1])
         pathVarsPerVus[vus].append(cooc[1])
 
     # put it all together in a single dict
