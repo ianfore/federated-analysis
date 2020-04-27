@@ -61,11 +61,9 @@ def main():
 
     parser = argparse.ArgumentParser(usage="cooccurrenceFinder args [options]")
 
-    parser.add_argument("vcf_filename", type=str,
-                        help="name of file containing VCF data")
+    parser.add_argument("vcf_filename", type=str, help="name of file containing VCF data")
 
-    parser.add_argument("output_filename", type=str,
-                        help="name of JSON-formatted output file")
+    parser.add_argument("output_filename", type=str, help="name of JSON-formatted output file")
 
     parser.add_argument("--h", dest="h", help="Human genome version (37 or 38). Default=37", default=37)
 
@@ -85,8 +83,7 @@ def main():
 
     parser.add_argument("--n", dest="n", help="Number of processes. Default=1", default=cpu_count())
 
-    parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" %
-                                                       defaultLogLevel, default=defaultLogLevel)
+    parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" % defaultLogLevel, default=defaultLogLevel)
 
     options = parser.parse_args()
 
@@ -225,7 +222,9 @@ def findVariantsInBRCA(fileName, classStrings, hgVersion):
 def getGnomadData(brcaDF, vus, hgVersion):
     # TODO write a unit test
     # 13:g.32393468:C>CT
-    hgString = 'chr' + str(vus[0][0]) + ':g.' + str(vus[0][1]) + ':' + str(vus[0][2]) + '>' + str(vus[0][3])
+    #hgString = 'chr' + str(vus[0][0]) + ':g.' + str(vus[0][1]) + ':' + str(vus[0][2]) + '>' + str(vus[0][3])
+    hgString = 'chr' + str(vus[0]) + ':g.' + str(vus[1]) + ':' + str(vus[2]) + '>' + str(vus[3])
+
     # first, get list of columns for GnomAD allleles
     gnomad = [v for v in list(brcaDF.columns) if 'GnomAD' in v]
     alleleFrequencies = [v for v in gnomad if 'Allele_frequency' in v]
@@ -258,7 +257,7 @@ def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelea
             if (vus[1] == '3') and (getGenesForVariant(vus[0], ensemblRelease, genesOfInterest)):
                 if str(vus) not in homoZygousPerVus:
                     homoZygousPerVus[str(vus)].append(0)
-                    maxPop, maxFreq = getGnomadData(brcaDF, vus, hgVersion)
+                    maxPop, maxFreq = getGnomadData(brcaDF, vus[0], hgVersion)
                     homoZygousPerVus[str(vus)].append(maxFreq)
                 homoZygousPerVus[str(vus)][0] += 1
 
@@ -267,8 +266,8 @@ def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelea
         maxPopFreq = homoZygousPerVus[vus][0]
         cohortFreq = float(maxFreq)/ float(cohortSize)
         homoZygousPerVus[vus].append(float(cohortFreq))
-        if cohortFreq > COMMON_VARIANT_CUTOFF_FREQUENCY or maxPopFreq > COMMON_VARIANT_CUTOFF_FREQUENCY:
-            homoZygousPerVus[vus].append('COMMON')
+        if cohortFreq < COMMON_VARIANT_CUTOFF_FREQUENCY or maxPopFreq < COMMON_VARIANT_CUTOFF_FREQUENCY:
+            homoZygousPerVus[vus].append('RARE')
 
     return homoZygousPerVus
 
@@ -333,8 +332,8 @@ def calculateLikelihood(pathCoocs, p1, n, k, includePathogenicVariants, brcaDF, 
             data = [p1, p2, n[vus], k[vus], likelihoodRatios[vus], maxPop, maxPopFreq, cohortFreq, pathVarsPerVus[vus]]
         else:
             data = [p1, p2, n[vus], k[vus], likelihoodRatios[vus], maxPop, maxPopFreq, cohortFreq]
-        if maxPopFreq > COMMON_VARIANT_CUTOFF_FREQUENCY or cohortFreq > COMMON_VARIANT_CUTOFF_FREQUENCY:
-            data.append('COMMON')
+        if maxPopFreq < COMMON_VARIANT_CUTOFF_FREQUENCY or cohortFreq < COMMON_VARIANT_CUTOFF_FREQUENCY:
+            data.append('RARE')
         dataPerVus[str(vus)] = data
 
     return dataPerVus
