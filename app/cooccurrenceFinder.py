@@ -258,7 +258,7 @@ def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelea
                 if str(vus) not in homoZygousPerVus:
                     homoZygousPerVus[str(vus)].append(0)
                     maxPop, maxFreq = getGnomadData(brcaDF, vus[0], hgVersion)
-                    homoZygousPerVus[str(vus)].append(maxFreq)
+                    homoZygousPerVus[str(vus)].append([maxPop, maxFreq])
                 homoZygousPerVus[str(vus)][0] += 1
 
     cohortSize = len(variantsPerIndividual)
@@ -329,9 +329,9 @@ def calculateLikelihood(pathCoocs, p1, n, k, includePathogenicVariants, brcaDF, 
         maxPop, maxPopFreq = getGnomadData(brcaDF, vus, hgVersion)
         cohortFreq = float(n[vus]) / float(cohortSize)
         if includePathogenicVariants:
-            data = [p1, p2, n[vus], k[vus], likelihoodRatios[vus], maxPop, maxPopFreq, cohortFreq, pathVarsPerVus[vus]]
+            data = [[p1, p2, n[vus], k[vus], likelihoodRatios[vus]], [maxPop, maxPopFreq, cohortFreq], pathVarsPerVus[vus]]
         else:
-            data = [p1, p2, n[vus], k[vus], likelihoodRatios[vus], maxPop, maxPopFreq, cohortFreq]
+            data = [[p1, p2, n[vus], k[vus], likelihoodRatios[vus]], [maxPop, maxPopFreq, cohortFreq]]
         if maxPopFreq < COMMON_VARIANT_CUTOFF_FREQUENCY or cohortFreq < COMMON_VARIANT_CUTOFF_FREQUENCY:
             data.append('RARE')
         dataPerVus[str(vus)] = data
