@@ -173,12 +173,36 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
 
     # TODO check this math!
     logger.info('calculating p1')
-    # p1 = P(VUS is benign and patient carries a pathogenic variant in trans)
-    numBenignWithPath = 0
+    # p1 = P(VUS is benign and patient carries a path variant in trans) = 0.5 * overall freq of path muts in cohort
+
+    # calculate total number of benign, pathogenic, and vus variants in cohort
+
+    '''numBenignWithPath = 0
     for cooc in individualsPerPathogenicCooccurrence:
-        numBenignWithPath += len(individualsPerPathogenicCooccurrence[cooc])
+        numBenignWithPath += len(individualsPerPathogenicCooccurrence[cooc])'''
+
+    totalBenign = set()
+    totalPathogenic = set()
+    totalVUS = set()
+
+    for i in variantsPerIndividual:
+        for b in variantsPerIndividual[i]['benign']:
+            totalBenign.add(b)
+        for p in variantsPerIndividual[i]['pathogenic']:
+            totalPathogenic.add(p)
+        for v in variantsPerIndividual[i]['vus']:
+            totalVUS.add(v)
+
+    numBenign = len(totalBenign)
+    numPathogenic = len(totalPathogenic)
+    numVUS = len(totalVUS)
+
+    print('total benign: ' + str(numBenign))
+    print('total pathogenic: ' + str(numPathogenic))
+    print('total vus: ' + str(numVUS))
+
     cohortSize = len(variantsPerIndividual)
-    p1 =  0.5 * numBenignWithPath / cohortSize
+    p1 =  0.5 * numBenign / cohortSize
 
     logger.info('putting all the data together per vus')
     dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, p1, n, k, includePaths, brcaDF, hgVersion, cohortSize)
@@ -258,7 +282,7 @@ def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelea
                 if str(vus) not in homoZygousPerVus:
                     homoZygousPerVus[str(vus)].append(0)
                     maxPop, maxFreq = getGnomadData(brcaDF, vus[0], hgVersion)
-                    homoZygousPerVus[str(vus)].append([maxPop, maxFreq])
+                    homoZygousPerVus[str(   vus)].append([maxPop, maxFreq])
                 homoZygousPerVus[str(vus)][0] += 1
 
     cohortSize = len(variantsPerIndividual)
