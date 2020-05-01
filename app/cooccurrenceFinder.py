@@ -26,11 +26,15 @@ classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely ben
 sigColName = 'Clinical_significance_ENIGMA'
 coordinateColumnBase = 'Genomic_Coordinate_hg'
 alleleFrequencyName = 'Allele_frequency_ExAC'
-DATA_DIR='/data/'
-brcaFileName = DATA_DIR + 'brca-variants.tsv'
-variantsPerIndividualFileName = DATA_DIR + 'variantsPerIndividual.json'
+#DATA_DIR='/data/'
+#brcaFileName = DATA_DIR + 'brca-variants.tsv'
+#brcaFileName = 'brca-variants.tsv'
+#variantsPerIndividualFileName = DATA_DIR + 'variantsPerIndividual.json'
+variantsPerIndividualFileName = 'variantsPerIndividual.json'
 
-os.environ['PYENSEMBL_CACHE_DIR'] = DATA_DIR + 'pyensembl-cache'
+#os.environ['PYENSEMBL_CACHE_DIR'] = DATA_DIR + 'pyensembl-cache'
+os.environ['PYENSEMBL_CACHE_DIR'] = 'pyensembl-cache'
+
 
 COMMON_VARIANT_CUTOFF_FREQUENCY=0.01
 
@@ -61,9 +65,9 @@ def main():
 
     parser = argparse.ArgumentParser(usage="cooccurrenceFinder args [options]")
 
-    parser.add_argument("vcf_filename", type=str, help="name of file containing VCF data")
+    parser.add_argument("--v", dest="v", help="name of file containing VCF data, default=None", default=None)
 
-    parser.add_argument("output_filename", type=str, help="name of JSON-formatted output file")
+    parser.add_argument("--o", dest="o", help="name of JSON-formatted output file, default=None", default=None)
 
     parser.add_argument("--h", dest="h", help="Human genome version (37 or 38). Default=37", default=37)
 
@@ -71,7 +75,7 @@ def main():
 
     parser.add_argument("--c", dest="c", help="List of chromosomes of interest. Default=[13,17]", default=[13,17])
 
-    parser.add_argument("--g", dest="g", help="List of genes. Default=['BRCA1', 'BRCA2']", default=['BRCA1','BRCA2'])
+    parser.add_argument("--g", dest="g", help="Gene of interest. Default=None", default=None)
 
     parser.add_argument("--p", dest="p", help="Phased (boolean). Default=False", default='True')
 
@@ -82,6 +86,8 @@ def main():
     parser.add_argument("--a", dest="a", help="calculate allele freqs for homozygous. Default=False", default='True')
 
     parser.add_argument("--n", dest="n", help="Number of processes. Default=1", default=cpu_count())
+
+    parser.add_argument("--b", dest="b", help="BRCA variants file. Default=brca-variants", default=None)
 
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" % defaultLogLevel, default=defaultLogLevel)
 
@@ -101,11 +107,15 @@ def main():
     logger.addHandler(ch)
     logger.debug("Established logger")
 
-    if isinstance(options.g, str):
+    '''if isinstance(options.g, str):
         g_options = list(eval(options.g))
     else:
-        g_options = list(options.g)
-    c_options = list(eval(options.c))
+        g_options = list(options.g)'''
+    g_options = options.g
+    b_options = options.b
+    v_options = options.v
+    o_options = options.o
+    c_options = options.c
     p_options = bool(eval(options.p))
     s_options = bool(eval(options.s))
     i_options = bool(eval(options.i))
@@ -116,11 +126,12 @@ def main():
 
     print(options)
 
-    run(h_options, e_options, c_options, g_options, p_options, DATA_DIR + options.vcf_filename,
-        DATA_DIR + options.output_filename, s_options, i_options, a_options, n_options)
+    '''run(h_options, e_options, c_options, g_options, p_options, DATA_DIR + options.vcf_filename,
+        DATA_DIR + options.output_filename, s_options, i_options, a_options, n_options)'''
+    run(h_options, e_options, c_options, g_options, p_options, v_options, o_options, s_options, i_options, a_options, n_options, b_options)
 
-def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outputFileName, saveVarsPerIndivid,
-        includePaths, calculateAlleleFreqs, numProcs):
+def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, outputFileName, saveVarsPerIndivid,
+        includePaths, calculateAlleleFreqs, numProcs, brcaFileName):
 
     logger.info('reading BRCA data from ' + brcaFileName)
     t = time.time()
@@ -137,26 +148,23 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
     q = Queue()
     processList = list()
     for i in range(numProcs):
-        p = Process(target=findVarsPerIndividual, args=(q, vcf, benignVariants, pathogenicVariants, chromosomes, i, numProcs,))
+        p = Process(target=findVarsPerIndividual, args=(q, vcf, benignVariants, pathogenicVariants, chromosome, i, numProcs,))
         p.start()
         processList.append(p)
-
     logger.info('joining results from forked threads')
     variantsPerIndividual = dict()
     for i in range(numProcs):
         variantsPerIndividual.update(q.get())
-
     for i in range(numProcs):
         processList[i].join()
-
     logger.info('elapsed time in findVariantsPerIndividual() ' + str(time.time() -t))
+
 
     if calculateAlleleFreqs:
         logger.info('finding homozygous  individuals per vus')
         t = time.time()
-        homozygousPerVus = countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, genes)
+        homozygousPerVus = countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, gene)
         logger.info('elapsed time in countHomozygousPerVus() ' + str(time.time() -t))
-
 
     if saveVarsPerIndivid:
         logger.info('saving variantsPerIndividual to ' + variantsPerIndividualFileName)
@@ -167,7 +175,7 @@ def run(hgVersion, ensemblRelease, chromosomes, genes, phased, vcfFileName, outp
     logger.info('finding individuals per cooc')
     t = time.time()
     individualsPerPathogenicCooccurrence, n, k = findIndividualsPerCooccurrence(variantsPerIndividual, ensemblRelease,
-                                                                                phased, genes)
+                                                                                phased, gene)
     logger.info('elapsed time in findIndividualsPerCooccurrence() ' + str(time.time() -t))
 
 
@@ -273,12 +281,12 @@ def getGnomadData(brcaDF, vus, hgVersion):
 
     return (maxPopulation, maxFrequency)
 
-def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, genesOfInterest):
+def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, geneOfInterest):
     homoZygousPerVus = defaultdict(list)
 
     for individual in variantsPerIndividual:
         for vus in variantsPerIndividual[individual]['vus']:
-            if (vus[1] == '3') and (getGenesForVariant(vus[0], ensemblRelease, genesOfInterest)):
+            if (vus[1] == '3') and (getGenesForVariant(vus[0], ensemblRelease, geneOfInterest)):
                 if str(vus) not in homoZygousPerVus:
                     homoZygousPerVus[str(vus)].append(0)
                     maxPop, maxFreq = getGnomadData(brcaDF, vus[0], hgVersion)
@@ -290,7 +298,7 @@ def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelea
         maxPopFreq = homoZygousPerVus[vus][1][1]
         cohortFreq = float(homoZygousPerVus[vus][0])/ float(cohortSize)
         homoZygousPerVus[vus].append(float(cohortFreq))
-        if cohortFreq < COMMON_VARIANT_CUTOFF_FREQUENCY or maxPopFreq < COMMON_VARIANT_CUTOFF_FREQUENCY:
+        if cohortFreq < COMMON_VARIANT_CUTOFF_FREQUENCY or (maxPopFreq != 0 and maxPopFreq < COMMON_VARIANT_CUTOFF_FREQUENCY):
             homoZygousPerVus[vus].append('RARE')
 
     return homoZygousPerVus
@@ -385,7 +393,7 @@ def getStartAndEnd(partitionSizes, threadID):
 
     return start, end
 
-def findVarsPerIndividual(q, vcf, benignVariants, pathogenicVariants, chromosomes, threadID, numProcesses):
+def findVarsPerIndividual(q, vcf, benignVariants, pathogenicVariants, chromosome, threadID, numProcesses):
 
     variantsPerIndividual = dict()
 
@@ -408,7 +416,7 @@ def findVarsPerIndividual(q, vcf, benignVariants, pathogenicVariants, chromosome
         variantsPerIndividual[individuals[i]]['vus'] = list()
 
         for variant in range(len(vcf['calldata/GT'])):
-            if int(vcf['variants/CHROM'][variant].replace('chr', '')) not in chromosomes:
+            if int(vcf['variants/CHROM'][variant].replace('chr', '')) != int(chromosome):
                 continue
             if 1 in vcf['calldata/GT'][variant][i]:
                 c = int(vcf['variants/CHROM'][variant].replace('chr', ''))
@@ -426,7 +434,7 @@ def findVarsPerIndividual(q, vcf, benignVariants, pathogenicVariants, chromosome
     #return variantsPerIndividual
     q.put(variantsPerIndividual)
 
-def getGenesForVariant(variant, ensemblRelease, genesOfInterest):
+def getGenesForVariant(variant, ensemblRelease, geneOfInterest):
     ensembl = pyensembl.EnsemblRelease(release=ensemblRelease)
     chrom = variant[0]
     if type(chrom) is str:
@@ -435,7 +443,7 @@ def getGenesForVariant(variant, ensemblRelease, genesOfInterest):
     try:
         genes = ensembl.gene_names_at_locus(contig=int(chrom), position=int(pos))
         # TODO could get BRCA and other gene like ZAR1L?
-        g_of_i = set(genesOfInterest)
+        g_of_i = set(geneOfInterest)
         g = set(genes)
         intersectingGenes = g_of_i.intersection(g)
         if len(intersectingGenes) != 1:
@@ -447,7 +455,7 @@ def getGenesForVariant(variant, ensemblRelease, genesOfInterest):
         logger.error('exception: ' + str(e))
         return None
 
-def findIndividualsPerCooccurrence(variantsPerIndividual, ensemblRelease, phased, genes):
+def findIndividualsPerCooccurrence(variantsPerIndividual, ensemblRelease, phased, gene):
 
     individualsPerPathogenicCooccurrence = defaultdict(list)
     n = defaultdict(int)
@@ -462,22 +470,22 @@ def findIndividualsPerCooccurrence(variantsPerIndividual, ensemblRelease, phased
 
         vusCrossPath = list(itertools.product(vusVarList, pathVarList))
         for cross in vusCrossPath:
-            if sameGeneSameParent(cross[0], cross[1], phased, ensemblRelease, genes):
+            if sameGeneSameParent(cross[0], cross[1], phased, ensemblRelease, gene):
                 k[tuple(cross[0][0])] += 1
                 individualsPerPathogenicCooccurrence[(tuple(cross[0][0]), tuple(cross[1][0]))].append(individual)
 
     return individualsPerPathogenicCooccurrence, n, k
 
-def sameGeneSameParent(vus, path, phased, ensemblRelease, genes):
+def sameGeneSameParent(vus, path, phased, ensemblRelease, gene):
 
     if not phased:
-        return getGenesForVariant(vus[0], ensemblRelease, genes) == \
-               getGenesForVariant(path[0], ensemblRelease, genes)
+        return getGenesForVariant(vus[0], ensemblRelease, gene) == \
+               getGenesForVariant(path[0], ensemblRelease, gene)
     else:
         # looking for vus in cis with path
         # if vus is 1|1, then it's either in cis or both in cis and in trans with path
         # else if vus and path are on opposite chromosomes
-        return (getGenesForVariant(vus[0], ensemblRelease, genes) == getGenesForVariant(path[0], ensemblRelease, genes)) \
+        return (getGenesForVariant(vus[0], ensemblRelease, gene) == getGenesForVariant(path[0], ensemblRelease, gene)) \
                and \
                 ((vus[1] == '3') or ((vus[1] == '2' and path[1] == '1') or (vus[1] == '1' and path[1] == '2')))
 
