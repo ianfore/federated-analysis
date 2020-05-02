@@ -69,11 +69,11 @@ def main():
 
     parser.add_argument("--o", dest="o", help="name of JSON-formatted output file, default=None", default=None)
 
-    parser.add_argument("--h", dest="h", help="Human genome version (37 or 38). Default=37", default=37)
+    parser.add_argument("--h", dest="h", help="Human genome version (37 or 38). Default=None", default=None)
 
-    parser.add_argument("--e", dest="e", help="Ensembl version - 75 (for 37) or 99 (for 38). Default=75", default=75)
+    parser.add_argument("--e", dest="e", help="Ensembl version - 75 (for 37) or 99 (for 38). Default=None", default=None)
 
-    parser.add_argument("--c", dest="c", help="List of chromosomes of interest. Default=[13,17]", default=[13,17])
+    parser.add_argument("--c", dest="c", help="Chromosome of interest. Default=None", default=None)
 
     parser.add_argument("--g", dest="g", help="Gene of interest. Default=None", default=None)
 
