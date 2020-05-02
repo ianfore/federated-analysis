@@ -11,7 +11,7 @@ then
 	echo "usage: $0 <vcf-file> analyze"
 	echo "OR"
 	echo "$0 <input-vcf-filename> <output-json-filename> <hg-version> <ensembl-version> <chromosome-of-interest> <phased-boolean> <gene-of-interest> <save-variants> <brca-vars-filename> <pyensembl-dir>"
-	echo "example: $0 /data/bc3.vcf /data/myout.json 38 99 13 True BRCA2 True /data/brca-variants.tsv /data/pyensembl-cache"
+	echo "example: $0 /data/bc3.vcf /data/myout.json 38 99 13 True BRCA2 True /data/brca-variants.tsv /var/tmp/pyensembl-cache"
 	exit 1
 	
 
@@ -35,27 +35,28 @@ then
 	PYENSEMBL_DIR=$10
 
 
-	if [ ! -d $PYENSEMBL_DIR ] 
-	then
-        	cd $DATA_PATH
-        	cat pyens.?? > pyensembl.zip
-        	unzip pyensembl.zip
-		rm pyensembl.zip
-        	cd -
-	fi
+	#if [ ! -d $PYENSEMBL_DIR ] 
+	#then
+        #	cd $DATA_PATH
+        #	cat pyens.?? > pyensembl.zip
+        #	unzip pyensembl.zip
+	#	rm pyensembl.zip
+        #	cd -
+	#fi
 
-	if [ $(uname) == "Darwin" ]
-	then
-		PREV_PERMS=$(stat -f "%OLp" ${DATA_PATH})
-	else
-		PREV_PERMS=$(stat -c "%a" ${DATA_PATH})
-	fi
+	#if [ $(uname) == "Darwin" ]
+	#then
+	#	PREV_PERMS=$(stat -f "%OLp" ${DATA_PATH})
+	#else
+	#	PREV_PERMS=$(stat -c "%a" ${DATA_PATH})
+	#fi
 
-	chmod 1777 ${DATA_PATH}
+	#chmod 1777 ${DATA_PATH}
 
 	docker build -t ${DOCKER_IMAGE_NAME} .
 
-	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 -w /home/myuser --user=1968:games -v ${APP_PATH}:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder.py  --v ${VCF_FILE} --o ${OUTPUT_FILE} --h $HG_VERSION --e $ENSEMBL_RELEASE --c $CHROM --p $PHASED --s ${SAVE_VARS} --g $GENE --b $BRCA_VARS --d $PYENSEMBL_DIR
+	#docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 -w /home/myuser --user=1968:games -v ${APP_PATH}:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder.py  --v ${VCF_FILE} --o ${OUTPUT_FILE} --h $HG_VERSION --e $ENSEMBL_RELEASE --c $CHROM --p $PHASED --s ${SAVE_VARS} --g $GENE --b $BRCA_VARS --d $PYENSEMBL_DIR
+	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 --user=`id -u`:`id -g` -v ${APP_PATH}:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder.py  --v ${VCF_FILE} --o ${OUTPUT_FILE} --h $HG_VERSION --e $ENSEMBL_RELEASE --c $CHROM --p $PHASED --s ${SAVE_VARS} --g $GENE --b $BRCA_VARS --d $PYENSEMBL_DIR
 
 
 	chmod $PREV_PERMS ${DATA_PATH}

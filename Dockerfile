@@ -26,5 +26,6 @@ RUN DEBIAN_FRONTEND=noninteractive  apt-get install r-base -y
 
 USER myuser
 
-#RUN pyensembl install --release 75
+RUN pyensembl install --release 75
+RUN pyensembl install --release 99 
 

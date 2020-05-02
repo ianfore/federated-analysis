@@ -31,7 +31,7 @@ alleleFrequencyName = 'Allele_frequency_ExAC'
 #brcaFileName = 'brca-variants.tsv'
 #variantsPerIndividualFileName = DATA_DIR + 'variantsPerIndividual.json'
 variantsPerIndividualFileName = 'variantsPerIndividual.json'
-
+individualsPerVariantFileName = 'individualsPerVariant.json'
 #os.environ['PYENSEMBL_CACHE_DIR'] = DATA_DIR + 'pyensembl-cache'
 #os.environ['PYENSEMBL_CACHE_DIR'] = 'pyensembl-cache'
 
@@ -79,7 +79,7 @@ def main():
 
     parser.add_argument("--p", dest="p", help="Phased (boolean). Default=False", default='True')
 
-    parser.add_argument("--s", dest="s", help="Save variants per individual to file. Default=False", default='False')
+    parser.add_argument("--s", dest="s", help="Save variants per individual. Default=False", default='False')
 
     parser.add_argument("--i", dest="i", help="Include pathog vars per VUS in report. Default=False", default='True')
 
@@ -89,7 +89,7 @@ def main():
 
     parser.add_argument("--b", dest="b", help="BRCA variants file. Default=brca-variants", default=None)
 
-    parser.add_argument("--d", dest="d", help="directory containing pyensembl-cache. Default=None", default=None)
+    parser.add_argument("--d", dest="d", help="directory containing pyensembl-cache. Default=/var/tmp/pyensembl-cache", default='/var/tmp/pyensembl-cache')
 
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" % defaultLogLevel, default=defaultLogLevel)
 
