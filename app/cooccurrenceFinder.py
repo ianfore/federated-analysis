@@ -33,7 +33,7 @@ alleleFrequencyName = 'Allele_frequency_ExAC'
 variantsPerIndividualFileName = 'variantsPerIndividual.json'
 
 #os.environ['PYENSEMBL_CACHE_DIR'] = DATA_DIR + 'pyensembl-cache'
-os.environ['PYENSEMBL_CACHE_DIR'] = 'pyensembl-cache'
+#os.environ['PYENSEMBL_CACHE_DIR'] = 'pyensembl-cache'
 
 
 COMMON_VARIANT_CUTOFF_FREQUENCY=0.01
@@ -89,6 +89,8 @@ def main():
 
     parser.add_argument("--b", dest="b", help="BRCA variants file. Default=brca-variants", default=None)
 
+    parser.add_argument("--d", dest="d", help="directory containing pyensembl-cache. Default=None", default=None)
+
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" % defaultLogLevel, default=defaultLogLevel)
 
     options = parser.parse_args()
@@ -116,6 +118,7 @@ def main():
     v_options = options.v
     o_options = options.o
     c_options = options.c
+    d_options = options.d
     p_options = bool(eval(options.p))
     s_options = bool(eval(options.s))
     i_options = bool(eval(options.i))
@@ -128,10 +131,14 @@ def main():
 
     '''run(h_options, e_options, c_options, g_options, p_options, DATA_DIR + options.vcf_filename,
         DATA_DIR + options.output_filename, s_options, i_options, a_options, n_options)'''
-    run(h_options, e_options, c_options, g_options, p_options, v_options, o_options, s_options, i_options, a_options, n_options, b_options)
+    run(h_options, e_options, c_options, g_options, p_options, v_options, o_options, s_options, i_options, a_options,
+        n_options, b_options, d_options)
 
 def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, outputFileName, saveVarsPerIndivid,
-        includePaths, calculateAlleleFreqs, numProcs, brcaFileName):
+        includePaths, calculateAlleleFreqs, numProcs, brcaFileName, pyensemblDir):
+
+    logger.info('setting pyensembl dir to ' + pyensemblDir)
+    os.environ['PYENSEMBL_CACHE_DIR'] = pyensemblDir
 
     logger.info('reading BRCA data from ' + brcaFileName)
     t = time.time()
