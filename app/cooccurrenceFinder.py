@@ -89,7 +89,7 @@ def main():
 
     parser.add_argument("--b", dest="b", help="BRCA variants file. Default=brca-variants", default=None)
 
-    parser.add_argument("--d", dest="d", help="directory containing pyensembl-cache. Default=/var/tmp/pyensembl-cache", default='/var/tmp/pyensembl-cache')
+    parser.add_argument("--d", dest="d", help="directory containing pyensembl-cache. Default=/.cache", default='/.cache')
 
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" % defaultLogLevel, default=defaultLogLevel)
 
