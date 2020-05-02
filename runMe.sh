@@ -10,8 +10,8 @@ if [ $# -eq 0 ]
 then
 	echo "usage: $0 <vcf-file> analyze"
 	echo "OR"
-	echo "$0 <input-vcf-filename> <output-json-filename> <hg-version> <ensembl-version> <chromosome-of-interest> <phased-boolean> <gene-of-interest> <save-variants> <brca-vars-filename>"
-	echo "example: $0 /data/bc3.vcf /data/myout.json 38 99 13 True BRCA2 True /data/brca-variants.tsv"
+	echo "$0 <input-vcf-filename> <output-json-filename> <hg-version> <ensembl-version> <chromosome-of-interest> <phased-boolean> <gene-of-interest> <save-variants> <brca-vars-filename> <pyensembl-dir>"
+	echo "example: $0 /data/bc3.vcf /data/myout.json 38 99 13 True BRCA2 True /data/brca-variants.tsv /data/pyensembl-cache"
 	exit 1
 	
 
@@ -20,7 +20,7 @@ then
 	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 -w / --user=`id -u`:`id -g` -v ${APP_PATH}:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data ${DOCKER_IMAGE_NAME} /usr/bin/python3 /app/dataAnalyzer.py /config/conf.json 
 	exit 0
 
-elif [ $# -eq 9 ]
+elif [ $# -eq 10 ]
 then
 
 	VCF_FILE=$1
@@ -32,14 +32,14 @@ then
 	GENE=$7
 	SAVE_VARS=$8
         BRCA_VARS=$9
+	PYENSEMBL_DIR=$10
 
 
-	if [ ! -d ${DATA_PATH}/pyensembl-cache ]
+	if [ ! -d $PYENSEMBL_DIR ] 
 	then
         	cd $DATA_PATH
         	cat pyens.?? > pyensembl.zip
         	unzip pyensembl.zip
-		rm pyens.??
 		rm pyensembl.zip
         	cd -
 	fi
@@ -55,7 +55,7 @@ then
 
 	docker build -t ${DOCKER_IMAGE_NAME} .
 
-	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 -w /home/myuser --user=1968:games -v ${APP_PATH}:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder.py  --v ${VCF_FILE} --o ${OUTPUT_FILE} --h $HG_VERSION --e $ENSEMBL_RELEASE --c $CHROM --p $PHASED --s ${SAVE_VARS} --g $GENE --b $BRCA_VARS
+	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 -w /home/myuser --user=1968:games -v ${APP_PATH}:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder.py  --v ${VCF_FILE} --o ${OUTPUT_FILE} --h $HG_VERSION --e $ENSEMBL_RELEASE --c $CHROM --p $PHASED --s ${SAVE_VARS} --g $GENE --b $BRCA_VARS --d $PYENSEMBL_DIR
 
 
 	chmod $PREV_PERMS ${DATA_PATH}
