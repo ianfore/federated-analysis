@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 FDA_PATH=$(pwd)
 APP_PATH=${FDA_PATH}/app
@@ -20,7 +20,7 @@ then
 	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 -w / --user=`id -u`:`id -g` -v ${APP_PATH}:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data ${DOCKER_IMAGE_NAME} /usr/bin/python3 /app/dataAnalyzer.py /config/conf.json 
 	exit 0
 
-elif [ $# -eq 9 ]
+elif [ $# -eq 10 ]
 then
 
 	VCF_FILE=$1
@@ -32,33 +32,14 @@ then
 	GENE=$7
 	SAVE_VARS=$8
         BRCA_VARS=$9
+	VARIANTS_FILE=${10}
 
 
-	#if [ ! -d $PYENSEMBL_DIR ] 
-	#then
-        #	cd $DATA_PATH
-        #	cat pyens.?? > pyensembl.zip
-        #	unzip pyensembl.zip
-	#	rm pyensembl.zip
-        #	cd -
-	#fi
+	docker build -t ${DOCKER_IMAGE_NAME} - < Dockerfile 
 
-	#if [ $(uname) == "Darwin" ]
-	#then
-	#	PREV_PERMS=$(stat -f "%OLp" ${DATA_PATH})
-	#else
-	#	PREV_PERMS=$(stat -c "%a" ${DATA_PATH})
-	#fi
-
-	#chmod 1777 ${DATA_PATH}
-
-	docker build -t ${DOCKER_IMAGE_NAME} .
-
-	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 --user=`id -u`:`id -g` -v ${APP_PATH}:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder.py  --v ${VCF_FILE} --o ${OUTPUT_FILE} --h $HG_VERSION --e $ENSEMBL_RELEASE --c $CHROM --p $PHASED --s ${SAVE_VARS} --g $GENE --b $BRCA_VARS 
-	#docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 -w /home/myuser --user=1968:games -v ${APP_PATH}:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder.py  --v ${VCF_FILE} --o ${OUTPUT_FILE} --h $HG_VERSION --e $ENSEMBL_RELEASE --c $CHROM --p $PHASED --s ${SAVE_VARS} --g $GENE --b $BRCA_VARS 
+	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 --user=`id -u`:`id -g` -v ${APP_PATH}:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder.py  --v ${VCF_FILE} --o ${OUTPUT_FILE} --h $HG_VERSION --e $ENSEMBL_RELEASE --c $CHROM --p $PHASED --s ${SAVE_VARS} --g $GENE --b $BRCA_VARS  --d /var/tmp/pyensembl-cache --f $VARIANTS_FILE 
 
 
-	chmod $PREV_PERMS ${DATA_PATH}
 
 elif [ $# -eq 2 -a $1 == 'interactive' ]
 then

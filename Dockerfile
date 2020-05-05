@@ -24,8 +24,8 @@ RUN add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-
 
 RUN DEBIAN_FRONTEND=noninteractive  apt-get install r-base -y
 
-USER myuser
+RUN pyensembl install --release 75 --species homo_sapiens
+RUN pyensembl install --release 99 --species homo_sapiens
 
-RUN pyensembl install --release 75
-RUN pyensembl install --release 99 
-
+RUN mv /root/.cache /var/tmp/pyensembl-cache
+RUN chmod 755 /var/tmp/pyensembl-cache

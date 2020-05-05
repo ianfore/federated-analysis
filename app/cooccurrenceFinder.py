@@ -4,7 +4,6 @@ import time
 import sys
 import json
 from collections import defaultdict
-import pyensembl
 import numpy as np
 import os
 import argparse
@@ -16,6 +15,10 @@ from multiprocessing import Process, Queue, cpu_count
 logger = logging.getLogger()
 defaultLogLevel = "DEBUG"
 
+logger.info('setting pyensembl dir to /var/tmp/pyensembl-cache')
+os.environ['PYENSEMBL_CACHE_DIR'] = '/var/tmp/pyensembl-cache'
+import pyensembl
+
 # p2 = P(VUS is pathogenic and patient carries a pathogenic variant in trans) (arbitrarily set by goldgar et al)
 # Integrated Evaluation of DNA Sequence Variants of Unknown Clinical Significance: Application to BRCA1 and BRCA2
 brca1_p2 = 0.0001
@@ -26,13 +29,8 @@ classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely ben
 sigColName = 'Clinical_significance_ENIGMA'
 coordinateColumnBase = 'Genomic_Coordinate_hg'
 alleleFrequencyName = 'Allele_frequency_ExAC'
-#DATA_DIR='/data/'
-#brcaFileName = DATA_DIR + 'brca-variants.tsv'
-#brcaFileName = 'brca-variants.tsv'
-#variantsPerIndividualFileName = DATA_DIR + 'variantsPerIndividual.json'
 variantsPerIndividualFileName = 'variantsPerIndividual.json'
-#os.environ['PYENSEMBL_CACHE_DIR'] = DATA_DIR + 'pyensembl-cache'
-#os.environ['PYENSEMBL_CACHE_DIR'] = 'pyensembl-cache'
+
 
 
 class NpEncoder(json.JSONEncoder):
@@ -66,6 +64,8 @@ def main():
 
     parser.add_argument("--o", dest="o", help="name of JSON-formatted output file, default=None", default=None)
 
+    parser.add_argument("--f", dest="f", help="name of JSON-formatted variants per individual file, default=None", default=None)
+
     parser.add_argument("--h", dest="h", help="Human genome version (37 or 38). Default=None", default=None)
 
     parser.add_argument("--e", dest="e", help="Ensembl version - 75 (for 37) or 99 (for 38). Default=None", default=None)
@@ -84,7 +84,7 @@ def main():
 
     parser.add_argument("--b", dest="b", help="BRCA variants file. Default=brca-variants", default=None)
 
-    parser.add_argument("--d", dest="d", help="directory containing pyensembl-cache. Default=/.cache", default='/.cache')
+    parser.add_argument("--d", dest="d", help="directory containing pyensembl-cache. Default=/var/tmp/pyensembl-cache", default='/var/tmp/pyensembl-cache')
 
     parser.add_argument("--r", dest="r", help="Rare frequency cutoff. Default=0.01", default=0.01)
 
@@ -111,11 +111,11 @@ def main():
     b_options = options.b
     v_options = options.v
     o_options = options.o
+    f_options = options.f
     c_options = options.c
     d_options = options.d
     p_options = bool(eval(options.p))
     s_options = bool(eval(options.s))
-    i_options = bool(eval(options.i))
     h_options = int(options.h)
     e_options = int(options.e)
     n_options = int(options.n)
@@ -124,14 +124,16 @@ def main():
     print(options)
 
 
-    run(h_options, e_options, c_options, g_options, p_options, v_options, o_options, s_options, i_options,
-        n_options, b_options, d_options, r_options)
+    run(h_options, e_options, c_options, g_options, p_options, v_options, o_options, s_options,
+        n_options, b_options, d_options, r_options, f_options)
 
-def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, outputFileName, saveVarsPerIndivid,
-        includePaths, numProcs, brcaFileName, pyensemblDir, rareCutoff):
+def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, outputFileName, saveVarsPerIndivid, numProcs,
+        brcaFileName, pyensemblDir, rareCutoff, variantsPerIndividualFileName):
+
 
     logger.info('setting pyensembl dir to ' + pyensemblDir)
-    os.environ['PYENSEMBL_CACHE_DIR'] = pyensemblDir
+    os.environ['PYENSEMBL_CACHE_DIR'] = '/var/tmp/pyensembl-cache'
+
 
     logger.info('reading BRCA data from ' + brcaFileName)
     t = time.time()
@@ -212,7 +214,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, output
     p1 =  0.5 * numBenign / cohortSize
 
     logger.info('putting all the data together per vus')
-    dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, p1, n, k, includePaths, brcaDF, hgVersion, cohortSize, rareCutoff)
+    dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, p1, n, k, brcaDF, hgVersion, cohortSize, rareCutoff)
 
     data_set = {"cooccurring vus": dataPerVus, "homozygous vus": homozygousPerVus}
     json_dump = json.dumps(data_set, cls=NpEncoder)
@@ -310,7 +312,7 @@ def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelea
 
     return homozygousPerVus
 
-def calculateLikelihood(pathCoocs, p1, n, k, includePathogenicVariants, brcaDF, hgVersion, cohortSize, rareCutoff):
+def calculateLikelihood(pathCoocs, p1, n, k, brcaDF, hgVersion, cohortSize, rareCutoff):
 
     # vus coocs data: {(vus1, vus2):[individuals]}
     # "([10, 89624243, 'A', 'G'], [10, 89624304, 'C', 'T')]": ["0000057940", "0000057950"],
@@ -367,13 +369,10 @@ def calculateLikelihood(pathCoocs, p1, n, k, includePathogenicVariants, brcaDF, 
             continue
         maxPop, maxPopFreq = getGnomadData(brcaDF, vus, hgVersion)
         cohortFreq = float(n[vus]) / float(cohortSize)
-        if includePathogenicVariants:
-            #data = [[p1, p2, n[vus], k[vus], likelihoodRatios[vus]], [maxPop, maxPopFreq, cohortFreq], pathVarsPerVus[vus]]
-            data = {'likelihood data': {'p1':p1, 'p2':p2, 'n':n[vus], 'k':k[vus], 'likelihood':likelihoodRatios[vus]},
+        data = {'likelihood data': {'p1':p1, 'p2':p2, 'n':n[vus], 'k':k[vus], 'likelihood':likelihoodRatios[vus]},
                     'allele frequencies':{'maxPop':maxPop, 'maxPopFreq':maxPopFreq, 'cohortFreq':cohortFreq},
                     'pathogenic variants': pathVarsPerVus[vus]}
-        else:
-            data = [[p1, p2, n[vus], k[vus], likelihoodRatios[vus]], [maxPop, maxPopFreq, cohortFreq]]
+
         if (maxPopFreq < rareCutoff and maxPopFreq != 0) or (cohortFreq < rareCutoff and cohortFreq != 0):
             data['RARE'] = True
         else:
