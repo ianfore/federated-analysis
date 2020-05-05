@@ -31,12 +31,9 @@ alleleFrequencyName = 'Allele_frequency_ExAC'
 #brcaFileName = 'brca-variants.tsv'
 #variantsPerIndividualFileName = DATA_DIR + 'variantsPerIndividual.json'
 variantsPerIndividualFileName = 'variantsPerIndividual.json'
-individualsPerVariantFileName = 'individualsPerVariant.json'
 #os.environ['PYENSEMBL_CACHE_DIR'] = DATA_DIR + 'pyensembl-cache'
 #os.environ['PYENSEMBL_CACHE_DIR'] = 'pyensembl-cache'
 
-
-COMMON_VARIANT_CUTOFF_FREQUENCY=0.01
 
 class NpEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -83,13 +80,14 @@ def main():
 
     parser.add_argument("--i", dest="i", help="Include pathog vars per VUS in report. Default=False", default='True')
 
-    parser.add_argument("--a", dest="a", help="calculate allele freqs for homozygous. Default=False", default='True')
-
     parser.add_argument("--n", dest="n", help="Number of processes. Default=1", default=cpu_count())
 
     parser.add_argument("--b", dest="b", help="BRCA variants file. Default=brca-variants", default=None)
 
     parser.add_argument("--d", dest="d", help="directory containing pyensembl-cache. Default=/.cache", default='/.cache')
+
+    parser.add_argument("--r", dest="r", help="Rare frequency cutoff. Default=0.01", default=0.01)
+
 
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" % defaultLogLevel, default=defaultLogLevel)
 
@@ -109,10 +107,6 @@ def main():
     logger.addHandler(ch)
     logger.debug("Established logger")
 
-    '''if isinstance(options.g, str):
-        g_options = list(eval(options.g))
-    else:
-        g_options = list(options.g)'''
     g_options = options.g
     b_options = options.b
     v_options = options.v
@@ -122,20 +116,19 @@ def main():
     p_options = bool(eval(options.p))
     s_options = bool(eval(options.s))
     i_options = bool(eval(options.i))
-    a_options = bool(eval(options.a))
     h_options = int(options.h)
     e_options = int(options.e)
     n_options = int(options.n)
+    r_options = float(options.r)
 
     print(options)
 
-    '''run(h_options, e_options, c_options, g_options, p_options, DATA_DIR + options.vcf_filename,
-        DATA_DIR + options.output_filename, s_options, i_options, a_options, n_options)'''
-    run(h_options, e_options, c_options, g_options, p_options, v_options, o_options, s_options, i_options, a_options,
-        n_options, b_options, d_options)
+
+    run(h_options, e_options, c_options, g_options, p_options, v_options, o_options, s_options, i_options,
+        n_options, b_options, d_options, r_options)
 
 def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, outputFileName, saveVarsPerIndivid,
-        includePaths, calculateAlleleFreqs, numProcs, brcaFileName, pyensemblDir):
+        includePaths, numProcs, brcaFileName, pyensemblDir, rareCutoff):
 
     logger.info('setting pyensembl dir to ' + pyensemblDir)
     os.environ['PYENSEMBL_CACHE_DIR'] = pyensemblDir
@@ -167,11 +160,10 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, output
     logger.info('elapsed time in findVariantsPerIndividual() ' + str(time.time() -t))
 
 
-    if calculateAlleleFreqs:
-        logger.info('finding homozygous  individuals per vus')
-        t = time.time()
-        homozygousPerVus = countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, gene)
-        logger.info('elapsed time in countHomozygousPerVus() ' + str(time.time() -t))
+    logger.info('finding homozygous  individuals per vus')
+    t = time.time()
+    homozygousPerVus = countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, gene, rareCutoff)
+    logger.info('elapsed time in countHomozygousPerVus() ' + str(time.time() -t))
 
     if saveVarsPerIndivid:
         logger.info('saving variantsPerIndividual to ' + variantsPerIndividualFileName)
@@ -220,15 +212,17 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, output
     p1 =  0.5 * numBenign / cohortSize
 
     logger.info('putting all the data together per vus')
-    dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, p1, n, k, includePaths, brcaDF, hgVersion, cohortSize)
+    dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, p1, n, k, includePaths, brcaDF, hgVersion, cohortSize, rareCutoff)
 
-    if calculateAlleleFreqs:
-        jsonOutputList = [dataPerVus, homozygousPerVus]
-    else:
-        jsonOutputList = dataPerVus
+    data_set = {"cooccurring vus": dataPerVus, "homozygous vus": homozygousPerVus}
+    json_dump = json.dumps(data_set, cls=NpEncoder)
+
     logger.info('saving final VUS data  to ' + outputFileName)
+    '''with open(outputFileName, 'w') as f:
+        json.dump(data_set, f, cls=NpEncoder)'''
+
     with open(outputFileName, 'w') as f:
-        json.dump(jsonOutputList, f, cls=NpEncoder)
+        f.write(json_dump)
     f.close()
 
 def findVariantsInBRCA(fileName, classStrings, hgVersion):
@@ -288,29 +282,35 @@ def getGnomadData(brcaDF, vus, hgVersion):
 
     return (maxPopulation, maxFrequency)
 
-def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, geneOfInterest):
-    homoZygousPerVus = defaultdict(list)
+def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, geneOfInterest, rareCutoff):
+    homozygousPerVus = dict()
 
     for individual in variantsPerIndividual:
         for vus in variantsPerIndividual[individual]['vus']:
             if (vus[1] == '3') and (getGenesForVariant(vus[0], ensemblRelease, geneOfInterest)):
-                if str(vus) not in homoZygousPerVus:
-                    homoZygousPerVus[str(vus)].append(0)
-                    maxPop, maxFreq = getGnomadData(brcaDF, vus[0], hgVersion)
-                    homoZygousPerVus[str(   vus)].append([maxPop, maxFreq])
-                homoZygousPerVus[str(vus)][0] += 1
+                if str(vus[0]) not in homozygousPerVus:
+                    homozygousPerVus[str(vus[0])] = dict()
+                    homozygousPerVus[str(vus[0])]['count'] = 0
+                    maxPop, maxPopFreq = getGnomadData(brcaDF, vus[0], hgVersion)
+                    homozygousPerVus[str(vus[0])]['maxPop'] = maxPop
+                    homozygousPerVus[str(vus[0])]['maxPopFreq'] = maxPopFreq
+                homozygousPerVus[str(vus[0])]['count'] += 1
 
     cohortSize = len(variantsPerIndividual)
-    for vus in homoZygousPerVus:
-        maxPopFreq = homoZygousPerVus[vus][1][1]
-        cohortFreq = float(homoZygousPerVus[vus][0])/ float(cohortSize)
-        homoZygousPerVus[vus].append(float(cohortFreq))
-        if cohortFreq < COMMON_VARIANT_CUTOFF_FREQUENCY or (maxPopFreq != 0 and maxPopFreq < COMMON_VARIANT_CUTOFF_FREQUENCY):
-            homoZygousPerVus[vus].append('RARE')
+    for vus in homozygousPerVus:
+        #maxPopFreq = homoZygousPerVus[vus][1][1]
+        maxPopFreq = homozygousPerVus[vus]['maxPopFreq']
+        cohortFreq = float(homozygousPerVus[vus]['count'])/ float(cohortSize)
+        homozygousPerVus[vus]['cohortFreq'] = float(cohortFreq)
+        if cohortFreq < rareCutoff or (maxPopFreq != 0 and maxPopFreq < rareCutoff):
+            homozygousPerVus[vus]['RARE']= True
+        else:
+            homozygousPerVus[vus]['RARE'] = False
 
-    return homoZygousPerVus
 
-def calculateLikelihood(pathCoocs, p1, n, k, includePathogenicVariants, brcaDF, hgVersion, cohortSize):
+    return homozygousPerVus
+
+def calculateLikelihood(pathCoocs, p1, n, k, includePathogenicVariants, brcaDF, hgVersion, cohortSize, rareCutoff):
 
     # vus coocs data: {(vus1, vus2):[individuals]}
     # "([10, 89624243, 'A', 'G'], [10, 89624304, 'C', 'T')]": ["0000057940", "0000057950"],
@@ -368,11 +368,16 @@ def calculateLikelihood(pathCoocs, p1, n, k, includePathogenicVariants, brcaDF, 
         maxPop, maxPopFreq = getGnomadData(brcaDF, vus, hgVersion)
         cohortFreq = float(n[vus]) / float(cohortSize)
         if includePathogenicVariants:
-            data = [[p1, p2, n[vus], k[vus], likelihoodRatios[vus]], [maxPop, maxPopFreq, cohortFreq], pathVarsPerVus[vus]]
+            #data = [[p1, p2, n[vus], k[vus], likelihoodRatios[vus]], [maxPop, maxPopFreq, cohortFreq], pathVarsPerVus[vus]]
+            data = {'likelihood data': {'p1':p1, 'p2':p2, 'n':n[vus], 'k':k[vus], 'likelihood':likelihoodRatios[vus]},
+                    'allele frequencies':{'maxPop':maxPop, 'maxPopFreq':maxPopFreq, 'cohortFreq':cohortFreq},
+                    'pathogenic variants': pathVarsPerVus[vus]}
         else:
             data = [[p1, p2, n[vus], k[vus], likelihoodRatios[vus]], [maxPop, maxPopFreq, cohortFreq]]
-        if maxPopFreq < COMMON_VARIANT_CUTOFF_FREQUENCY or cohortFreq < COMMON_VARIANT_CUTOFF_FREQUENCY:
-            data.append('RARE')
+        if (maxPopFreq < rareCutoff and maxPopFreq != 0) or (cohortFreq < rareCutoff and cohortFreq != 0):
+            data['RARE'] = True
+        else:
+            data['RARE'] = False
         dataPerVus[str(vus)] = data
 
     return dataPerVus
@@ -450,7 +455,8 @@ def getGenesForVariant(variant, ensemblRelease, geneOfInterest):
     try:
         genes = ensembl.gene_names_at_locus(contig=int(chrom), position=int(pos))
         # TODO could get BRCA and other gene like ZAR1L?
-        g_of_i = set(geneOfInterest)
+        g_of_i = set()
+        g_of_i.add(geneOfInterest)
         g = set(genes)
         intersectingGenes = g_of_i.intersection(g)
         if len(intersectingGenes) != 1:
