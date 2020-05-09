@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from collections import defaultdict
 import pandas as pd
+import math
 
 coordinateColumnBase = 'Genomic_Coordinate_hg'
 brcaFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/brca-variants.tsv'
@@ -19,34 +20,55 @@ def main():
     variantsFileName =sys.argv[1]
     vpiFileName = sys.argv[2]
 
-
-
     with open(vpiFileName, 'r') as f:
         vpiDict = json.load(f)
     f.close()
-    #genotypeCounts, frequenciesPerIndividual = countTotalGenotypes(vpiDict)
-    #plotGenotypeCounts(genotypeCounts)
-    #plotFrequenciesPerIndividual(frequenciesPerIndividual)
 
+    brcaDF = findVariantsInBRCA(brcaFileName)
 
     with open(variantsFileName, 'r') as f:
         variantsDict = json.load(f)
     f.close()
 
-    '''plotVUSByPosition(variantsDict)
-    homoVUS = variantsDict['homozygous vus']
-    plotVUSByFrequency(homoVUS, 'maxPopFreq')
-    plotVUSByFrequency(homoVUS, 'cohortFreq')'''
+    genotypeCounts, frequenciesPerIndividual = countTotalGenotypesForVariants(vpiDict, 0.001, brcaDF, hgVersion, rare=True)
+    plotGenotypeCounts(genotypeCounts, rare=True)
+    #plotFrequenciesPerIndividual(frequenciesPerIndividual)
 
-    homoVhetero = countHomoAndHeteroPerIndividual(vpiDict, variantsDict, brcaFileName, hgVersion)
-    print(homoVhetero)
+
+
+
+    '''variantCounts = countTotalVariants(vpiDict)
+    print('benign counts: ' + str(len(variantCounts['benign'])))
+    print('pathogenic counts: ' + str(len(variantCounts['pathogenic'])))
+    print('vus counts: ' + str(len(variantCounts['vus'])))'''
+
+
+    #plotVUSByPosition(variantsDict)
+
+    #brcaDF = findVariantsInBRCA(brcaFileName)
+    #plotVUSByFrequency(variantsDict, 'maxPopFreq', brcaDF, hgVersion)
+    #plotVUSByFrequency(variantsDict, 'cohortFreq', brcaDF, hgVersion)
+
+    #homoVhetero = countHomoAndHeteroPerIndividual(vpiDict, variantsDict, brcaDF, hgVersion)
+    #print(homoVhetero)
 
     #printHWReport(vpiDict, variantsDict)
 
 
-def countHomoAndHeteroPerIndividual(vpiDict, variantsDict, brcaFileName, hgVersion):
+def countTotalVariants(vpiDict):
+    variants = {'benign': set(), 'pathogenic': set(), 'vus': set()}
+    for i in vpiDict:
+        for v in vpiDict[i]['benign']:
+            variants['benign'].add(tuple(v[0]))
+        for v in vpiDict[i]['pathogenic']:
+            variants['pathogenic'].add(tuple(v[0]))
+        for v in vpiDict[i]['vus']:
+            variants['vus'].add(tuple(v[0]))
+
+    return variants
+
+def countHomoAndHeteroPerIndividual(vpiDict, variantsDict, brcaDF, hgVersion):
     individualsPerVariant = defaultdict(list)
-    brcaDF = findVariantsInBRCA(brcaFileName)
     # look at each homo vus
     for homoVUS in variantsDict['homozygous vus']:
         foundOne = False
@@ -302,23 +324,24 @@ def binPlot(theList, binSize, xlabel, ylabel, dtype, sigDigs, binList):
         customBinList = True
     bins = list()
 
-    if not customBinList:
-        for element in theList:
-            for i in range(len(binList) - 1):
-                lhs = binList[i]
-                rhs = binList[i + 1]
-                if element >= lhs and element <= rhs:
+    for element in theList:
+        for i in range(len(binList) - 1):
+            lhs = binList[i]
+            rhs = binList[i + 1]
+            if element >= lhs and element <= rhs:
+                if customBinList:
+                    bins.append(rhs)
+                else:
                     bins.append(dtype(round(0.5 * (lhs + rhs), sigDigs)))
-                    break
+                break
 
-        binMax = binList[len(binList)-1]
-        listMax = max(theList)
-        for element in theList:
-            if element > binMax:
-                bins.append(dtype(round(listMax, sigDigs)))
+    binMax = binList[len(binList)-1]
+    listMax = max(theList)
+    for element in theList:
+        if element > binMax:
+            bins.append(dtype(round(listMax, sigDigs)))
 
-    else:
-        bins = theList
+
 
     df_bins = pd.DataFrame({xlabel: bins})
     if (len(df_bins) != 0):
@@ -330,19 +353,39 @@ def binPlot(theList, binSize, xlabel, ylabel, dtype, sigDigs, binList):
         plt.show()
 
 
-def plotVUSByFrequency(homoVUS, freq):
+def plotVUSByFrequency(variantsDict, freq, brcaDF, hgVersion):
+    homoVUS = variantsDict['homozygous vus']
     popFreqs = list()
     for vus in homoVUS:
         popFreqs.append(homoVUS[vus][freq])
-
     fig = plt.figure()
     ax = fig.add_subplot(111)
     bp = ax.boxplot(popFreqs)
     plt.xlabel(freq)
     plt.show()
-
     binList = [0.00001, 0.0001, 0.001, 0.01, 0.1]
-    binPlot(popFreqs, 25, freq, "number of VUS", float, 3, binList)
+    binPlot(popFreqs, 25, freq, "number of homo VUS", float, 3, binList)
+
+    popFreqs = list()
+    heteroVUS = variantsDict['cooccurring vus']
+    for vus in heteroVUS:
+        if vus in homoVUS:
+            continue
+        elif freq is 'maxPopFreq':
+            #pFreq = getGnomadData(brcaDF, eval(vus), hgVersion)[1]
+            pFreq = heteroVUS[vus]['allele frequencies']['maxPopFreq']
+            popFreqs.append(pFreq)
+        else:
+            pFreq = heteroVUS[vus]['allele frequencies']['cohortFreq']
+            popFreqs.append(pFreq)
+    print(popFreqs)
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    bp = ax.boxplot(popFreqs)
+    plt.xlabel(freq)
+    plt.show()
+    binList = [0.00001, 0.0001, 0.001, 0.01, 0.1]
+    binPlot(popFreqs, 25, freq, "number of hetero VUS", float, 3, binList)
 
 
 def plotVUSByPosition(variantsDict):
@@ -350,8 +393,17 @@ def plotVUSByPosition(variantsDict):
     homozygousVUS = variantsDict['homozygous vus']
     for vus in homozygousVUS:
         locations.append(int(eval(vus)[1]))
+    binPlot(locations, 10000, "chromosome position bins", "number of homo VUS", int, 0, None)
 
-    binPlot(locations, 10000, "chromosome position bins", "number of VUS", int, 0, None)
+    locations = list()
+    heterozygousVUS = variantsDict['cooccurring vus']
+    for vus in heterozygousVUS:
+        if vus in homozygousVUS:
+            continue
+        else:
+            locations.append(int(eval(vus)[1]))
+    binPlot(locations, 10000, "chromosome position bins", "number of het VUS", int, 0, None)
+
 
 
 def plotFrequenciesPerIndividual(frequenciesPerIndividual):
@@ -363,7 +415,6 @@ def plotFrequenciesPerIndividual(frequenciesPerIndividual):
     hetero_path_counts = list()
     hetero_vus_counts = list()
 
-    print('number of individuals = ' + str(len(frequenciesPerIndividual)))
 
     for individual in frequenciesPerIndividual:
         homo_ben_counts.append(frequenciesPerIndividual[individual]['benign']['homo'])
@@ -382,8 +433,7 @@ def plotFrequenciesPerIndividual(frequenciesPerIndividual):
 
 
 
-def plotGenotypeCounts(genotypeCounts):
-    labels = ['benign', 'pathogenic', 'vus']
+def plotGenotypeCounts(genotypeCounts, rare):
     homoCounts = [0 if genotypeCounts['benign']['homo'] == 0 else genotypeCounts['benign']['homo'],
                  0 if genotypeCounts['pathogenic']['homo'] == 0 else genotypeCounts['pathogenic']['homo'],
                  0 if genotypeCounts['vus']['homo'] == 0 else genotypeCounts['vus']['homo']]
@@ -393,6 +443,7 @@ def plotGenotypeCounts(genotypeCounts):
 
 
     # plot bar graph
+    '''labels = ['benign', 'pathogenic', 'vus']
     x = np.arange(len(labels))
     width = 0.35
     fig, ax = plt.subplots()
@@ -404,59 +455,84 @@ def plotGenotypeCounts(genotypeCounts):
     ax.set_xticklabels(labels)
     ax.legend(loc='upper center')
     fig.tight_layout()
-    plt.show()
+    #plt.ylim(0, 7)
+    plt.show()'''
 
     # plot pie chart
     # Pie chart, where the slices will be ordered and plotted counter-clockwise:
-    labels = 'Homo benign', 'Homo path', 'Homo VUS', 'Hetero benign', 'Hetero path', 'Hetero VUS'
-    sizes = [genotypeCounts['benign']['homo'], genotypeCounts['pathogenic']['homo'],
-            genotypeCounts['vus']['homo'], genotypeCounts['benign']['hetero'],
-            genotypeCounts['pathogenic']['hetero'], genotypeCounts['vus']['hetero']]
-
+    plt.rcParams['font.size'] = 18
     fig1, ax1 = plt.subplots()
-    ax1.pie(sizes, labels=labels, autopct='%1.1f%%', shadow=True, startangle=90)
+
+    '''if rare:
+        labels = ['Homo VUS',  'Hetero VUS']
+        colors = ['green', 'brown']
+        sizes = [genotypeCounts['vus']['homo'], genotypeCounts['vus']['hetero']]
+        explode = (0, 0)
+        ax1.pie(sizes, explode=explode, colors=colors, labels=labels, shadow=False, startangle=90)'''
+    if False:
+        print('hi')
+
+    else:
+        labels = ['Homo benign', 'Homo path', 'Homo VUS', 'Hetero benign', 'Hetero path', 'Hetero VUS']
+        sizes = [genotypeCounts['benign']['homo'], genotypeCounts['pathogenic']['homo'],
+                genotypeCounts['vus']['homo'], genotypeCounts['benign']['hetero'],
+                genotypeCounts['pathogenic']['hetero'], genotypeCounts['vus']['hetero']]
+        colors = ['red', 'yellow', 'green', 'orange', 'blue', 'brown']
+        explode = (0.1, 0.1, 0.1, 0, 0, 0)
+        #ax1.pie(sizes, explode=explode, labels=labels, colors = colors, autopct='%1.3f%%', shadow=False, startangle=90)
+        ax1.pie(sizes, explode=explode, labels=labels, colors = colors, shadow=False, startangle=90)
+
     ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
-    plt.show()
+    #plt.show()
+    plt.savefig('/tmp/genotype.png')
 
 
-def countTotalGenotypes(vpiDict):
 
-   genotypeCounts = {'benign': {'homo':0, 'hetero': 0},
+def countTotalGenotypesForVariants(vpiDict, rareThreshold, brcaDF, hgVersion, rare):
+
+    genotypeCounts = {'benign': {'homo':0, 'hetero': 0},
                      'pathogenic': {'homo': 0, 'hetero': 0},
                      'vus': {'homo': 0, 'hetero': 0}}
 
-   frequenciesPerIndividual = dict()
+    frequenciesPerIndividual = dict()
 
-   for individual in vpiDict:
-      frequenciesPerIndividual[individual] = {'benign': {'homo': 0, 'hetero': 0},
+    for individual in vpiDict:
+        frequenciesPerIndividual[individual] = {'benign': {'homo': 0, 'hetero': 0},
                                               'pathogenic': {'homo': 0, 'hetero': 0},
                                               'vus': {'homo': 0, 'hetero': 0}}
-      for b in vpiDict[individual]['benign']:
-         if b:
-            if b[1] == '3':
-               genotypeCounts['benign']['homo'] += 1
-               frequenciesPerIndividual[individual]['benign']['homo'] += 1
-            else:
-               genotypeCounts['benign']['hetero'] += 1
-               frequenciesPerIndividual[individual]['benign']['hetero'] += 1
-      for p in vpiDict[individual]['pathogenic']:
-         if p:
-            if p[1] == '3':
-               genotypeCounts['pathogenic']['homo'] += 1
-               frequenciesPerIndividual[individual]['pathogenic']['homo'] += 1
-            else:
-               genotypeCounts['pathogenic']['hetero'] += 1
-               frequenciesPerIndividual[individual]['pathogenic']['hetero'] += 1
-      for v in vpiDict[individual]['vus']:
-         if v:
-            if v[1] == '3':
-               genotypeCounts['vus']['homo'] += 1
-               frequenciesPerIndividual[individual]['vus']['homo'] += 1
-            else:
-               genotypeCounts['vus']['hetero'] += 1
-               frequenciesPerIndividual[individual]['vus']['hetero'] += 1
+        for b in vpiDict[individual]['benign']:
+            if b:
+                if rare and getGnomadData(brcaDF, tuple(b[0]), hgVersion)[1] > rareThreshold:
+                    continue
+                elif b[1] == '3':
+                    genotypeCounts['benign']['homo'] += 1
+                    frequenciesPerIndividual[individual]['benign']['homo'] += 1
+                else:
+                    genotypeCounts['benign']['hetero'] += 1
+                    frequenciesPerIndividual[individual]['benign']['hetero'] += 1
+        for p in vpiDict[individual]['pathogenic']:
+            if p:
+                if rare and getGnomadData(brcaDF, tuple(p[0]), hgVersion)[1] > rareThreshold:
+                    continue
+                elif p[1] == '3':
+                    genotypeCounts['pathogenic']['homo'] += 1
+                    frequenciesPerIndividual[individual]['pathogenic']['homo'] += 1
+                else:
+                    genotypeCounts['pathogenic']['hetero'] += 1
+                    frequenciesPerIndividual[individual]['pathogenic']['hetero'] += 1
+        for v in vpiDict[individual]['vus']:
+            if v:
+                if rare and getGnomadData(brcaDF, tuple(v[0]), hgVersion)[1] > rareThreshold:
+                    continue
+                elif v[1] == '3':
+                    genotypeCounts['vus']['homo'] += 1
+                    frequenciesPerIndividual[individual]['vus']['homo'] += 1
+                else:
+                    genotypeCounts['vus']['hetero'] += 1
+                    frequenciesPerIndividual[individual]['vus']['hetero'] += 1
 
-   return genotypeCounts, frequenciesPerIndividual
+    print(genotypeCounts)
+    return genotypeCounts, frequenciesPerIndividual
 
 if __name__ == "__main__":
     main()
