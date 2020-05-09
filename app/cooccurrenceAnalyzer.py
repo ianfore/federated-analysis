@@ -12,13 +12,14 @@ hgVersion = 38
 
 
 def main():
-    if len(sys.argv) != 3:
-        print('provide path to variant and vpi files as args')
-        print('13-out.json 13-vpi.json')
+    if len(sys.argv) != 4:
+        print('provide path to variant, vpi, and brca files as args')
+        print('13-out.json 13-vpi.json brca-variants.tsv')
         sys.exit(1)
 
     variantsFileName =sys.argv[1]
     vpiFileName = sys.argv[2]
+    brcaFileName = sys.argv[3]
 
     with open(vpiFileName, 'r') as f:
         vpiDict = json.load(f)
@@ -497,6 +498,7 @@ def countTotalGenotypesForVariants(vpiDict, rareThreshold, brcaDF, hgVersion, ra
     frequenciesPerIndividual = dict()
 
     for individual in vpiDict:
+        print(individual)
         frequenciesPerIndividual[individual] = {'benign': {'homo': 0, 'hetero': 0},
                                               'pathogenic': {'homo': 0, 'hetero': 0},
                                               'vus': {'homo': 0, 'hetero': 0}}
