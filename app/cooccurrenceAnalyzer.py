@@ -4,15 +4,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 from collections import defaultdict
 import pandas as pd
-import math
+import logging
+import time
+from multiprocessing import Process, Queue, cpu_count
 
 coordinateColumnBase = 'Genomic_Coordinate_hg'
 brcaFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/brca-variants.tsv'
 hgVersion = 38
-
+logger = logging.getLogger()
+defaultLogLevel = "DEBUG"
 
 def main():
-    if len(sys.argv) != 4:
+    if len(sys.argv) != 6:
         print('provide path to variant, vpi, and brca files as args')
         print('13-out.json 13-vpi.json brca-variants.tsv')
         sys.exit(1)
@@ -20,6 +23,8 @@ def main():
     variantsFileName =sys.argv[1]
     vpiFileName = sys.argv[2]
     brcaFileName = sys.argv[3]
+    numProcesses = int(sys.argv[4])
+    outFile = sys.argv[5]
 
     with open(vpiFileName, 'r') as f:
         vpiDict = json.load(f)
@@ -27,14 +32,31 @@ def main():
 
     brcaDF = findVariantsInBRCA(brcaFileName)
 
-    with open(variantsFileName, 'r') as f:
+    '''with open(variantsFileName, 'r') as f:
         variantsDict = json.load(f)
-    f.close()
+    f.close()'''
 
-    genotypeCounts, frequenciesPerIndividual = countTotalGenotypesForVariants(vpiDict, 0.001, brcaDF, hgVersion, rare=True)
-    plotGenotypeCounts(genotypeCounts, rare=True)
+    #genotypeCounts, frequenciesPerIndividual = countTotalGenotypesForVariants(vpiDict, 0.001, brcaDF, hgVersion, True, threadID, numProcesses)
+    #plotGenotypeCounts(genotypeCounts, rare=True)
     #plotFrequenciesPerIndividual(frequenciesPerIndividual)
 
+    print('counting genotypes for variants on ' + str(numProcesses) + ' processes')
+    t = time.time()
+    q = Queue()
+    processList = list()
+    for i in range(numProcesses):
+        p = Process(target=countTotalGenotypesForVariants,
+                    args=(q, vpiDict, 0.001, brcaDF, hgVersion, True, i, numProcesses,))
+        p.start()
+        processList.append(p)
+    print('joining results from forked threads')
+    genotypeCounts = dict()
+    for i in range(numProcesses):
+        genotypeCounts.update(q.get())
+    for i in range(numProcesses):
+        processList[i].join()
+    print('elapsed time in findVariantsPerIndividual() ' + str(time.time() - t))
+    print(genotypeCounts)
 
 
 
@@ -487,54 +509,100 @@ def plotGenotypeCounts(genotypeCounts, rare):
     #plt.show()
     plt.savefig('/tmp/genotype.png')
 
+def divide(n, d):
+   res = list()
+   qu = int(n/d)
+   rm = n%d
+   for i in range(d):
+       if i < rm:
+           res.append(qu + 1)
+       else:
+           res.append(qu)
+   return res
+
+def getStartAndEnd(partitionSizes, threadID):
+    start = 0
+    for i in range(threadID):
+        start += partitionSizes[i]
+
+    end = start + partitionSizes[threadID]
+
+    return start, end
 
 
-def countTotalGenotypesForVariants(vpiDict, rareThreshold, brcaDF, hgVersion, rare):
+def countTotalGenotypesForVariants(q, vpiDict, rareThreshold, brcaDF, hgVersion, rare, threadID, numProcesses):
 
     genotypeCounts = {'benign': {'homo':0, 'hetero': 0},
                      'pathogenic': {'homo': 0, 'hetero': 0},
                      'vus': {'homo': 0, 'hetero': 0}}
 
-    frequenciesPerIndividual = dict()
+    #frequenciesPerIndividual = dict()
 
+
+    individuals = list()
     for individual in vpiDict:
+        individuals.append(individual)
+    n = len(individuals)
+    partitionSizes = divide(n, numProcesses)
+    start, end = getStartAndEnd(partitionSizes, threadID)
+
+    print('threadID = ' + str(threadID) + ' processing from ' + str(start) + ' to ' + str(end))
+
+    print('looping through ' + str(end - start) + ' individuals')
+    # for i in range(len(individuals)):
+    for i in range(start, end):
+        individual = individuals[i]
         print(individual)
-        frequenciesPerIndividual[individual] = {'benign': {'homo': 0, 'hetero': 0},
-                                              'pathogenic': {'homo': 0, 'hetero': 0},
-                                              'vus': {'homo': 0, 'hetero': 0}}
+        #frequenciesPerIndividual[individual] = {'benign': {'homo': 0, 'hetero': 0},
+         #                                   'pathogenic': {'homo': 0, 'hetero': 0},
+             #                                 'vus': {'homo': 0, 'hetero': 0}}
+        #benignFreqsPerIndividual[individual] = {'homo': 0, 'hetero': 0}
+        #pathFreqsPerIndividual[individual] = {'homo': 0, 'hetero': 0}
+        #vusFreqsPerIndividual[individual] = {'homo': 0, 'hetero': 0}
         for b in vpiDict[individual]['benign']:
             if b:
-                if rare and getGnomadData(brcaDF, tuple(b[0]), hgVersion)[1] > rareThreshold:
+                f = getGnomadData(brcaDF, tuple(b[0]), hgVersion)[1]
+                if rare and f > rareThreshold:
                     continue
                 elif b[1] == '3':
                     genotypeCounts['benign']['homo'] += 1
-                    frequenciesPerIndividual[individual]['benign']['homo'] += 1
+                    #frequenciesPerIndividual[individual]['benign']['homo'] += 1
+                    #benignFreqsPerIndividual[individual]['homo'] += 1
                 else:
                     genotypeCounts['benign']['hetero'] += 1
-                    frequenciesPerIndividual[individual]['benign']['hetero'] += 1
+                    #frequenciesPerIndividual[individual]['benign']['hetero'] += 1
+                    #benignFreqsPerIndividual[individual]['hetero'] += 1
         for p in vpiDict[individual]['pathogenic']:
             if p:
                 if rare and getGnomadData(brcaDF, tuple(p[0]), hgVersion)[1] > rareThreshold:
                     continue
                 elif p[1] == '3':
                     genotypeCounts['pathogenic']['homo'] += 1
-                    frequenciesPerIndividual[individual]['pathogenic']['homo'] += 1
+                    #frequenciesPerIndividual[individual]['pathogenic']['homo'] += 1
+                    #pathFreqsPerIndividual[individual]['homo'] += 1
                 else:
                     genotypeCounts['pathogenic']['hetero'] += 1
-                    frequenciesPerIndividual[individual]['pathogenic']['hetero'] += 1
+                    #frequenciesPerIndividual[individual]['pathogenic']['hetero'] += 1
+                    #pathFreqsPerIndividual[individual]['hetero'] += 1
         for v in vpiDict[individual]['vus']:
             if v:
                 if rare and getGnomadData(brcaDF, tuple(v[0]), hgVersion)[1] > rareThreshold:
                     continue
                 elif v[1] == '3':
                     genotypeCounts['vus']['homo'] += 1
-                    frequenciesPerIndividual[individual]['vus']['homo'] += 1
+                    #frequenciesPerIndividual[individual]['vus']['homo'] += 1
+                    #vusFreqsPerIndividual[individual]['homo'] += 1
+
                 else:
                     genotypeCounts['vus']['hetero'] += 1
-                    frequenciesPerIndividual[individual]['vus']['hetero'] += 1
+                    #frequenciesPerIndividual[individual]['vus']['hetero'] += 1
+                    #vusFreqsPerIndividual[individual]['hetero'] += 1
 
-    print(genotypeCounts)
-    return genotypeCounts, frequenciesPerIndividual
+    #print(genotypeCounts)
+    #return genotypeCounts, frequenciesPerIndividual
+    #return genotypeCounts, benignFreqsPerIndividual, pathFreqsPerIndividual, vusFreqsPerIndividual
+    q.put(genotypeCounts)
+
 
 if __name__ == "__main__":
     main()
