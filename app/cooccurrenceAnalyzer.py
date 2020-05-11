@@ -12,6 +12,7 @@ coordinateColumnBase = 'Genomic_Coordinate_hg'
 brcaFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/brca-variants.tsv'
 hgVersion = 38
 logger = logging.getLogger()
+
 defaultLogLevel = "DEBUG"
 
 def main():
