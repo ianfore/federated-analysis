@@ -35,12 +35,14 @@ def main():
         vpiDict = json.load(f)
     f.close()
 
+    vpiDF = pd.DataFrame(vpiDict)
+
     logger.info('finding variants from ' + brcaFileName)
     brcaDF = findVariantsInBRCA(brcaFileName)
 
-    '''with open(variantsFileName, 'r') as f:
+    with open(variantsFileName, 'r') as f:
         variantsDict = json.load(f)
-    f.close()'''
+    f.close()
 
     #genotypeCounts, frequenciesPerIndividual = countTotalGenotypesForVariants(vpiDict, 0.001, brcaDF, hgVersion, True, threadID, numProcesses)
     #plotGenotypeCounts(genotypeCounts, rare=True)
@@ -53,7 +55,7 @@ def main():
     processList = list()
     for i in range(numProcesses):
         p = Process(target=countTotalGenotypesForVariants,
-                    args=(q1, q2, vpiDict, 0.001, brcaDF, hgVersion, False, i, numProcesses,))
+                    args=(q1, q2, vpiDF, 0.001, brcaDF, hgVersion, False, i, numProcesses,))
         p.start()
         processList.append(p)
     logger.info('joining results from forked threads')
@@ -549,14 +551,14 @@ def getStartAndEnd(partitionSizes, threadID):
     return start, end
 
 
-def countTotalGenotypesForVariants(q1, q2, vpiDict, rareThreshold, brcaDF, hgVersion, rare, threadID, numProcesses):
+def countTotalGenotypesForVariants(q1, q2, vpiDF, rareThreshold, brcaDF, hgVersion, rare, threadID, numProcesses):
 
     genotypeCounts = {'benign': {'homo':0, 'hetero': 0},
                      'pathogenic': {'homo': 0, 'hetero': 0},
                      'vus': {'homo': 0, 'hetero': 0}}
     frequenciesPerIndividual = dict()
     individuals = list()
-    for individual in vpiDict:
+    for individual in vpiDF:
         individuals.append(individual)
     n = len(individuals)
     partitionSizes = divide(n, numProcesses)
@@ -570,10 +572,9 @@ def countTotalGenotypesForVariants(q1, q2, vpiDict, rareThreshold, brcaDF, hgVer
                                             'pathogenic': {'homo': 0, 'hetero': 0},
                                               'vus': {'homo': 0, 'hetero': 0}}
 
-        for b in vpiDict[individual]['benign']:
+        for b in vpiDF[individual]['benign']:
             if b:
-                f = getGnomadData(brcaDF, tuple(b[0]), hgVersion)[1]
-                if rare and f > rareThreshold:
+                if rare and getGnomadData(brcaDF, tuple(b[0]), hgVersion)[1] > rareThreshold:
                     continue
                 elif b[1] == '3':
                     genotypeCounts['benign']['homo'] += 1
@@ -581,7 +582,7 @@ def countTotalGenotypesForVariants(q1, q2, vpiDict, rareThreshold, brcaDF, hgVer
                 else:
                     genotypeCounts['benign']['hetero'] += 1
                     frequenciesPerIndividual[individual]['benign']['hetero'] += 1
-        for p in vpiDict[individual]['pathogenic']:
+        for p in vpiDF[individual]['pathogenic']:
             if p:
                 if rare and getGnomadData(brcaDF, tuple(p[0]), hgVersion)[1] > rareThreshold:
                     continue
@@ -591,7 +592,7 @@ def countTotalGenotypesForVariants(q1, q2, vpiDict, rareThreshold, brcaDF, hgVer
                 else:
                     genotypeCounts['pathogenic']['hetero'] += 1
                     frequenciesPerIndividual[individual]['pathogenic']['hetero'] += 1
-        for v in vpiDict[individual]['vus']:
+        for v in vpiDF[individual]['vus']:
             if v:
                 if rare and getGnomadData(brcaDF, tuple(v[0]), hgVersion)[1] > rareThreshold:
                     continue
