@@ -11,10 +11,9 @@ from multiprocessing import Process, Queue, cpu_count
 coordinateColumnBase = 'Genomic_Coordinate_hg'
 brcaFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/brca-variants.tsv'
 hgVersion = 38
+
 logging.basicConfig()
 logger = logging.getLogger()
-#for handler in logging.root.handlers[:]:
-#    logging.root.removeHandler(handler)
 logger.setLevel(logging.DEBUG)
 
 
@@ -30,12 +29,11 @@ def main():
     numProcesses = int(sys.argv[4])
     outputDir = sys.argv[5]
 
-    logger.info('reading data from ' + vpiFileName)
+    '''logger.info('reading data from ' + vpiFileName)
     with open(vpiFileName, 'r') as f:
         vpiDict = json.load(f)
     f.close()
-
-    vpiDF = pd.DataFrame(vpiDict)
+    vpiDF = pd.DataFrame(vpiDict)'''
 
     logger.info('finding variants from ' + brcaFileName)
     brcaDF = findVariantsInBRCA(brcaFileName)
@@ -44,18 +42,26 @@ def main():
         variantsDict = json.load(f)
     f.close()
 
-    #genotypeCounts, frequenciesPerIndividual = countTotalGenotypesForVariants(vpiDict, 0.001, brcaDF, hgVersion, True, threadID, numProcesses)
-    #plotGenotypeCounts(genotypeCounts, rare=True)
-    #plotFrequenciesPerIndividual(frequenciesPerIndividual)
+    logger.info('getting gnomad freqs per variant')
+    fpvFileName = 'freqPerVariant.json'
+    frequencyPerVariant = getFrequenciesPerVariant(variantsDict, brcaDF, hgVersion, 'AMR')
+    with open(outputDir + '/' + fpvFileName, 'w') as f:
+        json.dump(frequencyPerVariant, f)
+    f.close()
 
-    logger.info('counting genotypes for variants on ' + str(numProcesses) + ' processes')
+    l1, l2 = generateListsForCorrelation(frequencyPerVariant, 'AMR', 'cohort')
+
+    p = pearsonCorrelation(l1, l2)
+    print('p (amr, cohort) = ' + p)
+
+    '''logger.info('counting genotypes for variants on ' + str(numProcesses) + ' processes')
     t = time.time()
     q1 = Queue()
     q2 = Queue()
     processList = list()
     for i in range(numProcesses):
         p = Process(target=countTotalGenotypesForVariants,
-                    args=(q1, q2, vpiDF, 0.001, brcaDF, hgVersion, False, i, numProcesses,))
+                    args=(q1, q2, vpiDF, 0.001, brcaDF, hgVersion, True, i, numProcesses,))
         p.start()
         processList.append(p)
     logger.info('joining results from forked threads')
@@ -66,9 +72,11 @@ def main():
         frequenciesPerIndividual.update(q2.get())
     for i in range(numProcesses):
         processList[i].join()
-    logger.debug('elapsed time in countTotalGenotypesForVariants() ' + str(time.time() - t))
+    logger.debug('elapsed time in countTotalGenotypesForVariants() ' + str(time.time() - t))'''
 
-    genotypeCountsFileName = 'genotypeCounts.json'
+
+
+    '''genotypeCountsFileName = 'genotypeCounts.json'
     logger.info('saving to ' + outputDir + '/' + genotypeCountsFileName)
     with open(outputDir + '/' + genotypeCountsFileName, 'w') as f:
         json.dump(genotypeCounts, f)
@@ -80,6 +88,9 @@ def main():
         json.dump(frequenciesPerIndividual, f)
     f.close()
 
+    plotGenotypeCounts(genotypeCounts, rare=True)
+    plotFrequenciesPerIndividual(frequenciesPerIndividual)'''
+
     '''variantCounts = countTotalVariants(vpiDict)
     print('benign counts: ' + str(len(variantCounts['benign'])))
     print('pathogenic counts: ' + str(len(variantCounts['pathogenic'])))
@@ -88,7 +99,6 @@ def main():
 
     #plotVUSByPosition(variantsDict)
 
-    #brcaDF = findVariantsInBRCA(brcaFileName)
     #plotVUSByFrequency(variantsDict, 'maxPopFreq', brcaDF, hgVersion)
     #plotVUSByFrequency(variantsDict, 'cohortFreq', brcaDF, hgVersion)
 
@@ -96,6 +106,103 @@ def main():
     #print(homoVhetero)
 
     #printHWReport(vpiDict, variantsDict)
+
+def generateListsForCorrelation(fpv, list_1_string, list_2_string):
+    l1 = list()
+    l2 = list()
+    for v in fpv:
+        if fpv[v]['homozygous vus']:
+            if list_1_string == 'max' or list_1_string == 'min':
+                l1.append(fpv[v][list_1_string]['frequency'])
+            elif list_1_string == 'cohort':
+                l1.append(fpv[v]['cohort'])
+            else:
+                # ethnicity
+                maxEthnic = max(fpv[v][list_1_string]['Allele_frequency_exome_'+list_1_string+'_GnomAD'],
+                              fpv[v][list_1_string]['Allele_frequency_genome_'+list_1_string+'_GnomAD'])
+                l1.append(maxEthnic)
+            if list_2_string == 'max' or list_2_string == 'min':
+                l2.append((fpv[v][list_2_string]['frequency']))
+            elif list_2_string == 'cohort':
+                l2.append(fpv[v]['cohort'])
+            else:
+                # ethnicity
+                maxEthnic = max(fpv[v][list_2_string]['Allele_frequency_exome_' + list_2_string + '_GnomAD'],
+                              fpv[v][list_2_string]['Allele_frequency_genome_' + list_2_string + '_GnomAD'])
+                l2.append(maxEthnic)
+
+        else:
+            continue
+
+    # now clean up the lists -- there may be some [] from maxEthnic. Remove the corresponding elts from both lists
+    # you can't remove elts from a list while you are iterating on it :) so add indices to list and remove them later
+    indicesToRemove = list()
+    for i in range(len(l1)):
+        if l1[i] == [] or l1[i] == '-':
+            indicesToRemove.append(i)
+        elif l2[i] == [] or l2[i] == '-':
+            indicesToRemove.append(i)
+
+    l1_stripped = list()
+    l2_stripped = list()
+    for i in range(len(l1)):
+        # here's where you 'remove' an elt at an index by not adding it to the final list :)
+        if i not in indicesToRemove:
+            # by the time you get here, you'll have 1-elt lists, so just extract the [0] value for ethnic freq
+            if type(l1[i]) is list:
+                if type(l1[i][0]) is str:
+                    try:
+                        x = eval(l1[i][0])
+                    except Exception as e:
+                        print('x = ' + str(x))
+                        break
+                    l1_stripped.append(eval(l1[i][0]))
+                else:
+                    l1_stripped.append(l1[i][0])
+            else:
+                l1_stripped.append(l1[i])
+            if type(l2[i]) is list:
+                if type(l2[i][0]) is str:
+                    l2_stripped.append(eval(l2[i][0]))
+                else:
+                    l2_stripped.append(l2[i][0])
+            else:
+                l2_stripped.append(l2[i])
+
+    return l1_stripped, l2_stripped
+
+def mean(someList):
+    total = 0
+    for a in someList:
+        total += float(a)
+    mean = total/len(someList)
+    return mean
+
+def standDev(someList):
+    listMean = mean(someList)
+    dev = 0.0
+    for i in range(len(someList)):
+        dev += (someList[i]-listMean)**2
+    dev = dev**(1/2.0)
+    return dev
+
+def pearsonCorrelation(someList1, someList2):
+
+    # First establish the means and standard deviations for both lists.
+    xMean = mean(someList1)
+    yMean = mean(someList2)
+    xStandDev = standDev(someList1)
+    yStandDev = standDev(someList2)
+    # r numerator
+    rNum = 0.0
+    for i in range(len(someList1)):
+        rNum += (someList1[i]-xMean)*(someList2[i]-yMean)
+
+    # r denominator
+    rDen = xStandDev * yStandDev
+
+    r =  rNum/rDen
+    return r
 
 
 def countTotalVariants(vpiDict):
@@ -142,38 +249,118 @@ def countHomoAndHeteroPerIndividual(vpiDict, variantsDict, brcaDF, hgVersion):
 def findVariantsInBRCA(fileName):
     return pd.read_csv(fileName, sep='\t', header=0, dtype=str)
 
+def getFrequenciesPerVariant(variantsDict, brcaDF, hgVersion, ethnicity):
+    freqPerVariant = defaultdict(dict)
+    # get min, max, median, and #hom and #hem
 
+    for variant in variantsDict['cooccurring vus']:
+        #logger.debug('variant: ' + str(variant))
+        freqPerVariant[variant]['cooccurring vus'] = True
+        freqPerVariant[variant]['homozygous vus'] = False
+        gnomadData = getGnomadData(brcaDF, variant, hgVersion, ethnicity)
+        for g in gnomadData:
+            freqPerVariant[variant][g] = gnomadData[g]
+        freqPerVariant[variant]['cohort'] = variantsDict['cooccurring vus'][variant]['allele frequencies']['cohortFreq']
+    for variant in variantsDict['homozygous vus']:
+        #logger.debug('variant: ' + str(variant))
+        freqPerVariant[variant]['homozygous vus'] = True
+        if 'cooccurring vus' not in freqPerVariant[variant]:
+            freqPerVariant[variant]['cooccurring vus'] = False
+            gnomadData = getGnomadData(brcaDF, variant, hgVersion, ethnicity)
+            for g in gnomadData:
+                freqPerVariant[variant][g] = gnomadData[g]
+            freqPerVariant[variant]['cohort'] = variantsDict['homozygous vus'][variant]['cohortFreq']
 
+    return freqPerVariant
 
-def getGnomadData(brcaDF, vus, hgVersion):
+def getGnomadData(brcaDF, vus, hgVersion, ethnicity):
     # TODO write a unit test
     # 13:g.32393468:C>CT
     #hgString = 'chr' + str(vus[0][0]) + ':g.' + str(vus[0][1]) + ':' + str(vus[0][2]) + '>' + str(vus[0][3])
+    if type(vus) is str:
+        vus = eval(vus)
     hgString = 'chr' + str(vus[0]) + ':g.' + str(vus[1]) + ':' + str(vus[2]) + '>' + str(vus[3])
 
     # first, get list of columns for GnomAD allleles
+    #alleleFrequencyPrefixes = ['Allele_frequency_genome_', 'Allele_frequency_']
+    # 'Allele_count_exome_AMR_GnomAD', 'Allele_count_hemi_exome_AMR_GnomAD', 'Allele_count_hom_exome_AMR_GnomAD',
+    # 'Allele_number_exome_AMR_GnomAD', 'Allele_frequency_exome_AMR_GnomAD' ,'Allele_frequency_AMR_GnomAD'
+
     gnomad = [v for v in list(brcaDF.columns) if 'GnomAD' in v]
-    alleleFrequencies = [v for v in gnomad if 'Allele_frequency' in v]
 
     # second, get frequencies across exomes and genomes to determine max
     # return population, frequency, count, and number
     # replace "frequency" with "count" and "number" in Allele_frequency_genome_AFR_GnomAD
 
-    maxFrequency = 0.0
-    maxPopulation = None
+    '''if ethnicity == 'max':
+        alleleFrequencies = [v for v in gnomad if 'Allele_frequency' in v]
+        return getMaxGnomad(brcaDF, hgString, hgVersion, alleleFrequencies)
+
+    elif ethnicity == 'min':
+        alleleFrequencies = [v for v in gnomad if 'Allele_frequency' in v]
+        return getMinGnomad(brcaDF, hgString, hgVersion, alleleFrequencies)
+
+    #elif ethnicity in [ 'AFR', 'AMR', 'ASJ', 'EAS', 'FIN', 'NFE', 'OTH', 'SAS']:
+    #    return getPopulationGnomadData(brcaDF, hgString, hgVersion, alleleFrequencies)
+
+    else:'''
+    allDict = dict()
+
+    alleleFrequencies = [v for v in gnomad if 'Allele_frequency' in v]
+    allDict['max'] = getMaxGnomad(brcaDF, hgString, hgVersion, alleleFrequencies)
+    allDict['min'] = getMinGnomad(brcaDF, hgString, hgVersion, alleleFrequencies)
+
+    alleleFrequencies = [v for v in gnomad if ethnicity in v]
+    allDict[ethnicity] = getPopulationGnomadData(brcaDF, hgString, hgVersion, alleleFrequencies)
+    return allDict
+
+def getPopulationGnomadData(brcaDF, hgString, hgVersion, alleleFrequencies):
+    ethData = dict()
     for af in alleleFrequencies:
-        freq=0.0
+        ethData[af] = brcaDF[brcaDF[coordinateColumnBase + str(hgVersion)] == hgString][af].tolist()
+    return ethData
+
+def getMinGnomad(brcaDF, hgString, hgVersion, alleleFrequencies):
+    minData = {'frequency': 1.1, 'population': None}
+    for af in alleleFrequencies:
+        freq = 0.0
         alleleFreqList = brcaDF[brcaDF[coordinateColumnBase + str(hgVersion)] == hgString][af].tolist()
         if alleleFreqList:
             try:
+                if len(alleleFreqList) > 1:
+                    print('more than one')
+                # yes, it always returns a list of length 0
                 freq = float(alleleFreqList[0])
             except ValueError:
                 continue
-            if freq > maxFrequency:
-                maxFrequency = freq
-                maxPopulation = af
+            if freq < minData['frequency'] and freq != 0.0:
+                # TODO get homo and abs counts as well
+                minData['frequency'] = freq
+                minData['population'] = af
+    if minData['frequency'] == 1.1:
+        minData['population'] = 0.0
+    return minData
 
-    return (maxPopulation, maxFrequency)
+
+def getMaxGnomad(brcaDF, hgString, hgVersion, alleleFrequencies):
+    maxData = {'frequency': 0.0, 'population': None}
+    for af in alleleFrequencies:
+        freq = 0.0
+        alleleFreqList = brcaDF[brcaDF[coordinateColumnBase + str(hgVersion)] == hgString][af].tolist()
+        if alleleFreqList:
+            try:
+                if len(alleleFreqList) > 1:
+                    print('more than one')
+                # yes, it always returns a list of length 0
+                freq = float(alleleFreqList[0])
+            except ValueError:
+                continue
+            if freq > maxData['frequency']:
+                # TODO get homo and abs counts as well
+                maxData['frequency'] = freq
+                maxData['population'] = af
+    return maxData
+
 
 def printHWReport(vpiDict, variantsDict):
     bVars, pVars, vVars = calculateZygosityFrequenciesPerVariant(vpiDict)
@@ -462,18 +649,18 @@ def plotFrequenciesPerIndividual(frequenciesPerIndividual):
 
     for individual in frequenciesPerIndividual:
         homo_ben_counts.append(frequenciesPerIndividual[individual]['benign']['homo'])
-        hetero_ben_counts.append(frequenciesPerIndividual[individual]['benign']['hetero'])
-        homo_path_counts.append(frequenciesPerIndividual[individual]['pathogenic']['homo'])
-        hetero_path_counts.append(frequenciesPerIndividual[individual]['pathogenic']['hetero'])
-        homo_vus_counts.append(frequenciesPerIndividual[individual]['vus']['homo'])
-        hetero_vus_counts.append(frequenciesPerIndividual[individual]['vus']['hetero'])
+        #hetero_ben_counts.append(frequenciesPerIndividual[individual]['benign']['hetero'])
+        #homo_path_counts.append(frequenciesPerIndividual[individual]['pathogenic']['homo'])
+        #hetero_path_counts.append(frequenciesPerIndividual[individual]['pathogenic']['hetero'])
+        #homo_vus_counts.append(frequenciesPerIndividual[individual]['vus']['homo'])
+        #hetero_vus_counts.append(frequenciesPerIndividual[individual]['vus']['hetero'])
 
     binPlot(homo_ben_counts, 10, "homozygous benign variant count bins", "number of individuals", int, 0, None)
-    binPlot(hetero_ben_counts, 10, "heterozygous benign variant count bins", "number of individuals", int, 0, None)
+    #binPlot(hetero_ben_counts, 10, "heterozygous benign variant count bins", "number of individuals", int, 0, None)
     #binPlot(homo_path_counts, 10, "homozygous pathogenic variant count bins", "number of individuals", int, 0, None)
-    binPlot(hetero_path_counts, 10, "heterozygous pathogenic variant count bins", "number of individuals", int, 0, [0, 1])
-    binPlot(homo_vus_counts, 10, "homozygous vus variant count bins", "number of individuals", int, 0, None)
-    binPlot(hetero_vus_counts, 10, "heterozygous vus variant count bins", "number of individuals", int, 0, None)
+    #binPlot(hetero_path_counts, 10, "heterozygous pathogenic variant count bins", "number of individuals", int, 0, [0, 1])
+    #binPlot(homo_vus_counts, 10, "homozygous vus variant count bins", "number of individuals", int, 0, None)
+    #binPlot(hetero_vus_counts, 10, "heterozygous vus variant count bins", "number of individuals", int, 0, None)
 
 
 
@@ -513,22 +700,18 @@ def plotGenotypeCounts(genotypeCounts, rare):
         sizes = [genotypeCounts['vus']['homo'], genotypeCounts['vus']['hetero']]
         explode = (0, 0)
         ax1.pie(sizes, explode=explode, colors=colors, labels=labels, shadow=False, startangle=90)'''
-    if False:
-        print('hi')
 
-    else:
-        labels = ['Homo benign', 'Homo path', 'Homo VUS', 'Hetero benign', 'Hetero path', 'Hetero VUS']
-        sizes = [genotypeCounts['benign']['homo'], genotypeCounts['pathogenic']['homo'],
+    labels = ['Homo benign', 'Homo path', 'Homo VUS', 'Hetero benign', 'Hetero path', 'Hetero VUS']
+    sizes = [genotypeCounts['benign']['homo'], genotypeCounts['pathogenic']['homo'],
                 genotypeCounts['vus']['homo'], genotypeCounts['benign']['hetero'],
                 genotypeCounts['pathogenic']['hetero'], genotypeCounts['vus']['hetero']]
-        colors = ['red', 'yellow', 'green', 'orange', 'blue', 'brown']
-        explode = (0.1, 0.1, 0.1, 0, 0, 0)
-        #ax1.pie(sizes, explode=explode, labels=labels, colors = colors, autopct='%1.3f%%', shadow=False, startangle=90)
-        ax1.pie(sizes, explode=explode, labels=labels, colors = colors, shadow=False, startangle=90)
+    colors = ['red', 'yellow', 'green', 'orange', 'blue', 'brown']
+    explode = (0.1, 0.1, 0.1, 0, 0, 0)
+    #ax1.pie(sizes, explode=explode, labels=labels, colors = colors, autopct='%1.3f%%', shadow=False, startangle=90)
+    ax1.pie(sizes, explode=explode, labels=labels, colors = colors, shadow=False, startangle=90)
 
     ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
-    #plt.show()
-    plt.savefig('/tmp/genotype.png')
+    plt.show()
 
 def divide(n, d):
    res = list()
