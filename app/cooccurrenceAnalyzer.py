@@ -29,11 +29,11 @@ def main():
     numProcesses = int(sys.argv[4])
     outputDir = sys.argv[5]
 
-    '''logger.info('reading data from ' + vpiFileName)
+    logger.info('reading data from ' + vpiFileName)
     with open(vpiFileName, 'r') as f:
         vpiDict = json.load(f)
     f.close()
-    vpiDF = pd.DataFrame(vpiDict)'''
+    vpiDF = pd.DataFrame(vpiDict)
 
     logger.info('finding variants from ' + brcaFileName)
     brcaDF = findVariantsInBRCA(brcaFileName)
@@ -42,19 +42,25 @@ def main():
         variantsDict = json.load(f)
     f.close()
 
-    logger.info('getting gnomad freqs per variant')
-    fpvFileName = 'freqPerVariant.json'
-    frequencyPerVariant = getFrequenciesPerVariant(variantsDict, brcaDF, hgVersion, 'AMR')
-    with open(outputDir + '/' + fpvFileName, 'w') as f:
-        json.dump(frequencyPerVariant, f)
-    f.close()
+    '''gnomadEthnicities = [ 'AFR', 'AMR', 'ASJ', 'EAS', 'FIN', 'NFE', 'OTH', 'SAS']
 
-    l1, l2 = generateListsForCorrelation(frequencyPerVariant, 'AMR', 'cohort')
 
-    p = pearsonCorrelation(l1, l2)
-    print('p (amr, cohort) = ' + p)
+    for ethnicity in gnomadEthnicities:
+        logger.info('getting gnomad freqs per variant')
+        fpvFileName = 'freqPerVariant.json'
+        frequencyPerVariant = getFrequenciesPerVariant(variantsDict, brcaDF, hgVersion, ethnicity, 'AFR')
+        with open(outputDir + '/' + fpvFileName, 'w') as f:
+            json.dump(frequencyPerVariant, f)
+        f.close()
 
-    '''logger.info('counting genotypes for variants on ' + str(numProcesses) + ' processes')
+        logger.info('calculating correlation')
+        l1, l2 = generateListsForCorrelation(frequencyPerVariant, 'AFR', ethnicity)
+        p = pearsonCorrelation(l1, l2)
+        #print('p (' + list1 + ',' + list2 + ') = ' + str(p))
+        print('p (AFR, ' + ethnicity + ') = ' + str(p))'''
+
+
+    logger.info('counting genotypes for variants on ' + str(numProcesses) + ' processes')
     t = time.time()
     q1 = Queue()
     q2 = Queue()
@@ -72,11 +78,11 @@ def main():
         frequenciesPerIndividual.update(q2.get())
     for i in range(numProcesses):
         processList[i].join()
-    logger.debug('elapsed time in countTotalGenotypesForVariants() ' + str(time.time() - t))'''
+    logger.debug('elapsed time in countTotalGenotypesForVariants() ' + str(time.time() - t))
 
 
 
-    '''genotypeCountsFileName = 'genotypeCounts.json'
+    genotypeCountsFileName = 'genotypeCounts.json'
     logger.info('saving to ' + outputDir + '/' + genotypeCountsFileName)
     with open(outputDir + '/' + genotypeCountsFileName, 'w') as f:
         json.dump(genotypeCounts, f)
@@ -89,7 +95,7 @@ def main():
     f.close()
 
     plotGenotypeCounts(genotypeCounts, rare=True)
-    plotFrequenciesPerIndividual(frequenciesPerIndividual)'''
+    plotFrequenciesPerIndividual(frequenciesPerIndividual)
 
     '''variantCounts = countTotalVariants(vpiDict)
     print('benign counts: ' + str(len(variantCounts['benign'])))
@@ -154,16 +160,19 @@ def generateListsForCorrelation(fpv, list_1_string, list_2_string):
                     try:
                         x = eval(l1[i][0])
                     except Exception as e:
-                        print('x = ' + str(x))
-                        break
-                    l1_stripped.append(eval(l1[i][0]))
+                        print('exception : ' + str(Exception) + 'x = ' + str(x))
+                    l1_stripped.append(x)
                 else:
                     l1_stripped.append(l1[i][0])
             else:
                 l1_stripped.append(l1[i])
             if type(l2[i]) is list:
                 if type(l2[i][0]) is str:
-                    l2_stripped.append(eval(l2[i][0]))
+                    try:
+                        x = eval(l2[i][0])
+                    except Exception as e:
+                        print('exception : ' + str(Exception) + 'x = ' + str(x))
+                    l2_stripped.append(x)
                 else:
                     l2_stripped.append(l2[i][0])
             else:
@@ -249,7 +258,7 @@ def countHomoAndHeteroPerIndividual(vpiDict, variantsDict, brcaDF, hgVersion):
 def findVariantsInBRCA(fileName):
     return pd.read_csv(fileName, sep='\t', header=0, dtype=str)
 
-def getFrequenciesPerVariant(variantsDict, brcaDF, hgVersion, ethnicity):
+def getFrequenciesPerVariant(variantsDict, brcaDF, hgVersion, ethnicity1, ethnicity2):
     freqPerVariant = defaultdict(dict)
     # get min, max, median, and #hom and #hem
 
@@ -257,18 +266,26 @@ def getFrequenciesPerVariant(variantsDict, brcaDF, hgVersion, ethnicity):
         #logger.debug('variant: ' + str(variant))
         freqPerVariant[variant]['cooccurring vus'] = True
         freqPerVariant[variant]['homozygous vus'] = False
-        gnomadData = getGnomadData(brcaDF, variant, hgVersion, ethnicity)
-        for g in gnomadData:
-            freqPerVariant[variant][g] = gnomadData[g]
+        gnomadData1 = getGnomadData(brcaDF, variant, hgVersion, ethnicity1)
+        for g in gnomadData1:
+            freqPerVariant[variant][g] = gnomadData1[g]
+        if ethnicity2:
+            gnomadData2 = getGnomadData(brcaDF, variant, hgVersion, ethnicity2)
+            for g in gnomadData2:
+                freqPerVariant[variant][g] = gnomadData2[g]
         freqPerVariant[variant]['cohort'] = variantsDict['cooccurring vus'][variant]['allele frequencies']['cohortFreq']
     for variant in variantsDict['homozygous vus']:
         #logger.debug('variant: ' + str(variant))
         freqPerVariant[variant]['homozygous vus'] = True
         if 'cooccurring vus' not in freqPerVariant[variant]:
             freqPerVariant[variant]['cooccurring vus'] = False
-            gnomadData = getGnomadData(brcaDF, variant, hgVersion, ethnicity)
-            for g in gnomadData:
-                freqPerVariant[variant][g] = gnomadData[g]
+            gnomadData1 = getGnomadData(brcaDF, variant, hgVersion, ethnicity1)
+            for g in gnomadData1:
+                freqPerVariant[variant][g] = gnomadData1[g]
+            if ethnicity2:
+                gnomadData2 = getGnomadData(brcaDF, variant, hgVersion, ethnicity2)
+                for g in gnomadData2:
+                    freqPerVariant[variant][g] = gnomadData2[g]
             freqPerVariant[variant]['cohort'] = variantsDict['homozygous vus'][variant]['cohortFreq']
 
     return freqPerVariant
@@ -310,8 +327,9 @@ def getGnomadData(brcaDF, vus, hgVersion, ethnicity):
     allDict['max'] = getMaxGnomad(brcaDF, hgString, hgVersion, alleleFrequencies)
     allDict['min'] = getMinGnomad(brcaDF, hgString, hgVersion, alleleFrequencies)
 
-    alleleFrequencies = [v for v in gnomad if ethnicity in v]
-    allDict[ethnicity] = getPopulationGnomadData(brcaDF, hgString, hgVersion, alleleFrequencies)
+    if ethnicity is not None:
+        alleleFrequencies = [v for v in gnomad if ethnicity in v]
+        allDict[ethnicity] = getPopulationGnomadData(brcaDF, hgString, hgVersion, alleleFrequencies)
     return allDict
 
 def getPopulationGnomadData(brcaDF, hgString, hgVersion, alleleFrequencies):
@@ -365,21 +383,35 @@ def getMaxGnomad(brcaDF, hgString, hgVersion, alleleFrequencies):
 def printHWReport(vpiDict, variantsDict):
     bVars, pVars, vVars = calculateZygosityFrequenciesPerVariant(vpiDict)
     bVars, pVars, vVars = hardyWeinbergChiSquareTest(bVars, pVars, vVars, len(vpiDict))
+    bVars, pVars, vVars = hardyWeinbergInbreedingCoefficient(bVars, pVars, vVars)
     rejectHW = {'benign': 0, 'pathogenic': 0, 'vus': 0}
     acceptHW = {'benign': 0, 'pathogenic': 0, 'vus': 0}
+    acceptF = {'benign': 0, 'pathogenic': 0, 'vus': 0}
+    rejectF = {'benign': 0, 'pathogenic': 0, 'vus': 0}
+
     for b in bVars:
         if bVars[b]['accept hw'] is False:
             rejectHW['benign'] += 1
         else:
             acceptHW['benign'] += 1
+        if bVars[b]['accept F'] is False:
+            rejectF['benign'] += 1
+        else:
+            acceptF['benign'] += 1
     for p in pVars:
         if pVars[p]['accept hw'] is False:
             rejectHW['pathogenic'] += 1
         else:
             acceptHW['pathogenic'] += 1
+        if pVars[p]['accept F'] is False:
+            rejectF['pathogenic'] += 1
+        else:
+            rejectF['pathogenic'] += 1
 
     rejectVUS = {'cooccurring vus': 0, 'homozygous vus': 0}
     acceptVUS = {'cooccurring vus': 0, 'homozygous vus': 0}
+    rejectVUS_F = {'cooccurring vus': 0, 'homozygous vus': 0}
+    acceptVUS_F = {'cooccurring vus': 0, 'homozygous vus': 0}
 
     for v in vVars:
         if vVars[v]['accept hw'] is False:
@@ -395,12 +427,45 @@ def printHWReport(vpiDict, variantsDict):
             if str(v) in variantsDict['homozygous vus']:
                 acceptVUS['homozygous vus'] += 1
 
+        if vVars[v]['accept F'] is False:
+            rejectF['vus'] += 1
+            if str(v) in variantsDict['cooccurring vus']:
+                rejectVUS_F['cooccurring vus'] += 1
+            if str(v) in variantsDict['homozygous vus']:
+                rejectVUS_F['homozygous vus'] += 1
+        else:
+            acceptF['vus'] += 1
+            if str(v) in variantsDict['cooccurring vus']:
+                acceptVUS_F['cooccurring vus'] += 1
+            if str(v) in variantsDict['homozygous vus']:
+                acceptVUS_F['homozygous vus'] += 1
+
+
+    # check to see if 654 vus that reject HW are same vus that reject F
+    vusRejectingBothHWandF = list()
+    for v in vVars:
+        if str(v) not in variantsDict['homozygous vus']:
+            continue
+        elif vVars[v]['accept hw'] == False and vVars[v]['accept F'] == False:
+            vusRejectingBothHWandF.append(v)
+
+
     print('reject HW: ' + str(rejectHW))
     print('accept HW: ' + str(acceptHW))
+    print('accept F:  ' + str(acceptF))
+    print('reject F:  ' + str(rejectF))
     print('num co-occurring vus that reject HW: ' + str(rejectVUS['cooccurring vus']))
     print('num co-occurring vus that accept HW:' + str(acceptVUS['cooccurring vus']))
     print('num homozygous vus that reject HW: ' + str(rejectVUS['homozygous vus']))
     print('num homozygous vus that accept HW: ' + str(acceptVUS['homozygous vus']))
+    print('num co-occurring vus that reject F: ' + str(rejectVUS_F['cooccurring vus']))
+    print('num co-occurring vus that accept F:' + str(acceptVUS_F['cooccurring vus']))
+    print('num homozygous vus that reject F: ' + str(rejectVUS_F['homozygous vus']))
+    print('num homozygous vus that accept F: ' + str(acceptVUS_F['homozygous vus']))
+
+    print('list of vus rejecting both HW and F: ' + str(vusRejectingBothHWandF))
+    print('length list of vus rejecting both HW and F: ' + str(len(vusRejectingBothHWandF)))
+
 
 
 def calculateZygosityFrequenciesPerVariant(vpiDict):
@@ -449,6 +514,67 @@ def calculateZygosityFrequenciesPerVariant(vpiDict):
         vusVariants[v]['AA'] = n - (vusVariants[v]['Aa'] + vusVariants[v]['aa'])
 
     return benignVariants, pathogenicVariants, vusVariants
+
+def hardyWeinbergInbreedingCoefficient(bVars, pVars, vVars):
+    # https://en.wikipedia.org/wiki/Hardy-Weinberg_principle
+    # degrees of freedom = 1
+    # The inbreeding coefficient, F (see also F-statistics), is one minus the observed frequency of
+    # heterozygotes over that expected from Hardy–Weinberg equilibrium.
+    # F = [ E(f(Aa)) - O(f(Aa)) ] / [ E(f(Aa)) ] = 1 - O(f(Aa))/E(f(Aa))
+    # where E(f(Aa)) = 2pq
+    # For two alleles, the chi - squared goodness of fit test for Hardy–Weinberg proportions is equivalent to the test
+    # for inbreeding, F = 0.
+    # The inbreeding coefficient is unstable as the expected value approaches zero, and thus not useful for rare and
+    # very common alleles. For: E = 0, O > 0, F = −∞ and E = 0, O = 0, F is undefined.
+    significance = 0.001
+
+    for b in bVars:
+        # 1. get E(f(Aa))
+        bVars[b]['E(f(Aa))'] = 2 * bVars[b]['p'] * bVars[b]['q']
+        # 2. O(f(Aa)) = bVars[b]['Aa']
+        # 3. calculate F
+        try:
+            bVars[b]['F'] = ( bVars[b]['E(f(Aa))'] - bVars[b]['Aa'] ) / ( bVars[b]['E(f(Aa))'] )
+        except Exception as e:
+            print('exception calculating F: ' + str(e))
+            continue
+        if bVars[b]['F'] <= significance:
+            bVars[b]['accept F'] = True
+        else:
+            bVars[b]['accept F'] = False
+
+    for p in pVars:
+        # 1. get E(f(Aa))
+        pVars[p]['E(f(Aa))'] = 2 * pVars[p]['p'] * pVars[p]['q']
+        # 2. O(f(Aa)) = pVars[p]['Aa']
+        # 3. calculate F
+        try:
+            pVars[p]['F'] = ( pVars[p]['E(f(Aa))'] - pVars[p]['Aa'] ) / ( pVars[p]['E(f(Aa))'] )
+        except Exception as e:
+            print('exception calculating F: ' + str(e))
+            continue
+        if pVars[p]['F'] <= significance:
+            pVars[p]['accept F'] = True
+        else:
+            pVars[p]['accept F'] = False
+
+
+    for v in vVars:
+        # 1. get E(f(Aa))
+        vVars[v]['E(f(Aa))'] = 2 * vVars[v]['p'] * vVars[v]['q']
+        # 2. O(f(Aa)) = vVars[v]['Aa']
+        # 3. calculate F
+        try:
+            vVars[v]['F'] = ( vVars[v]['E(f(Aa))'] - vVars[v]['Aa'] ) / ( vVars[v]['E(f(Aa))'] )
+        except Exception as e:
+            print('exception calculating F: ' + str(e))
+            vVars[v]['F'] = 0.0
+        if vVars[v]['F'] <= significance:
+            vVars[v]['accept F'] = True
+        else:
+            vVars[v]['accept F'] = False
+
+    return bVars, pVars, vVars
 
 def hardyWeinbergChiSquareTest(bVars, pVars, vVars, n):
     # https://en.wikipedia.org/wiki/Hardy-Weinberg_principle
@@ -694,21 +820,22 @@ def plotGenotypeCounts(genotypeCounts, rare):
     plt.rcParams['font.size'] = 18
     fig1, ax1 = plt.subplots()
 
-    '''if rare:
+    if rare:
         labels = ['Homo VUS',  'Hetero VUS']
         colors = ['green', 'brown']
         sizes = [genotypeCounts['vus']['homo'], genotypeCounts['vus']['hetero']]
         explode = (0, 0)
-        ax1.pie(sizes, explode=explode, colors=colors, labels=labels, shadow=False, startangle=90)'''
+        ax1.pie(sizes, explode=explode, colors=colors, labels=labels, shadow=False, startangle=90)
 
-    labels = ['Homo benign', 'Homo path', 'Homo VUS', 'Hetero benign', 'Hetero path', 'Hetero VUS']
-    sizes = [genotypeCounts['benign']['homo'], genotypeCounts['pathogenic']['homo'],
-                genotypeCounts['vus']['homo'], genotypeCounts['benign']['hetero'],
-                genotypeCounts['pathogenic']['hetero'], genotypeCounts['vus']['hetero']]
-    colors = ['red', 'yellow', 'green', 'orange', 'blue', 'brown']
-    explode = (0.1, 0.1, 0.1, 0, 0, 0)
-    #ax1.pie(sizes, explode=explode, labels=labels, colors = colors, autopct='%1.3f%%', shadow=False, startangle=90)
-    ax1.pie(sizes, explode=explode, labels=labels, colors = colors, shadow=False, startangle=90)
+    else:
+        labels = ['Homo benign', 'Homo path', 'Homo VUS', 'Hetero benign', 'Hetero path', 'Hetero VUS']
+        sizes = [genotypeCounts['benign']['homo'], genotypeCounts['pathogenic']['homo'],
+                    genotypeCounts['vus']['homo'], genotypeCounts['benign']['hetero'],
+                    genotypeCounts['pathogenic']['hetero'], genotypeCounts['vus']['hetero']]
+        colors = ['red', 'yellow', 'green', 'orange', 'blue', 'brown']
+        explode = (0.1, 0.1, 0.1, 0, 0, 0)
+        #ax1.pie(sizes, explode=explode, labels=labels, colors = colors, autopct='%1.3f%%', shadow=False, startangle=90)
+        ax1.pie(sizes, explode=explode, labels=labels, colors = colors, shadow=False, startangle=90)
 
     ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
     plt.show()
@@ -757,7 +884,7 @@ def countTotalGenotypesForVariants(q1, q2, vpiDF, rareThreshold, brcaDF, hgVersi
 
         for b in vpiDF[individual]['benign']:
             if b:
-                if rare and getGnomadData(brcaDF, tuple(b[0]), hgVersion)[1] > rareThreshold:
+                if rare and getGnomadData(brcaDF, tuple(b[0]), hgVersion, None)['max']['frequency'] > rareThreshold:
                     continue
                 elif b[1] == '3':
                     genotypeCounts['benign']['homo'] += 1
@@ -767,7 +894,7 @@ def countTotalGenotypesForVariants(q1, q2, vpiDF, rareThreshold, brcaDF, hgVersi
                     frequenciesPerIndividual[individual]['benign']['hetero'] += 1
         for p in vpiDF[individual]['pathogenic']:
             if p:
-                if rare and getGnomadData(brcaDF, tuple(p[0]), hgVersion)[1] > rareThreshold:
+                if rare and getGnomadData(brcaDF, tuple(p[0]), hgVersion, None)['max']['frequency'] > rareThreshold:
                     continue
                 elif p[1] == '3':
                     genotypeCounts['pathogenic']['homo'] += 1
@@ -777,7 +904,7 @@ def countTotalGenotypesForVariants(q1, q2, vpiDF, rareThreshold, brcaDF, hgVersi
                     frequenciesPerIndividual[individual]['pathogenic']['hetero'] += 1
         for v in vpiDF[individual]['vus']:
             if v:
-                if rare and getGnomadData(brcaDF, tuple(v[0]), hgVersion)[1] > rareThreshold:
+                if rare and getGnomadData(brcaDF, tuple(v[0]), hgVersion, None)['max']['frequency'] > rareThreshold:
                     continue
                 elif v[1] == '3':
                     genotypeCounts['vus']['homo'] += 1
