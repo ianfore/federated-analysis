@@ -538,16 +538,16 @@ def calculateZygosityFrequenciesPerVariant(vpiDict):
     return benignVariants, pathogenicVariants, vusVariants
 
 def hardyWeinbergInbreedingCoefficient(bVars, pVars, vVars):
-    # https://en.wikipedia.org/wiki/Hardy-Weinberg_principle
+    # https://en.wikipedia.org/wiki/Hardy Weinberg_principle
     # degrees of freedom = 1
     # The inbreeding coefficient, F (see also F-statistics), is one minus the observed frequency of
-    # heterozygotes over that expected from Hardy–Weinberg equilibrium.
+    # heterozygotes over that expected from Hardy Weinberg equilibrium.
     # F = [ E(f(Aa)) - O(f(Aa)) ] / [ E(f(Aa)) ] = 1 - O(f(Aa))/E(f(Aa))
     # where E(f(Aa)) = 2pq
-    # For two alleles, the chi - squared goodness of fit test for Hardy–Weinberg proportions is equivalent to the test
+    # For two alleles, the chi - squared goodness of fit test for Hardy Weinberg proportions is equivalent to the test
     # for inbreeding, F = 0.
     # The inbreeding coefficient is unstable as the expected value approaches zero, and thus not useful for rare and
-    # very common alleles. For: E = 0, O > 0, F = −∞ and E = 0, O = 0, F is undefined.
+    # very common alleles. For: E = 0, O > 0, F = inf and E = 0, O = 0, F is undefined.
     significance = 0.10
 
     for b in bVars:
