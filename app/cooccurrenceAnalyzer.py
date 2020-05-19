@@ -19,15 +19,16 @@ logger.setLevel(logging.DEBUG)
 
 
 def main():
-    if len(sys.argv) != 6:
-        print('13-out.json 13-vpi.json brca-variants.tsv 16 /tmp/myout')
+    if len(sys.argv) != 7:
+        print('13-out.json 13-vpi.json brca-variants.tsv brca-regions.json /tmp/myout 16')
         sys.exit(1)
 
     variantsFileName =sys.argv[1]
     vpiFileName = sys.argv[2]
     brcaFileName = sys.argv[3]
-    numProcesses = int(sys.argv[4])
+    regionsFileName = sys.argv[4]
     outputDir = sys.argv[5]
+    numProcesses = int(sys.argv[6])
 
     logger.info('reading data from ' + vpiFileName)
     with open(vpiFileName, 'r') as f:
@@ -40,6 +41,10 @@ def main():
 
     with open(variantsFileName, 'r') as f:
         variantsDict = json.load(f)
+    f.close()
+
+    with open(regionsFileName, 'r') as f:
+        regionsDict = json.load(f)
     f.close()
 
     '''gnomadEthnicities = [ 'AFR', 'AMR', 'ASJ', 'EAS', 'FIN', 'NFE', 'OTH', 'SAS']
@@ -119,6 +124,9 @@ def main():
         json.dump(iphv, f)
     f.close()
 
+#def findRegionPerVariant(variantsDict, regionsDict):
+
+
 def findIndividualsPerHomozygousVUS(vpiDict, variantsDict, brcaDF, hgVersion, rareCutoffFrequency):
     individualsPerVariant = defaultdict(list)
     # look at each homo vus
@@ -131,7 +139,7 @@ def findIndividualsPerHomozygousVUS(vpiDict, variantsDict, brcaDF, hgVersion, ra
             # find the individuals who have expressed this as a homo vus
             for v in vpiDict[individual]['vus']:
                 if tuple(v[0]) == eval(homoVUS) and v[1] == '3':
-                    individualsPerVariant[tuple(v[0])].append(individual)
+                    individualsPerVariant[str(tuple(v[0]))].append(individual)
                     break
     return individualsPerVariant
 
