@@ -60,7 +60,7 @@ def main():
         print('p (AFR, ' + ethnicity + ') = ' + str(p))'''
 
 
-    logger.info('counting genotypes for variants on ' + str(numProcesses) + ' processes')
+    '''logger.info('counting genotypes for variants on ' + str(numProcesses) + ' processes')
     t = time.time()
     q1 = Queue()
     q2 = Queue()
@@ -95,7 +95,7 @@ def main():
     f.close()
 
     plotGenotypeCounts(genotypeCounts, rare=True)
-    plotFrequenciesPerIndividual(frequenciesPerIndividual)
+    plotFrequenciesPerIndividual(frequenciesPerIndividual)'''
 
     '''variantCounts = countTotalVariants(vpiDict)
     print('benign counts: ' + str(len(variantCounts['benign'])))
@@ -112,6 +112,28 @@ def main():
     #print(homoVhetero)
 
     #printHWReport(vpiDict, variantsDict)
+    iphv = findIndividualsPerHomozygousVUS(vpiDict, variantsDict, brcaDF, hgVersion, 1.0)
+    iphvFileName = 'iphv.json'
+    logger.info('saving to ' + outputDir + '/' + iphvFileName)
+    with open(outputDir + '/' + iphvFileName, 'w') as f:
+        json.dump(iphv, f)
+    f.close()
+
+def findIndividualsPerHomozygousVUS(vpiDict, variantsDict, brcaDF, hgVersion, rareCutoffFrequency):
+    individualsPerVariant = defaultdict(list)
+    # look at each homo vus
+    for homoVUS in variantsDict['homozygous vus']:
+        logger.info('looking at vus ' + str(homoVUS))
+        maxPopFreq = variantsDict['homozygous vus'][homoVUS]['maxPopFreq']
+        if  maxPopFreq > rareCutoffFrequency:
+            continue
+        for individual in vpiDict:
+            # find the individuals who have expressed this as a homo vus
+            for v in vpiDict[individual]['vus']:
+                if tuple(v[0]) == eval(homoVUS) and v[1] == '3':
+                    individualsPerVariant[tuple(v[0])].append(individual)
+                    break
+    return individualsPerVariant
 
 def generateListsForCorrelation(fpv, list_1_string, list_2_string):
     l1 = list()
@@ -526,7 +548,7 @@ def hardyWeinbergInbreedingCoefficient(bVars, pVars, vVars):
     # for inbreeding, F = 0.
     # The inbreeding coefficient is unstable as the expected value approaches zero, and thus not useful for rare and
     # very common alleles. For: E = 0, O > 0, F = −∞ and E = 0, O = 0, F is undefined.
-    significance = 0.001
+    significance = 0.10
 
     for b in bVars:
         # 1. get E(f(Aa))
