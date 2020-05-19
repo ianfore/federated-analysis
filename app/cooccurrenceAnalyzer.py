@@ -48,15 +48,9 @@ def main():
     f.close()
 
     '''gnomadEthnicities = [ 'AFR', 'AMR', 'ASJ', 'EAS', 'FIN', 'NFE', 'OTH', 'SAS']
-
-
     for ethnicity in gnomadEthnicities:
         logger.info('getting gnomad freqs per variant')
-        fpvFileName = 'freqPerVariant.json'
         frequencyPerVariant = getFrequenciesPerVariant(variantsDict, brcaDF, hgVersion, ethnicity, 'AFR')
-        with open(outputDir + '/' + fpvFileName, 'w') as f:
-            json.dump(frequencyPerVariant, f)
-        f.close()
 
         logger.info('calculating correlation')
         l1, l2 = generateListsForCorrelation(frequencyPerVariant, 'AFR', ethnicity)
@@ -65,7 +59,7 @@ def main():
         print('p (AFR, ' + ethnicity + ') = ' + str(p))'''
 
 
-    '''logger.info('counting genotypes for variants on ' + str(numProcesses) + ' processes')
+    logger.info('counting genotypes for variants on ' + str(numProcesses) + ' processes')
     t = time.time()
     q1 = Queue()
     q2 = Queue()
@@ -99,8 +93,8 @@ def main():
         json.dump(frequenciesPerIndividual, f)
     f.close()
 
-    plotGenotypeCounts(genotypeCounts, rare=True)
-    plotFrequenciesPerIndividual(frequenciesPerIndividual)'''
+    #plotGenotypeCounts(genotypeCounts, rare=True)
+    #plotFrequenciesPerIndividual(frequenciesPerIndividual)
 
     '''variantCounts = countTotalVariants(vpiDict)
     print('benign counts: ' + str(len(variantCounts['benign'])))
@@ -117,15 +111,90 @@ def main():
     #print(homoVhetero)
 
     #printHWReport(vpiDict, variantsDict)
-    iphv = findIndividualsPerHomozygousVUS(vpiDict, variantsDict, brcaDF, hgVersion, 1.0)
+    '''iphv = findIndividualsPerHomozygousVUS(vpiDict, variantsDict, brcaDF, hgVersion, 1.0)
     iphvFileName = 'iphv.json'
     logger.info('saving to ' + outputDir + '/' + iphvFileName)
     with open(outputDir + '/' + iphvFileName, 'w') as f:
         json.dump(iphv, f)
+    f.close()'''
+    '''inCIdomain = findRegionPerVariant(variantsDict, regionsDict)
+    domainFileName = 'domain.json'
+    logger.info('saving to ' + outputDir + '/' + domainFileName)
+    with open(outputDir + '/' + domainFileName, 'w') as f:
+        json.dump(inCIdomain, f)
     f.close()
 
-#def findRegionPerVariant(variantsDict, regionsDict):
+    plotRegionsPerVariant(inCIdomain)'''
 
+
+def plotRegionsPerVariant(inCIdomain):
+    '''"(17, 43048687, 'GT', 'G')": [
+        "huntsman",
+        "brct"
+    ],
+    "(17, 43109258, 'A', 'G')": [
+        "huntsman",
+        "ring"
+    ],'''
+
+    # get labels
+    counts = dict()
+    for v in inCIdomain:
+        if inCIdomain[v] != None:
+            org = inCIdomain[v][0]
+            code = inCIdomain[v][1]
+            label = org + '-' + code
+        else:
+            label = 'None'
+        if label not in counts:
+            counts[label] = 0
+        counts[label] += 1
+
+    # Pie chart, where the slices will be ordered and plotted counter-clockwise:
+    plt.rcParams['font.size'] = 12
+    fig1, ax1 = plt.subplots()
+
+    labels = counts.keys()
+    sizes = list()
+    for l in labels:
+        sizes.append(counts[l])
+    print(sizes)
+    # ax1.pie(sizes, explode=explode, labels=labels, colors = colors, autopct='%1.3f%%', shadow=False, startangle=90)
+    #ax1.pie(sizes, explode=explode, labels=labels, colors=colors, shadow=False, startangle=90)
+    ax1.pie(sizes, labels=labels, shadow=False, startangle=90)
+
+    ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+    plt.show()
+
+
+
+def findRegionPerVariant(variantsDict, regionsDict):
+    inCIdomain = dict()
+    for v in variantsDict['homozygous vus']:
+        chr = int(eval(v)[0])
+        pos = int(eval(v)[1])
+        if chr == 13:
+            gene = 'brca2'
+        elif chr == 17:
+            gene = 'brca1'
+        else:
+            print('unrecognized chr: ' + str(chr))
+            return None
+        geneCIDomains = gene + 'CIDomains'
+        for org in regionsDict[geneCIDomains]:
+            for domain in regionsDict[geneCIDomains][org]['domains']:
+                name = domain['name']
+                if gene == 'brca2':
+                    start = int(domain['start'])
+                    end = int(domain['end'])
+                else:
+                    start = int(domain['end'])
+                    end = int(domain['start'])
+                if pos >= start and pos <= end:
+                    inCIdomain[v] = (regionsDict[geneCIDomains][org]['code'], name)
+                else:
+                    inCIdomain[v] = None
+    return inCIdomain
 
 def findIndividualsPerHomozygousVUS(vpiDict, variantsDict, brcaDF, hgVersion, rareCutoffFrequency):
     individualsPerVariant = defaultdict(list)
