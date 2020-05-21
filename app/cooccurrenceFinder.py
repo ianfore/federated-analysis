@@ -150,7 +150,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, output
     q = Queue()
     processList = list()
     for i in range(numProcs):
-        p = Process(target=findVarsPerIndividual, args=(q, vcf, benignVariants, pathogenicVariants, chromosome, i, numProcs,))
+        p = Process(target=findVarsPerIndividual, args=(q, vcf, benignVariants, pathogenicVariants, chromosome, gene, ensemblRelease, i, numProcs,))
         p.start()
         processList.append(p)
     logger.info('joining results from forked threads')
@@ -404,7 +404,7 @@ def getStartAndEnd(partitionSizes, threadID):
 
     return start, end
 
-def findVarsPerIndividual(q, vcf, benignVariants, pathogenicVariants, chromosome, threadID, numProcesses):
+def findVarsPerIndividual(q, vcf, benignVariants, pathogenicVariants, chromosome, gene, ensemblRelease, threadID, numProcesses):
 
     variantsPerIndividual = dict()
 
@@ -434,6 +434,8 @@ def findVarsPerIndividual(q, vcf, benignVariants, pathogenicVariants, chromosome
                 p = int(vcf['variants/POS'][variant])
                 r = str(vcf['variants/REF'][variant])
                 a = str(vcf['variants/ALT'][variant][0])
+                if getGenesForVariant([c,p,r,a], ensemblRelease, gene) is None:
+                    continue
                 genotype = str(int(str(vcf['calldata/GT'][variant][i][0]) + str(vcf['calldata/GT'][variant][i][1]), 2))
                 if (c, p, r, a) in benignVariants:
                     variantsPerIndividual[individuals[i]]['benign'].append(((c, p, r, a), genotype))

@@ -970,6 +970,7 @@ def countTotalGenotypesForVariants(q1, q2, vpiDF, rareThreshold, brcaDF, hgVersi
     for individual in vpiDF:
         individuals.append(individual)
     n = len(individuals)
+    print('total number of individuals = ' + str(n))
     partitionSizes = divide(n, numProcesses)
     start, end = getStartAndEnd(partitionSizes, threadID)
 
