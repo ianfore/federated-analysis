@@ -80,51 +80,49 @@ def main():
     logger.debug('elapsed time in countTotalGenotypesForVariants() ' + str(time.time() - t))
 
 
-
     genotypeCountsFileName = 'genotypeCounts.json'
     logger.info('saving to ' + outputDir + '/' + genotypeCountsFileName)
     with open(outputDir + '/' + genotypeCountsFileName, 'w') as f:
         json.dump(genotypeCounts, f)
     f.close()
-
     fpiFileName = 'fpi.json'
     logger.info('saving to ' + outputDir + '/' + fpiFileName)
     with open(outputDir + '/' + fpiFileName, 'w') as f:
         json.dump(frequenciesPerIndividual, f)
     f.close()
 
-    #plotGenotypeCounts(genotypeCounts, rare=True)
-    #plotFrequenciesPerIndividual(frequenciesPerIndividual)
+    plotGenotypeCounts(genotypeCounts, rare=True)
+    plotFrequenciesPerIndividual(frequenciesPerIndividual)
 
-    '''variantCounts = countTotalVariants(vpiDict)
+    variantCounts = countTotalVariants(vpiDict)
     print('benign counts: ' + str(len(variantCounts['benign'])))
     print('pathogenic counts: ' + str(len(variantCounts['pathogenic'])))
-    print('vus counts: ' + str(len(variantCounts['vus'])))'''
+    print('vus counts: ' + str(len(variantCounts['vus'])))
 
 
-    #plotVUSByPosition(variantsDict)
+    plotVUSByPosition(variantsDict)
 
-    #plotVUSByFrequency(variantsDict, 'maxPopFreq', brcaDF, hgVersion)
-    #plotVUSByFrequency(variantsDict, 'cohortFreq', brcaDF, hgVersion)
+    plotVUSByFrequency(variantsDict, 'maxPopFreq', brcaDF, hgVersion)
+    plotVUSByFrequency(variantsDict, 'cohortFreq', brcaDF, hgVersion)
 
-    #homoVhetero = countHomoAndHeteroPerIndividual(vpiDict, variantsDict, brcaDF, hgVersion)
-    #print(homoVhetero)
+    homoVhetero = countHomoAndHeteroPerIndividual(vpiDict, variantsDict, brcaDF, hgVersion)
+    print(homoVhetero)
 
-    #printHWReport(vpiDict, variantsDict)
-    '''iphv = findIndividualsPerHomozygousVUS(vpiDict, variantsDict, brcaDF, hgVersion, 1.0)
+    printHWReport(vpiDict, variantsDict)
+    iphv = findIndividualsPerHomozygousVUS(vpiDict, variantsDict, brcaDF, hgVersion, 1.0)
     iphvFileName = 'iphv.json'
     logger.info('saving to ' + outputDir + '/' + iphvFileName)
     with open(outputDir + '/' + iphvFileName, 'w') as f:
         json.dump(iphv, f)
-    f.close()'''
-    '''inCIdomain = findRegionPerVariant(variantsDict, regionsDict)
+    f.close()
+    inCIdomain = findRegionPerVariant(variantsDict, regionsDict)
     domainFileName = 'domain.json'
     logger.info('saving to ' + outputDir + '/' + domainFileName)
     with open(outputDir + '/' + domainFileName, 'w') as f:
         json.dump(inCIdomain, f)
     f.close()
 
-    plotRegionsPerVariant(inCIdomain)'''
+    plotRegionsPerVariant(inCIdomain)
 
 
 def plotRegionsPerVariant(inCIdomain):
@@ -339,7 +337,7 @@ def countHomoAndHeteroPerIndividual(vpiDict, variantsDict, brcaDF, hgVersion):
                 if tuple(v[0]) == eval(homoVUS):
 
                     for b in vpiDict[individual]['benign']:
-                        freq = getGnomadData(brcaDF, b[0], hgVersion)[1]
+                        freq = getGnomadData(brcaDF, b[0], hgVersion, None)['max']['frequency']
                         if b[1] == "1" or b[1] == "2" and  freq > 0.01:
                             individualsPerVariant[homoVUS].append(individual)
                             foundOne = True
@@ -772,10 +770,15 @@ def hardyWeinbergChiSquareTest(bVars, pVars, vVars, n):
 
 
 def binPlot(theList, binSize, xlabel, ylabel, dtype, sigDigs, binList):
-    sizeOfRange = 0.5 * (min(theList) + max(theList))
     customBinList = False
     if binList is None:
-        binList = np.arange(min(theList), max(theList), round((1/binSize) * sizeOfRange, sigDigs) , dtype=dtype)
+        minList = min(theList)
+        maxList = max(theList)
+        if minList == maxList:
+            binList = [minList]
+        else:
+            sizeOfRange = 0.5 * (min(theList) + max(theList))
+            binList = np.arange(minList, maxList, round((1/binSize) * sizeOfRange, sigDigs) , dtype=dtype)
     else:
         customBinList = True
     bins = list()
@@ -841,7 +844,10 @@ def plotVUSByFrequency(variantsDict, freq, brcaDF, hgVersion):
     plt.xlabel(freq)
     plt.show()
     binList = [0.00001, 0.0001, 0.001, 0.01, 0.1]
-    binPlot(popFreqs, 25, freq, "number of hetero VUS", float, 3, binList)
+    if len(popFreqs) == 0:
+        print('empty list')
+    else:
+        binPlot(popFreqs, 25, freq, "number of hetero VUS", float, 3, binList)
 
 
 def plotVUSByPosition(variantsDict):
@@ -849,7 +855,10 @@ def plotVUSByPosition(variantsDict):
     homozygousVUS = variantsDict['homozygous vus']
     for vus in homozygousVUS:
         locations.append(int(eval(vus)[1]))
-    binPlot(locations, 10000, "chromosome position bins", "number of homo VUS", int, 0, None)
+    if len(locations) == 0:
+        print('empty list')
+    else:
+        binPlot(locations, 10000, "chromosome position bins", "number of homo VUS", int, 0, None)
 
     locations = list()
     heterozygousVUS = variantsDict['cooccurring vus']
@@ -858,7 +867,10 @@ def plotVUSByPosition(variantsDict):
             continue
         else:
             locations.append(int(eval(vus)[1]))
-    binPlot(locations, 10000, "chromosome position bins", "number of het VUS", int, 0, None)
+    if len(locations) == 0:
+        print('empty list')
+    else:
+        binPlot(locations, 10000, "chromosome position bins", "number of het VUS", int, 0, None)
 
 
 
@@ -880,7 +892,10 @@ def plotFrequenciesPerIndividual(frequenciesPerIndividual):
         #homo_vus_counts.append(frequenciesPerIndividual[individual]['vus']['homo'])
         #hetero_vus_counts.append(frequenciesPerIndividual[individual]['vus']['hetero'])
 
-    binPlot(homo_ben_counts, 10, "homozygous benign variant count bins", "number of individuals", int, 0, None)
+    if len(homo_ben_counts) == 0:
+        print('empty list')
+    else:
+        binPlot(homo_ben_counts, 10, "homozygous benign variant count bins", "number of individuals", int, 0, None)
     #binPlot(hetero_ben_counts, 10, "heterozygous benign variant count bins", "number of individuals", int, 0, None)
     #binPlot(homo_path_counts, 10, "homozygous pathogenic variant count bins", "number of individuals", int, 0, None)
     #binPlot(hetero_path_counts, 10, "heterozygous pathogenic variant count bins", "number of individuals", int, 0, [0, 1])
