@@ -91,8 +91,8 @@ def main():
         json.dump(frequenciesPerIndividual, f)
     f.close()
 
-    plotGenotypeCounts(genotypeCounts, rare=True)
-    plotFrequenciesPerIndividual(frequenciesPerIndividual)
+    plotGenotypeCounts(genotypeCounts, True, outputDir)
+    plotFrequenciesPerIndividual(frequenciesPerIndividual, outputDir)
 
     variantCounts = countTotalVariants(vpiDict)
     print('benign counts: ' + str(len(variantCounts['benign'])))
@@ -100,10 +100,10 @@ def main():
     print('vus counts: ' + str(len(variantCounts['vus'])))
 
 
-    plotVUSByPosition(variantsDict)
+    plotVUSByPosition(variantsDict, outputDir)
 
-    plotVUSByFrequency(variantsDict, 'maxPopFreq', brcaDF, hgVersion)
-    plotVUSByFrequency(variantsDict, 'cohortFreq', brcaDF, hgVersion)
+    plotVUSByFrequency(variantsDict, 'maxPopFreq', outputDir)
+    plotVUSByFrequency(variantsDict, 'cohortFreq', outputDir)
 
     homoVhetero = countHomoAndHeteroPerIndividual(vpiDict, variantsDict, brcaDF, hgVersion)
     print(homoVhetero)
@@ -122,10 +122,10 @@ def main():
         json.dump(inCIdomain, f)
     f.close()
 
-    plotRegionsPerVariant(inCIdomain)
+    plotRegionsPerVariant(inCIdomain, outputDir)
 
 
-def plotRegionsPerVariant(inCIdomain):
+def plotRegionsPerVariant(inCIdomain, outputDir):
     '''"(17, 43048687, 'GT', 'G')": [
         "huntsman",
         "brct"
@@ -162,7 +162,8 @@ def plotRegionsPerVariant(inCIdomain):
     ax1.pie(sizes, labels=labels, shadow=False, startangle=90)
 
     ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
-    plt.show()
+    #plt.show()
+    plt.savefig(outputDir + '/regionsPerVariant.png')
 
 
 
@@ -769,7 +770,7 @@ def hardyWeinbergChiSquareTest(bVars, pVars, vVars, n):
     return bVars, pVars, vVars
 
 
-def binPlot(theList, binSize, xlabel, ylabel, dtype, sigDigs, binList):
+def binPlot(theList, binSize, xlabel, ylabel, dtype, sigDigs, binList, outputDir, imageName):
     customBinList = False
     if binList is None:
         minList = min(theList)
@@ -778,7 +779,10 @@ def binPlot(theList, binSize, xlabel, ylabel, dtype, sigDigs, binList):
             binList = [minList]
         else:
             sizeOfRange = 0.5 * (min(theList) + max(theList))
-            binList = np.arange(minList, maxList, round((1/binSize) * sizeOfRange, sigDigs) , dtype=dtype)
+            try:
+                binList = np.arange(minList, maxList, round((1/binSize) * sizeOfRange, sigDigs) , dtype=dtype)
+            except Exception as e:
+                logger.error('error in binPlot np.arange(): ' + str(e.message))
     else:
         customBinList = True
     bins = list()
@@ -809,10 +813,11 @@ def binPlot(theList, binSize, xlabel, ylabel, dtype, sigDigs, binList):
         plt.ylabel(ylabel)
         #plt.xlim(start, end)
         #plt.ylim(ymin, ymax)
-        plt.show()
+        #plt.show()
+        plt.savefig(outputDir + '/' + imageName)
 
 
-def plotVUSByFrequency(variantsDict, freq, brcaDF, hgVersion):
+def plotVUSByFrequency(variantsDict, freq, outputDir):
     homoVUS = variantsDict['homozygous vus']
     popFreqs = list()
     for vus in homoVUS:
@@ -821,9 +826,9 @@ def plotVUSByFrequency(variantsDict, freq, brcaDF, hgVersion):
     ax = fig.add_subplot(111)
     bp = ax.boxplot(popFreqs)
     plt.xlabel(freq)
-    plt.show()
+    #plt.show()
     binList = [0.00001, 0.0001, 0.001, 0.01, 0.1]
-    binPlot(popFreqs, 25, freq, "number of homo VUS", float, 3, binList)
+    binPlot(popFreqs, 25, freq, "number of homo VUS", float, 3, binList, outputDir, 'homoVUSFreqs.png')
 
     popFreqs = list()
     heteroVUS = variantsDict['cooccurring vus']
@@ -831,7 +836,6 @@ def plotVUSByFrequency(variantsDict, freq, brcaDF, hgVersion):
         if vus in homoVUS:
             continue
         elif freq is 'maxPopFreq':
-            #pFreq = getGnomadData(brcaDF, eval(vus), hgVersion)[1]
             pFreq = heteroVUS[vus]['allele frequencies']['maxPopFreq']
             popFreqs.append(pFreq)
         else:
@@ -842,15 +846,15 @@ def plotVUSByFrequency(variantsDict, freq, brcaDF, hgVersion):
     ax = fig.add_subplot(111)
     bp = ax.boxplot(popFreqs)
     plt.xlabel(freq)
-    plt.show()
+    #plt.show()
     binList = [0.00001, 0.0001, 0.001, 0.01, 0.1]
     if len(popFreqs) == 0:
         print('empty list')
     else:
-        binPlot(popFreqs, 25, freq, "number of hetero VUS", float, 3, binList)
+        binPlot(popFreqs, 25, freq, "number of hetero VUS", float, 3, binList, outputDir, 'heteroVUSFreqs.png')
 
 
-def plotVUSByPosition(variantsDict):
+def plotVUSByPosition(variantsDict, outputDir):
     locations = list()
     homozygousVUS = variantsDict['homozygous vus']
     for vus in homozygousVUS:
@@ -858,7 +862,7 @@ def plotVUSByPosition(variantsDict):
     if len(locations) == 0:
         print('empty list')
     else:
-        binPlot(locations, 10000, "chromosome position bins", "number of homo VUS", int, 0, None)
+        binPlot(locations, 10000, "chromosome position bins", "number of homo VUS", int, 0, None, outputDir, 'homoVUSPositions.png')
 
     locations = list()
     heterozygousVUS = variantsDict['cooccurring vus']
@@ -870,11 +874,11 @@ def plotVUSByPosition(variantsDict):
     if len(locations) == 0:
         print('empty list')
     else:
-        binPlot(locations, 10000, "chromosome position bins", "number of het VUS", int, 0, None)
+        binPlot(locations, 10000, "chromosome position bins", "number of het VUS", int, 0, None, outputDir, 'heteroVUSPositions.png')
 
 
 
-def plotFrequenciesPerIndividual(frequenciesPerIndividual):
+def plotFrequenciesPerIndividual(frequenciesPerIndividual, outputDir):
     # count the number of individuals per frequency
     homo_ben_counts = list()
     homo_path_counts = list()
@@ -895,7 +899,7 @@ def plotFrequenciesPerIndividual(frequenciesPerIndividual):
     if len(homo_ben_counts) == 0:
         print('empty list')
     else:
-        binPlot(homo_ben_counts, 10, "homozygous benign variant count bins", "number of individuals", int, 0, None)
+        binPlot(homo_ben_counts, 10, "homozygous benign variant count bins", "number of individuals", int, 0, None, outputDir, 'homoBenignFPI.png')
     #binPlot(hetero_ben_counts, 10, "heterozygous benign variant count bins", "number of individuals", int, 0, None)
     #binPlot(homo_path_counts, 10, "homozygous pathogenic variant count bins", "number of individuals", int, 0, None)
     #binPlot(hetero_path_counts, 10, "heterozygous pathogenic variant count bins", "number of individuals", int, 0, [0, 1])
@@ -904,7 +908,7 @@ def plotFrequenciesPerIndividual(frequenciesPerIndividual):
 
 
 
-def plotGenotypeCounts(genotypeCounts, rare):
+def plotGenotypeCounts(genotypeCounts, rare, outputDir):
     homoCounts = [0 if genotypeCounts['benign']['homo'] == 0 else genotypeCounts['benign']['homo'],
                  0 if genotypeCounts['pathogenic']['homo'] == 0 else genotypeCounts['pathogenic']['homo'],
                  0 if genotypeCounts['vus']['homo'] == 0 else genotypeCounts['vus']['homo']]
@@ -952,7 +956,8 @@ def plotGenotypeCounts(genotypeCounts, rare):
         ax1.pie(sizes, explode=explode, labels=labels, colors = colors, shadow=False, startangle=90)
 
     ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
-    plt.show()
+    #plt.show()
+    plt.savefig(outputDir + '/genotypeCounts.png')
 
 def divide(n, d):
    res = list()
