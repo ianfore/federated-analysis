@@ -773,16 +773,12 @@ def hardyWeinbergChiSquareTest(bVars, pVars, vVars, n):
 def binPlot(theList, binSize, xlabel, ylabel, dtype, sigDigs, binList, outputDir, imageName):
     customBinList = False
     if binList is None:
-        minList = min(theList)
-        maxList = max(theList)
-        if minList == maxList:
-            binList = [minList]
-        else:
-            sizeOfRange = 0.5 * (min(theList) + max(theList))
-            try:
-                binList = np.arange(minList, maxList, round((1/binSize) * sizeOfRange, sigDigs) , dtype=dtype)
-            except Exception as e:
-                logger.error('error in binPlot np.arange(): ' + str(e))
+        sizeOfRange = 0.5 * (min(theList) + max(theList))
+        try:
+            binList = np.arange(min(theList), max(theList), round((1/binSize) * sizeOfRange, sigDigs) , dtype=dtype)
+        except Exception as e:
+            logger.error('error in binPlot np.arange(): ' + str(e))
+            return
     else:
         customBinList = True
     bins = list()
