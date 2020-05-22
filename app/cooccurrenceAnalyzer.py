@@ -782,7 +782,7 @@ def binPlot(theList, binSize, xlabel, ylabel, dtype, sigDigs, binList, outputDir
             try:
                 binList = np.arange(minList, maxList, round((1/binSize) * sizeOfRange, sigDigs) , dtype=dtype)
             except Exception as e:
-                logger.error('error in binPlot np.arange(): ' + str(e.message))
+                logger.error('error in binPlot np.arange(): ' + str(e))
     else:
         customBinList = True
     bins = list()
