@@ -770,6 +770,7 @@ def hardyWeinbergChiSquareTest(bVars, pVars, vVars, n):
     return bVars, pVars, vVars
 
 
+
 def binPlot(theList, binSize, xlabel, ylabel, dtype, sigDigs, binList, outputDir, imageName):
     customBinList = False
     if binList is None:

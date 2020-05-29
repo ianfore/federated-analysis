@@ -32,7 +32,6 @@ alleleFrequencyName = 'Allele_frequency_ExAC'
 variantsPerIndividualFileName = 'variantsPerIndividual.json'
 
 
-
 class NpEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, np.integer):
@@ -65,6 +64,8 @@ def main():
     parser.add_argument("--o", dest="o", help="name of JSON-formatted output file, default=None", default=None)
 
     parser.add_argument("--f", dest="f", help="name of JSON-formatted variants per individual file, default=None", default=None)
+
+    parser.add_argument("--vi", dest="vi", help="name of JSON-formatted variant info file, default=None", default=None)
 
     parser.add_argument("--h", dest="h", help="Human genome version (37 or 38). Default=None", default=None)
 
@@ -112,6 +113,7 @@ def main():
     v_options = options.v
     o_options = options.o
     f_options = options.f
+    vi_options = options.vi
     c_options = options.c
     d_options = options.d
     p_options = bool(eval(options.p))
@@ -125,10 +127,10 @@ def main():
 
 
     run(h_options, e_options, c_options, g_options, p_options, v_options, o_options, s_options,
-        n_options, b_options, d_options, r_options, f_options)
+        n_options, b_options, d_options, r_options, f_options, vi_options)
 
 def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, outputFileName, saveVarsPerIndivid, numProcs,
-        brcaFileName, pyensemblDir, rareCutoff, variantsPerIndividualFileName):
+        brcaFileName, pyensemblDir, rareCutoff, variantsPerIndividualFileName, variantInfoFileName):
 
 
     logger.info('setting pyensembl dir to ' + pyensemblDir)
@@ -148,30 +150,37 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, output
     logger.info('finding variants per individual in ' + vcfFileName)
     t = time.time()
     q = Queue()
+    w = Queue()
     processList = list()
     for i in range(numProcs):
-        p = Process(target=findVarsPerIndividual, args=(q, vcf, benignVariants, pathogenicVariants, chromosome, gene, ensemblRelease, i, numProcs,))
+        p = Process(target=findVarsPerIndividual, args=(q, w, vcf, benignVariants, pathogenicVariants, chromosome, gene, ensemblRelease, i, numProcs,))
         p.start()
         processList.append(p)
     logger.info('joining results from forked threads')
     variantsPerIndividual = dict()
+    variantInfo = dict()
     for i in range(numProcs):
         variantsPerIndividual.update(q.get())
+        variantInfo.update(w.get())
     for i in range(numProcs):
         processList[i].join()
     logger.info('elapsed time in findVariantsPerIndividual() ' + str(time.time() -t))
-
-
-    logger.info('finding homozygous  individuals per vus')
-    t = time.time()
-    homozygousPerVus = countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, gene, rareCutoff)
-    logger.info('elapsed time in countHomozygousPerVus() ' + str(time.time() -t))
 
     if saveVarsPerIndivid:
         logger.info('saving variantsPerIndividual to ' + variantsPerIndividualFileName)
         with open(variantsPerIndividualFileName, 'w') as f:
             json.dump(variantsPerIndividual, f, cls=NpEncoder)
         f.close()
+        with open(variantInfoFileName, 'w') as f:
+            json.dump(variantInfo, f, cls=NpEncoder)
+        f.close()
+
+    logger.info('finding homozygous  individuals per vus')
+    t = time.time()
+    homozygousPerVus = countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, gene, rareCutoff)
+    logger.info('elapsed time in countHomozygousPerVus() ' + str(time.time() -t))
+
+
 
     logger.info('finding individuals per cooc')
     t = time.time()
@@ -382,7 +391,7 @@ def calculateLikelihood(pathCoocs, p1, n, k, brcaDF, hgVersion, cohortSize, rare
     return dataPerVus
 
 def readVCFFile(vcfFileName):
-    return allel.read_vcf(vcfFileName)
+    return allel.read_vcf(vcfFileName, fields=['samples', 'calldata/GT', 'variants/ALT', 'variants/CHROM','variants/FILTER_PASS', 'variants/ID', 'variants/POS', 'variants/QUAL','variants/REF', 'variants/INFO'])
 
 def divide(n, d):
    res = list()
@@ -404,9 +413,17 @@ def getStartAndEnd(partitionSizes, threadID):
 
     return start, end
 
-def findVarsPerIndividual(q, vcf, benignVariants, pathogenicVariants, chromosome, gene, ensemblRelease, threadID, numProcesses):
+def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromosome, gene, ensemblRelease, threadID, numProcesses):
+    infoFields = ['variants/ABE', 'variants/ABZ', 'variants/AC', 'variants/AF', 'variants/ALT',
+     'variants/AN', 'variants/ANN', 'variants/AVGDP', 'variants/BETA_IF', 'variants/BQZ',
+     'variants/CYZ', 'variants/FIBC_I', 'variants/FIBC_P', 'variants/FILTER_PASS', 'variants/FLT20', 'variants/GC',
+     'variants/GN', 'variants/HWEAF_P', 'variants/HWE_SLP_I', 'variants/HWE_SLP_P', 'variants/IBC_I', 'variants/IBC_P',
+     'variants/ID', 'variants/IOR', 'variants/MAX_IF', 'variants/MIN_IF', 'variants/NM0', 'variants/NM1',
+     'variants/NMZ', 'variants/NS_NREF', 'variants/QUAL', 'variants/REF', 'variants/STZ',
+     'variants/SVM']
 
     variantsPerIndividual = dict()
+    individualsPerVariant = defaultdict(dict)
 
     individuals = list(vcf['samples'])
 
@@ -444,8 +461,18 @@ def findVarsPerIndividual(q, vcf, benignVariants, pathogenicVariants, chromosome
                 # if not a known VUS, it is a VUS now
                 else:
                     variantsPerIndividual[individuals[i]]['vus'].append(((c, p, r, a), genotype))
-    #return variantsPerIndividual
+                # add variant info
+                if not (c,p,r,a) in individualsPerVariant:
+                    individualsPerVariant[str((c,p,r,a))]['individuals'] = list()
+                    individualsPerVariant[str((c,p,r,a))]['info'] = dict()
+                individualsPerVariant[str((c,p,r,a))]['individuals'].append(individuals[i])
+                for f in infoFields:
+                    try:
+                        individualsPerVariant[str((c,p,r,a))]['info'][f] = vcf[f]
+                    except KeyError:
+                        continue
     q.put(variantsPerIndividual)
+    w.put(individualsPerVariant)
 
 def getGenesForVariant(variant, ensemblRelease, geneOfInterest):
     ensembl = pyensembl.EnsemblRelease(release=ensemblRelease)
