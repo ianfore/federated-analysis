@@ -79,7 +79,7 @@ def main():
 
     parser.add_argument("--s", dest="s", help="Save variants per individual. Default=False", default='False')
 
-    parser.add_argument("--i", dest="i", help="Include pathog vars per VUS in report. Default=False", default='True')
+    parser.add_argument("--i", dest="i", help="Include pathog vars per VUS in report. Default=True", default='True')
 
     parser.add_argument("--n", dest="n", help="Number of processes. Default=1", default=cpu_count())
 
@@ -414,13 +414,13 @@ def getStartAndEnd(partitionSizes, threadID):
     return start, end
 
 def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromosome, gene, ensemblRelease, threadID, numProcesses):
-    infoFields = ['variants/ABE', 'variants/ABZ', 'variants/AC', 'variants/AF', 'variants/ALT',
+    '''infoFields = ['variants/ABE', 'variants/ABZ', 'variants/AC', 'variants/AF',
      'variants/AN', 'variants/ANN', 'variants/AVGDP', 'variants/BETA_IF', 'variants/BQZ',
      'variants/CYZ', 'variants/FIBC_I', 'variants/FIBC_P', 'variants/FILTER_PASS', 'variants/FLT20', 'variants/GC',
      'variants/GN', 'variants/HWEAF_P', 'variants/HWE_SLP_I', 'variants/HWE_SLP_P', 'variants/IBC_I', 'variants/IBC_P',
      'variants/ID', 'variants/IOR', 'variants/MAX_IF', 'variants/MIN_IF', 'variants/NM0', 'variants/NM1',
-     'variants/NMZ', 'variants/NS_NREF', 'variants/QUAL', 'variants/REF', 'variants/STZ',
-     'variants/SVM']
+     'variants/NMZ', 'variants/NS_NREF', 'variants/QUAL', 'variants/STZ', 'variants/SVM']'''
+    infoFields = ['variants/FIBC_I']
 
     variantsPerIndividual = dict()
     individualsPerVariant = defaultdict(dict)
@@ -443,6 +443,7 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
         variantsPerIndividual[individuals[i]]['pathogenic'] = list()
         variantsPerIndividual[individuals[i]]['vus'] = list()
 
+        variantIndex = 0
         for variant in range(len(vcf['calldata/GT'])):
             if int(vcf['variants/CHROM'][variant].replace('chr', '')) != int(chromosome):
                 continue
@@ -467,10 +468,11 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
                     individualsPerVariant[str((c,p,r,a))]['info'] = dict()
                 individualsPerVariant[str((c,p,r,a))]['individuals'].append(individuals[i])
                 for f in infoFields:
-                    try:
-                        individualsPerVariant[str((c,p,r,a))]['info'][f] = vcf[f]
-                    except KeyError:
-                        continue
+                    #try:
+                    individualsPerVariant[str((c,p,r,a))]['info'][f] = vcf[f][variantIndex]
+                    variantIndex += 1
+                    #except KeyError:
+                    #    continue
     q.put(variantsPerIndividual)
     w.put(individualsPerVariant)
 
