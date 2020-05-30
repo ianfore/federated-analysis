@@ -65,7 +65,7 @@ def main():
 
     parser.add_argument("--f", dest="f", help="name of JSON-formatted variants per individual file, default=None", default=None)
 
-    parser.add_argument("--vi", dest="vi", help="name of JSON-formatted variant info file, default=None", default=None)
+    parser.add_argument("--ipv", dest="ipv", help="name of JSON-formatted individuals per variant file, default=None", default=None)
 
     parser.add_argument("--h", dest="h", help="Human genome version (37 or 38). Default=None", default=None)
 
@@ -113,7 +113,7 @@ def main():
     v_options = options.v
     o_options = options.o
     f_options = options.f
-    vi_options = options.vi
+    ipv_options = options.ipv
     c_options = options.c
     d_options = options.d
     p_options = bool(eval(options.p))
@@ -127,10 +127,10 @@ def main():
 
 
     run(h_options, e_options, c_options, g_options, p_options, v_options, o_options, s_options,
-        n_options, b_options, d_options, r_options, f_options, vi_options)
+        n_options, b_options, d_options, r_options, f_options, ipv_options)
 
 def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, outputFileName, saveVarsPerIndivid, numProcs,
-        brcaFileName, pyensemblDir, rareCutoff, variantsPerIndividualFileName, variantInfoFileName):
+        brcaFileName, pyensemblDir, rareCutoff, variantsPerIndividualFileName, individualsPerVariantFileName):
 
 
     logger.info('setting pyensembl dir to ' + pyensemblDir)
@@ -158,21 +158,37 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, output
         processList.append(p)
     logger.info('joining results from forked threads')
     variantsPerIndividual = dict()
-    variantInfo = dict()
+    individualsPerVariant = dict()
     for i in range(numProcs):
         variantsPerIndividual.update(q.get())
-        variantInfo.update(w.get())
+        individualsPerVariant.update(w.get())
     for i in range(numProcs):
         processList[i].join()
     logger.info('elapsed time in findVariantsPerIndividual() ' + str(time.time() -t))
+
+    # add FIBC_I from INFO field
+    variantIndex = 0
+    variantInfo = vcf['variants/FIBC_I']
+    print('variants/fibc_i = ' + str(variantInfo))
+    for variant in range(len(vcf['calldata/GT'])):
+        if int(vcf['variants/CHROM'][variant].replace('chr', '')) != int(chromosome):
+            continue
+        if 1 in vcf['calldata/GT'][variant][i]:
+            c = int(vcf['variants/CHROM'][variant].replace('chr', ''))
+            p = int(vcf['variants/POS'][variant])
+            r = str(vcf['variants/REF'][variant])
+            a = str(vcf['variants/ALT'][variant][0])
+            if str((c,p,r,a)) in individualsPerVariant:
+                individualsPerVariant[str((c,p,r,a))]['fibc_i'] = variantInfo[variantIndex]
+        variantIndex += 1
 
     if saveVarsPerIndivid:
         logger.info('saving variantsPerIndividual to ' + variantsPerIndividualFileName)
         with open(variantsPerIndividualFileName, 'w') as f:
             json.dump(variantsPerIndividual, f, cls=NpEncoder)
         f.close()
-        with open(variantInfoFileName, 'w') as f:
-            json.dump(variantInfo, f, cls=NpEncoder)
+        with open(individualsPerVariantFileName, 'w') as f:
+            json.dump(individualsPerVariant, f, cls=NpEncoder)
         f.close()
 
     logger.info('finding homozygous  individuals per vus')
@@ -195,29 +211,15 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, output
 
     # calculate total number of benign, pathogenic, and vus variants in cohort
 
-    '''numBenignWithPath = 0
-    for cooc in individualsPerPathogenicCooccurrence:
-        numBenignWithPath += len(individualsPerPathogenicCooccurrence[cooc])'''
+    totals=calculateTotalPerClass(variantsPerIndividual)
 
-    totalBenign = set()
-    totalPathogenic = set()
-    totalVUS = set()
+    numBenign = len(totals['benign'])
+    numPathogenic = len(totals['pathogenic'])
+    numVUS = len(totals['vus'])
 
-    for i in variantsPerIndividual:
-        for b in variantsPerIndividual[i]['benign']:
-            totalBenign.add(b)
-        for p in variantsPerIndividual[i]['pathogenic']:
-            totalPathogenic.add(p)
-        for v in variantsPerIndividual[i]['vus']:
-            totalVUS.add(v)
-
-    numBenign = len(totalBenign)
-    numPathogenic = len(totalPathogenic)
-    numVUS = len(totalVUS)
-
-    print('total benign: ' + str(numBenign))
-    print('total pathogenic: ' + str(numPathogenic))
-    print('total vus: ' + str(numVUS))
+    print('num benign = ' + str(numBenign))
+    print('num pathogenic = ' + str(numPathogenic))
+    print('num vus = ' + str(numVUS))
 
     cohortSize = len(variantsPerIndividual)
     p1 =  0.5 * numBenign / cohortSize
@@ -235,6 +237,22 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, output
     with open(outputFileName, 'w') as f:
         f.write(json_dump)
     f.close()
+
+def calculateTotalPerClass(vpi):
+    totals = dict()
+    totals['benign'] = set()
+    totals['pathogenic'] = set()
+    totals['vus'] = set()
+
+    for i in vpi:
+        for b in vpi[i]['benign']:
+            totals['benign'].add(b)
+        for p in vpi[i]['pathogenic']:
+            totals['pathogenic'].add(p)
+        for v in vpi[i]['vus']:
+            totals['vus'].add(v)
+
+    return totals
 
 def findVariantsInBRCA(fileName, classStrings, hgVersion):
     brcaDF = pandas.read_csv(fileName, sep='\t', header=0, dtype=str)
@@ -443,7 +461,6 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
         variantsPerIndividual[individuals[i]]['pathogenic'] = list()
         variantsPerIndividual[individuals[i]]['vus'] = list()
 
-        variantIndex = 0
         for variant in range(len(vcf['calldata/GT'])):
             if int(vcf['variants/CHROM'][variant].replace('chr', '')) != int(chromosome):
                 continue
@@ -462,17 +479,13 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
                 # if not a known VUS, it is a VUS now
                 else:
                     variantsPerIndividual[individuals[i]]['vus'].append(((c, p, r, a), genotype))
+
                 # add variant info
                 if not (c,p,r,a) in individualsPerVariant:
                     individualsPerVariant[str((c,p,r,a))]['individuals'] = list()
-                    individualsPerVariant[str((c,p,r,a))]['info'] = dict()
                 individualsPerVariant[str((c,p,r,a))]['individuals'].append(individuals[i])
-                for f in infoFields:
-                    #try:
-                    individualsPerVariant[str((c,p,r,a))]['info'][f] = vcf[f][variantIndex]
-                    variantIndex += 1
-                    #except KeyError:
-                    #    continue
+
+
     q.put(variantsPerIndividual)
     w.put(individualsPerVariant)
 
