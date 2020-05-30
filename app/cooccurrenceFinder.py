@@ -167,8 +167,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, output
     logger.info('elapsed time in findVariantsPerIndividual() ' + str(time.time() -t))
 
     # add FIBC_I from INFO field
-    variantInfo = vcf['variants/FIBC_I']
-    individualsPerVariant = addVariantInfo(individualsPerVariant, vcf, chromosome, variantInfo)
+    individualsPerVariant = addVariantInfo(individualsPerVariant, vcf, chromosome, ['FIBC_I', 'FIBC_P'])
 
     if saveVarsPerIndivid:
         logger.info('saving variantsPerIndividual to ' + variantsPerIndividualFileName)
@@ -226,7 +225,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, output
         f.write(json_dump)
     f.close()
 
-def addVariantInfo(individualsPerVariant, vcf, chromosome, variantInfo):
+def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList):
     # add FIBC_I from INFO field
     for variant in range(len(vcf['calldata/GT'])):
         if int(vcf['variants/CHROM'][variant].replace('chr', '')) != int(chromosome):
@@ -236,7 +235,9 @@ def addVariantInfo(individualsPerVariant, vcf, chromosome, variantInfo):
         r = str(vcf['variants/REF'][variant])
         a = str(vcf['variants/ALT'][variant][0])
         if str((c,p,r,a)) in individualsPerVariant:
-            individualsPerVariant[str((c,p,r,a))]['fibc_i'] = variantInfo[variant]
+            for info in infoList:
+                individualsPerVariant[str((c,p,r,a))][info] = vcf['variants/' + info][variant]
+                individualsPerVariant[str((c,p,r,a))][info] = vcf['variants/' + info][variant]
     return individualsPerVariant
 
 def calculateTotalPerClass(vpi):

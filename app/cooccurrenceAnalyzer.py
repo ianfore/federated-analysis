@@ -19,22 +19,28 @@ logger.setLevel(logging.DEBUG)
 
 
 def main():
-    if len(sys.argv) != 7:
-        print('13-out.json 13-vpi.json brca-variants.tsv brca-regions.json /tmp/myout 16')
+    if len(sys.argv) != 8:
+        print('13-out.json 13-vpi.json 13-ipv.json brca-variants.tsv brca-regions.json /tmp/myout 16')
         sys.exit(1)
 
     variantsFileName =sys.argv[1]
     vpiFileName = sys.argv[2]
-    brcaFileName = sys.argv[3]
-    regionsFileName = sys.argv[4]
-    outputDir = sys.argv[5]
-    numProcesses = int(sys.argv[6])
+    ipvFileName = sys.argv[3]
+    brcaFileName = sys.argv[4]
+    regionsFileName = sys.argv[5]
+    outputDir = sys.argv[6]
+    numProcesses = int(sys.argv[7])
 
     logger.info('reading data from ' + vpiFileName)
     with open(vpiFileName, 'r') as f:
         vpiDict = json.load(f)
     f.close()
     vpiDF = pd.DataFrame(vpiDict)
+
+    logger.info('reading data from ' + ipvFileName)
+    with open(ipvFileName, 'r') as f:
+        ipvDict = json.load(f)
+    f.close()
 
     logger.info('finding variants from ' + brcaFileName)
     brcaDF = findVariantsInBRCA(brcaFileName)
@@ -108,21 +114,28 @@ def main():
     homoVhetero = countHomoAndHeteroPerIndividual(vpiDict, variantsDict, brcaDF, hgVersion)
     print(homoVhetero)
 
-    printHWReport(vpiDict, variantsDict)
-    iphv = findIndividualsPerHomozygousVUS(vpiDict, variantsDict, brcaDF, hgVersion, 1.0)
+    ipvDict = getHardyWeinbergStats(vpiDict, variantsDict, ipvDict)
+
+    iphv = findIndividualsPerHomozygousVariant(vpiDict, variantsDict, 1.0)
     iphvFileName = 'iphv.json'
     logger.info('saving to ' + outputDir + '/' + iphvFileName)
     with open(outputDir + '/' + iphvFileName, 'w') as f:
         json.dump(iphv, f)
     f.close()
+
     inCIdomain = findRegionPerVariant(variantsDict, regionsDict)
     domainFileName = 'domain.json'
     logger.info('saving to ' + outputDir + '/' + domainFileName)
     with open(outputDir + '/' + domainFileName, 'w') as f:
         json.dump(inCIdomain, f)
     f.close()
-
     plotRegionsPerVariant(inCIdomain, outputDir)
+
+    # write ipv dict back out now that it has f-value
+    ipvOut = ipvFileName.replace('.json', '') + '-f.json'
+    with open(ipvOut, 'w') as f:
+        json.dump(ipvDict, f)
+    f.close()
 
 
 def plotRegionsPerVariant(inCIdomain, outputDir):
@@ -195,8 +208,8 @@ def findRegionPerVariant(variantsDict, regionsDict):
                     inCIdomain[v] = None
     return inCIdomain
 
-def findIndividualsPerHomozygousVUS(vpiDict, variantsDict, brcaDF, hgVersion, rareCutoffFrequency):
-    individualsPerVariant = defaultdict(list)
+def findIndividualsPerHomozygousVariant(vpiDict, variantsDict, rareCutoffFrequency):
+    individualsPerHomozygousVariant = defaultdict(list)
     # look at each homo vus
     for homoVUS in variantsDict['homozygous vus']:
         logger.info('looking at vus ' + str(homoVUS))
@@ -207,9 +220,10 @@ def findIndividualsPerHomozygousVUS(vpiDict, variantsDict, brcaDF, hgVersion, ra
             # find the individuals who have expressed this as a homo vus
             for v in vpiDict[individual]['vus']:
                 if tuple(v[0]) == eval(homoVUS) and v[1] == '3':
-                    individualsPerVariant[str(tuple(v[0]))].append(individual)
+                    individualsPerHomozygousVariant[str(tuple(v[0]))].append(individual)
                     break
-    return individualsPerVariant
+
+    return individualsPerHomozygousVariant
 
 def generateListsForCorrelation(fpv, list_1_string, list_2_string):
     l1 = list()
@@ -478,7 +492,7 @@ def getMaxGnomad(brcaDF, hgString, hgVersion, alleleFrequencies):
     return maxData
 
 
-def printHWReport(vpiDict, variantsDict):
+def getHardyWeinbergStats(vpiDict, variantsDict, individualsPerVariant):
     bVars, pVars, vVars = calculateZygosityFrequenciesPerVariant(vpiDict)
     bVars, pVars, vVars = hardyWeinbergChiSquareTest(bVars, pVars, vVars, len(vpiDict))
     bVars, pVars, vVars = hardyWeinbergInbreedingCoefficient(bVars, pVars, vVars)
@@ -496,6 +510,11 @@ def printHWReport(vpiDict, variantsDict):
             rejectF['benign'] += 1
         else:
             acceptF['benign'] += 1
+        individualsPerVariant[str(b)]['F'] = bVars[b]['F']
+        individualsPerVariant[str(b)]['class'] = 'benign'
+        individualsPerVariant[str(b)]['aa'] = bVars[b]['aa']
+        individualsPerVariant[str(b)]['Aa'] = bVars[b]['Aa']
+
     for p in pVars:
         if pVars[p]['accept hw'] is False:
             rejectHW['pathogenic'] += 1
@@ -505,6 +524,12 @@ def printHWReport(vpiDict, variantsDict):
             rejectF['pathogenic'] += 1
         else:
             rejectF['pathogenic'] += 1
+        individualsPerVariant[str(p)]['F'] = pVars[p]['F']
+        individualsPerVariant[str(p)]['class'] = 'pathogenic'
+        individualsPerVariant[str(p)]['aa'] = pVars[p]['aa']
+        individualsPerVariant[str(p)]['Aa'] = pVars[p]['Aa']
+
+
 
     rejectVUS = {'cooccurring vus': 0, 'homozygous vus': 0}
     acceptVUS = {'cooccurring vus': 0, 'homozygous vus': 0}
@@ -537,6 +562,10 @@ def printHWReport(vpiDict, variantsDict):
                 acceptVUS_F['cooccurring vus'] += 1
             if str(v) in variantsDict['homozygous vus']:
                 acceptVUS_F['homozygous vus'] += 1
+        individualsPerVariant[str(v)]['F'] = vVars[v]['F']
+        individualsPerVariant[str(v)]['class'] = 'vus'
+        individualsPerVariant[str(v)]['aa'] = vVars[v]['aa']
+        individualsPerVariant[str(v)]['Aa'] = vVars[v]['Aa']
 
 
     # check to see if 654 vus that reject HW are same vus that reject F
@@ -564,7 +593,7 @@ def printHWReport(vpiDict, variantsDict):
     print('list of vus rejecting both HW and F: ' + str(vusRejectingBothHWandF))
     print('length list of vus rejecting both HW and F: ' + str(len(vusRejectingBothHWandF)))
 
-
+    return individualsPerVariant
 
 def calculateZygosityFrequenciesPerVariant(vpiDict):
     benignVariants = dict()
