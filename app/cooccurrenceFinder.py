@@ -168,17 +168,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, output
 
     # add FIBC_I from INFO field
     variantInfo = vcf['variants/FIBC_I']
-    print('variants/fibc_i = ' + str(variantInfo))
-    for variant in range(len(vcf['calldata/GT'])):
-        if int(vcf['variants/CHROM'][variant].replace('chr', '')) != int(chromosome):
-            continue
-        if 1 in vcf['calldata/GT'][variant][i]:
-            c = int(vcf['variants/CHROM'][variant].replace('chr', ''))
-            p = int(vcf['variants/POS'][variant])
-            r = str(vcf['variants/REF'][variant])
-            a = str(vcf['variants/ALT'][variant][0])
-            if str((c,p,r,a)) in individualsPerVariant:
-                individualsPerVariant[str((c,p,r,a))]['fibc_i'] = variantInfo[variant]
+    individualsPerVariant = addVariantInfo(individualsPerVariant, vcf, chromosome, variantInfo)
 
     if saveVarsPerIndivid:
         logger.info('saving variantsPerIndividual to ' + variantsPerIndividualFileName)
@@ -229,12 +219,25 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, output
     json_dump = json.dumps(data_set, cls=NpEncoder)
 
     logger.info('saving final VUS data  to ' + outputFileName)
-    '''with open(outputFileName, 'w') as f:
-        json.dump(data_set, f, cls=NpEncoder)'''
+    with open(outputFileName, 'w') as f:
+        json.dump(data_set, f, cls=NpEncoder)
 
     with open(outputFileName, 'w') as f:
         f.write(json_dump)
     f.close()
+
+def addVariantInfo(individualsPerVariant, vcf, chromosome, variantInfo):
+    # add FIBC_I from INFO field
+    for variant in range(len(vcf['calldata/GT'])):
+        if int(vcf['variants/CHROM'][variant].replace('chr', '')) != int(chromosome):
+            continue
+        c = int(vcf['variants/CHROM'][variant].replace('chr', ''))
+        p = int(vcf['variants/POS'][variant])
+        r = str(vcf['variants/REF'][variant])
+        a = str(vcf['variants/ALT'][variant][0])
+        if str((c,p,r,a)) in individualsPerVariant:
+            individualsPerVariant[str((c,p,r,a))]['fibc_i'] = variantInfo[variant]
+    return individualsPerVariant
 
 def calculateTotalPerClass(vpi):
     totals = dict()
@@ -479,7 +482,7 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
                     variantsPerIndividual[individuals[i]]['vus'].append(((c, p, r, a), genotype))
 
                 # add variant info
-                if not (c,p,r,a) in individualsPerVariant:
+                if not str((c,p,r,a)) in individualsPerVariant:
                     individualsPerVariant[str((c,p,r,a))]['individuals'] = list()
                 individualsPerVariant[str((c,p,r,a))]['individuals'].append(individuals[i])
 
