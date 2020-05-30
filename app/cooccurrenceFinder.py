@@ -166,8 +166,8 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, output
         processList[i].join()
     logger.info('elapsed time in findVariantsPerIndividual() ' + str(time.time() -t))
 
-    # add FIBC_I from INFO field
-    individualsPerVariant = addVariantInfo(individualsPerVariant, vcf, chromosome, ['FIBC_I', 'FIBC_P'])
+    # add infos
+    individualsPerVariant = addVariantInfo(individualsPerVariant, vcf, chromosome, ['FIBC_I', 'FIBC_P'], brcaDF, hgVersion)
 
     if saveVarsPerIndivid:
         logger.info('saving variantsPerIndividual to ' + variantsPerIndividualFileName)
@@ -225,8 +225,8 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, output
         f.write(json_dump)
     f.close()
 
-def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList):
-    # add FIBC_I from INFO field
+def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, brcaDF, hgVersion):
+    # add infoList stuff from INFO field
     for variant in range(len(vcf['calldata/GT'])):
         if int(vcf['variants/CHROM'][variant].replace('chr', '')) != int(chromosome):
             continue
@@ -234,10 +234,14 @@ def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList):
         p = int(vcf['variants/POS'][variant])
         r = str(vcf['variants/REF'][variant])
         a = str(vcf['variants/ALT'][variant][0])
-        if str((c,p,r,a)) in individualsPerVariant:
+        v = str((c,p,r,a))
+        if v in individualsPerVariant:
             for info in infoList:
-                individualsPerVariant[str((c,p,r,a))][info] = vcf['variants/' + info][variant]
-                individualsPerVariant[str((c,p,r,a))][info] = vcf['variants/' + info][variant]
+                individualsPerVariant[v][info] = vcf['variants/' + info][variant]
+                maxPop, maxFreq = getGnomadData(brcaDF, v, hgVersion)
+                individualsPerVariant[v]['maxPop'] = maxPop
+                individualsPerVariant[v]['maxFreq'] = maxFreq
+
     return individualsPerVariant
 
 def calculateTotalPerClass(vpi):
@@ -473,6 +477,7 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
                 a = str(vcf['variants/ALT'][variant][0])
                 if getGenesForVariant([c,p,r,a], ensemblRelease, gene) is None:
                     continue
+
                 genotype = str(int(str(vcf['calldata/GT'][variant][i][0]) + str(vcf['calldata/GT'][variant][i][1]), 2))
                 if (c, p, r, a) in benignVariants:
                     variantsPerIndividual[individuals[i]]['benign'].append(((c, p, r, a), genotype))
@@ -483,9 +488,14 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
                     variantsPerIndividual[individuals[i]]['vus'].append(((c, p, r, a), genotype))
 
                 # add variant info
-                if not str((c,p,r,a)) in individualsPerVariant:
-                    individualsPerVariant[str((c,p,r,a))]['individuals'] = list()
-                individualsPerVariant[str((c,p,r,a))]['individuals'].append(individuals[i])
+                if not str((c, p, r, a)) in individualsPerVariant:
+                    individualsPerVariant[str((c, p, r, a))]['homozygous individuals'] = list()
+                    individualsPerVariant[str((c, p, r, a))]['heterozygous individuals'] = list()
+                if genotype == '3':
+                    individualsPerVariant[str((c,p,r,a))]['homozygous individuals'].append(individuals[i])
+                elif genotype == '1' or genotype == '2':
+                    individualsPerVariant[str((c,p,r,a))]['heterozygous individuals'].append(individuals[i])
+
 
 
     q.put(variantsPerIndividual)

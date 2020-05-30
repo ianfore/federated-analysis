@@ -53,6 +53,8 @@ def main():
         regionsDict = json.load(f)
     f.close()
 
+
+
     '''gnomadEthnicities = [ 'AFR', 'AMR', 'ASJ', 'EAS', 'FIN', 'NFE', 'OTH', 'SAS']
     for ethnicity in gnomadEthnicities:
         logger.info('getting gnomad freqs per variant')
@@ -177,8 +179,6 @@ def plotRegionsPerVariant(inCIdomain, outputDir):
     ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
     #plt.show()
     plt.savefig(outputDir + '/regionsPerVariant.png')
-
-
 
 def findRegionPerVariant(variantsDict, regionsDict):
     inCIdomain = dict()
@@ -325,7 +325,6 @@ def pearsonCorrelation(someList1, someList2):
     r =  rNum/rDen
     return r
 
-
 def countTotalVariants(vpiDict):
     variants = {'benign': set(), 'pathogenic': set(), 'vus': set()}
     for i in vpiDict:
@@ -471,7 +470,6 @@ def getMinGnomad(brcaDF, hgString, hgVersion, alleleFrequencies):
         minData['population'] = 0.0
     return minData
 
-
 def getMaxGnomad(brcaDF, hgString, hgVersion, alleleFrequencies):
     maxData = {'frequency': 0.0, 'population': None}
     for af in alleleFrequencies:
@@ -491,7 +489,6 @@ def getMaxGnomad(brcaDF, hgString, hgVersion, alleleFrequencies):
                 maxData['population'] = af
     return maxData
 
-
 def getHardyWeinbergStats(vpiDict, variantsDict, individualsPerVariant):
     bVars, pVars, vVars = calculateZygosityFrequenciesPerVariant(vpiDict)
     bVars, pVars, vVars = hardyWeinbergChiSquareTest(bVars, pVars, vVars, len(vpiDict))
@@ -510,10 +507,12 @@ def getHardyWeinbergStats(vpiDict, variantsDict, individualsPerVariant):
             rejectF['benign'] += 1
         else:
             acceptF['benign'] += 1
+        individualsPerVariant[str(b)]['accept F'] = bVars[b]['accept F']
         individualsPerVariant[str(b)]['F'] = bVars[b]['F']
         individualsPerVariant[str(b)]['class'] = 'benign'
         individualsPerVariant[str(b)]['aa'] = bVars[b]['aa']
         individualsPerVariant[str(b)]['Aa'] = bVars[b]['Aa']
+        individualsPerVariant[str(b)]['AA'] = bVars[b]['AA']
 
     for p in pVars:
         if pVars[p]['accept hw'] is False:
@@ -525,9 +524,12 @@ def getHardyWeinbergStats(vpiDict, variantsDict, individualsPerVariant):
         else:
             rejectF['pathogenic'] += 1
         individualsPerVariant[str(p)]['F'] = pVars[p]['F']
+        individualsPerVariant[str(p)]['accept F'] = pVars[p]['accept F']
         individualsPerVariant[str(p)]['class'] = 'pathogenic'
         individualsPerVariant[str(p)]['aa'] = pVars[p]['aa']
         individualsPerVariant[str(p)]['Aa'] = pVars[p]['Aa']
+        individualsPerVariant[str(p)]['AA'] = pVars[p]['AA']
+
 
 
 
@@ -563,10 +565,11 @@ def getHardyWeinbergStats(vpiDict, variantsDict, individualsPerVariant):
             if str(v) in variantsDict['homozygous vus']:
                 acceptVUS_F['homozygous vus'] += 1
         individualsPerVariant[str(v)]['F'] = vVars[v]['F']
+        individualsPerVariant[str(v)]['accept F'] = vVars[v]['accept F']
         individualsPerVariant[str(v)]['class'] = 'vus'
         individualsPerVariant[str(v)]['aa'] = vVars[v]['aa']
         individualsPerVariant[str(v)]['Aa'] = vVars[v]['Aa']
-
+        individualsPerVariant[str(v)]['AA'] = vVars[v]['AA']
 
     # check to see if 654 vus that reject HW are same vus that reject F
     vusRejectingBothHWandF = list()
@@ -798,8 +801,6 @@ def hardyWeinbergChiSquareTest(bVars, pVars, vVars, n):
 
     return bVars, pVars, vVars
 
-
-
 def binPlot(theList, binSize, xlabel, ylabel, dtype, sigDigs, binList, outputDir, imageName):
     customBinList = False
     if binList is None:
@@ -842,7 +843,6 @@ def binPlot(theList, binSize, xlabel, ylabel, dtype, sigDigs, binList, outputDir
         #plt.show()
         plt.savefig(outputDir + '/' + imageName)
 
-
 def plotVUSByFrequency(variantsDict, freq, outputDir):
     homoVUS = variantsDict['homozygous vus']
     popFreqs = list()
@@ -879,7 +879,6 @@ def plotVUSByFrequency(variantsDict, freq, outputDir):
     else:
         binPlot(popFreqs, 25, freq, "number of hetero VUS", float, 3, binList, outputDir, 'heteroVUSFreqs.png')
 
-
 def plotVUSByPosition(variantsDict, outputDir):
     locations = list()
     homozygousVUS = variantsDict['homozygous vus']
@@ -901,8 +900,6 @@ def plotVUSByPosition(variantsDict, outputDir):
         print('empty list')
     else:
         binPlot(locations, 10000, "chromosome position bins", "number of het VUS", int, 0, None, outputDir, 'heteroVUSPositions.png')
-
-
 
 def plotFrequenciesPerIndividual(frequenciesPerIndividual, outputDir):
     # count the number of individuals per frequency
@@ -931,8 +928,6 @@ def plotFrequenciesPerIndividual(frequenciesPerIndividual, outputDir):
     #binPlot(hetero_path_counts, 10, "heterozygous pathogenic variant count bins", "number of individuals", int, 0, [0, 1])
     #binPlot(homo_vus_counts, 10, "homozygous vus variant count bins", "number of individuals", int, 0, None)
     #binPlot(hetero_vus_counts, 10, "heterozygous vus variant count bins", "number of individuals", int, 0, None)
-
-
 
 def plotGenotypeCounts(genotypeCounts, rare, outputDir):
     homoCounts = [0 if genotypeCounts['benign']['homo'] == 0 else genotypeCounts['benign']['homo'],
@@ -1004,7 +999,6 @@ def getStartAndEnd(partitionSizes, threadID):
     end = start + partitionSizes[threadID]
 
     return start, end
-
 
 def countTotalGenotypesForVariants(q1, q2, vpiDF, rareThreshold, brcaDF, hgVersion, rare, threadID, numProcesses):
 
