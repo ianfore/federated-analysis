@@ -241,7 +241,7 @@ def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, brcaDF, hgV
         if v in individualsPerVariant:
             for info in infoList:
                 individualsPerVariant[v][info] = vcf['variants/' + info][variant]
-            maxPop, maxFreq = getGnomadData(brcaDF, v, hgVersion)
+            maxPop, maxFreq = getGnomadData(brcaDF, eval(v), hgVersion)
             individualsPerVariant[v]['maxPop'] = maxPop
             individualsPerVariant[v]['maxFreq'] = maxFreq
             individualsPerVariant[v]['cohortFreq'] = float(len(individualsPerVariant[v]['homozygous individuals']) + \
