@@ -167,7 +167,6 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, output
     logger.info('elapsed time in findVariantsPerIndividual() ' + str(time.time() -t))
 
     # add FIBC_I from INFO field
-    variantIndex = 0
     variantInfo = vcf['variants/FIBC_I']
     print('variants/fibc_i = ' + str(variantInfo))
     for variant in range(len(vcf['calldata/GT'])):
@@ -179,8 +178,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, output
             r = str(vcf['variants/REF'][variant])
             a = str(vcf['variants/ALT'][variant][0])
             if str((c,p,r,a)) in individualsPerVariant:
-                individualsPerVariant[str((c,p,r,a))]['fibc_i'] = variantInfo[variantIndex]
-        variantIndex += 1
+                individualsPerVariant[str((c,p,r,a))]['fibc_i'] = variantInfo[variant]
 
     if saveVarsPerIndivid:
         logger.info('saving variantsPerIndividual to ' + variantsPerIndividualFileName)
