@@ -166,8 +166,11 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, output
         processList[i].join()
     logger.info('elapsed time in findVariantsPerIndividual() ' + str(time.time() -t))
 
+    cohortSize = len(variantsPerIndividual)
+
     # add infos
-    individualsPerVariant = addVariantInfo(individualsPerVariant, vcf, chromosome, ['FIBC_I', 'FIBC_P'], brcaDF, hgVersion)
+    individualsPerVariant = addVariantInfo(individualsPerVariant, vcf, chromosome, ['FIBC_I', 'FIBC_P'], brcaDF,
+                                           hgVersion, cohortSize)
 
     if saveVarsPerIndivid:
         logger.info('saving variantsPerIndividual to ' + variantsPerIndividualFileName)
@@ -177,6 +180,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, output
         with open(individualsPerVariantFileName, 'w') as f:
             json.dump(individualsPerVariant, f, cls=NpEncoder)
         f.close()
+
 
     logger.info('finding homozygous  individuals per vus')
     t = time.time()
@@ -208,7 +212,6 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, output
     print('num pathogenic = ' + str(numPathogenic))
     print('num vus = ' + str(numVUS))
 
-    cohortSize = len(variantsPerIndividual)
     p1 =  0.5 * numBenign / cohortSize
 
     logger.info('putting all the data together per vus')
@@ -225,7 +228,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, output
         f.write(json_dump)
     f.close()
 
-def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, brcaDF, hgVersion):
+def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, brcaDF, hgVersion, cohortSize):
     # add infoList stuff from INFO field
     for variant in range(len(vcf['calldata/GT'])):
         if int(vcf['variants/CHROM'][variant].replace('chr', '')) != int(chromosome):
@@ -238,9 +241,11 @@ def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, brcaDF, hgV
         if v in individualsPerVariant:
             for info in infoList:
                 individualsPerVariant[v][info] = vcf['variants/' + info][variant]
-                maxPop, maxFreq = getGnomadData(brcaDF, v, hgVersion)
-                individualsPerVariant[v]['maxPop'] = maxPop
-                individualsPerVariant[v]['maxFreq'] = maxFreq
+            maxPop, maxFreq = getGnomadData(brcaDF, v, hgVersion)
+            individualsPerVariant[v]['maxPop'] = maxPop
+            individualsPerVariant[v]['maxFreq'] = maxFreq
+            individualsPerVariant[v]['cohortFreq'] = float(len(individualsPerVariant[v]['homozygous individuals']) + \
+                len(individualsPerVariant[v]['heterozygous individuals']) ) / float(cohortSize)
 
     return individualsPerVariant
 
