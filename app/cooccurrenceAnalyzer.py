@@ -492,7 +492,7 @@ def getMaxGnomad(brcaDF, hgString, hgVersion, alleleFrequencies):
 def getHardyWeinbergStats(vpiDict, variantsDict, individualsPerVariant):
     bVars, pVars, vVars = calculateZygosityFrequenciesPerVariant(vpiDict)
     bVars, pVars, vVars = hardyWeinbergChiSquareTest(bVars, pVars, vVars, len(vpiDict))
-    bVars, pVars, vVars = hardyWeinbergInbreedingCoefficient(bVars, pVars, vVars)
+    bVars, pVars, vVars = hardyWeinbergInbreedingCoefficient(bVars, pVars, vVars, significance=0.01)
     rejectHW = {'benign': 0, 'pathogenic': 0, 'vus': 0}
     acceptHW = {'benign': 0, 'pathogenic': 0, 'vus': 0}
     acceptF = {'benign': 0, 'pathogenic': 0, 'vus': 0}
@@ -645,7 +645,7 @@ def calculateZygosityFrequenciesPerVariant(vpiDict):
 
     return benignVariants, pathogenicVariants, vusVariants
 
-def hardyWeinbergInbreedingCoefficient(bVars, pVars, vVars):
+def hardyWeinbergInbreedingCoefficient(bVars, pVars, vVars, significance):
     # https://en.wikipedia.org/wiki/Hardy Weinberg_principle
     # degrees of freedom = 1
     # The inbreeding coefficient, F (see also F-statistics), is one minus the observed frequency of
@@ -656,7 +656,6 @@ def hardyWeinbergInbreedingCoefficient(bVars, pVars, vVars):
     # for inbreeding, F = 0.
     # The inbreeding coefficient is unstable as the expected value approaches zero, and thus not useful for rare and
     # very common alleles. For: E = 0, O > 0, F = inf and E = 0, O = 0, F is undefined.
-    significance = 0.10
 
     for b in bVars:
         # 1. get E(f(Aa))
@@ -668,7 +667,7 @@ def hardyWeinbergInbreedingCoefficient(bVars, pVars, vVars):
         except Exception as e:
             print('exception calculating F: ' + str(e))
             continue
-        if bVars[b]['F'] <= significance:
+        if abs(bVars[b]['F']) <= significance:
             bVars[b]['accept F'] = True
         else:
             bVars[b]['accept F'] = False
@@ -683,7 +682,7 @@ def hardyWeinbergInbreedingCoefficient(bVars, pVars, vVars):
         except Exception as e:
             print('exception calculating F: ' + str(e))
             continue
-        if pVars[p]['F'] <= significance:
+        if abs(pVars[p]['F']) <= significance:
             pVars[p]['accept F'] = True
         else:
             pVars[p]['accept F'] = False
@@ -699,7 +698,7 @@ def hardyWeinbergInbreedingCoefficient(bVars, pVars, vVars):
         except Exception as e:
             print('exception calculating F: ' + str(e))
             vVars[v]['F'] = 0.0
-        if vVars[v]['F'] <= significance:
+        if abs(vVars[v]['F']) <= significance:
             vVars[v]['accept F'] = True
         else:
             vVars[v]['accept F'] = False
