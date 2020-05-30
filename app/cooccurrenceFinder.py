@@ -411,7 +411,8 @@ def calculateLikelihood(pathCoocs, p1, n, k, brcaDF, hgVersion, cohortSize, rare
     return dataPerVus
 
 def readVCFFile(vcfFileName):
-    return allel.read_vcf(vcfFileName, fields=['samples', 'calldata/GT', 'variants/ALT', 'variants/CHROM','variants/FILTER_PASS', 'variants/ID', 'variants/POS', 'variants/QUAL','variants/REF', 'variants/INFO'])
+    return allel.read_vcf(vcfFileName, fields=['samples', 'calldata/GT', 'variants/ALT', 'variants/CHROM',
+                'variants/FILTER_PASS', 'variants/ID', 'variants/POS', 'variants/QUAL','variants/REF', 'variants/INFO'])
 
 def divide(n, d):
    res = list()
@@ -440,7 +441,6 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
      'variants/GN', 'variants/HWEAF_P', 'variants/HWE_SLP_I', 'variants/HWE_SLP_P', 'variants/IBC_I', 'variants/IBC_P',
      'variants/ID', 'variants/IOR', 'variants/MAX_IF', 'variants/MIN_IF', 'variants/NM0', 'variants/NM1',
      'variants/NMZ', 'variants/NS_NREF', 'variants/QUAL', 'variants/STZ', 'variants/SVM']'''
-    infoFields = ['variants/FIBC_I']
 
     variantsPerIndividual = dict()
     individualsPerVariant = defaultdict(dict)
