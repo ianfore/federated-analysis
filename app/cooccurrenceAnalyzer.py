@@ -7,6 +7,7 @@ import pandas as pd
 import logging
 import time
 from multiprocessing import Process, Queue, cpu_count
+import math
 
 coordinateColumnBase = 'Genomic_Coordinate_hg'
 brcaFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/brca-variants.tsv'
@@ -492,7 +493,7 @@ def getMaxGnomad(brcaDF, hgString, hgVersion, alleleFrequencies):
 def getHardyWeinbergStats(vpiDict, variantsDict, individualsPerVariant):
     bVars, pVars, vVars = calculateZygosityFrequenciesPerVariant(vpiDict)
     bVars, pVars, vVars = hardyWeinbergChiSquareTest(bVars, pVars, vVars, len(vpiDict))
-    bVars, pVars, vVars = hardyWeinbergInbreedingCoefficient(bVars, pVars, vVars, significance=0.01)
+    bVars, pVars, vVars = hardyWeinbergStatistics(bVars, pVars, vVars, significance=0.01)
     rejectHW = {'benign': 0, 'pathogenic': 0, 'vus': 0}
     acceptHW = {'benign': 0, 'pathogenic': 0, 'vus': 0}
     acceptF = {'benign': 0, 'pathogenic': 0, 'vus': 0}
@@ -509,10 +510,12 @@ def getHardyWeinbergStats(vpiDict, variantsDict, individualsPerVariant):
             acceptF['benign'] += 1
         individualsPerVariant[str(b)]['accept F'] = bVars[b]['accept F']
         individualsPerVariant[str(b)]['F'] = bVars[b]['F']
+        individualsPerVariant[str(b)]['Z'] = bVars[b]['Z']
         individualsPerVariant[str(b)]['class'] = 'benign'
         individualsPerVariant[str(b)]['aa'] = bVars[b]['aa']
         individualsPerVariant[str(b)]['Aa'] = bVars[b]['Aa']
         individualsPerVariant[str(b)]['AA'] = bVars[b]['AA']
+
 
     for p in pVars:
         if pVars[p]['accept hw'] is False:
@@ -524,6 +527,7 @@ def getHardyWeinbergStats(vpiDict, variantsDict, individualsPerVariant):
         else:
             rejectF['pathogenic'] += 1
         individualsPerVariant[str(p)]['F'] = pVars[p]['F']
+        individualsPerVariant[str(p)]['Z'] = pVars[p]['Z']
         individualsPerVariant[str(p)]['accept F'] = pVars[p]['accept F']
         individualsPerVariant[str(p)]['class'] = 'pathogenic'
         individualsPerVariant[str(p)]['aa'] = pVars[p]['aa']
@@ -565,6 +569,7 @@ def getHardyWeinbergStats(vpiDict, variantsDict, individualsPerVariant):
             if str(v) in variantsDict['homozygous vus']:
                 acceptVUS_F['homozygous vus'] += 1
         individualsPerVariant[str(v)]['F'] = vVars[v]['F']
+        individualsPerVariant[str(v)]['Z'] = vVars[v]['Z']
         individualsPerVariant[str(v)]['accept F'] = vVars[v]['accept F']
         individualsPerVariant[str(v)]['class'] = 'vus'
         individualsPerVariant[str(v)]['aa'] = vVars[v]['aa']
@@ -645,7 +650,7 @@ def calculateZygosityFrequenciesPerVariant(vpiDict):
 
     return benignVariants, pathogenicVariants, vusVariants
 
-def hardyWeinbergInbreedingCoefficient(bVars, pVars, vVars, significance):
+def hardyWeinbergStatistics(bVars, pVars, vVars, significance):
     # https://en.wikipedia.org/wiki/Hardy Weinberg_principle
     # degrees of freedom = 1
     # The inbreeding coefficient, F (see also F-statistics), is one minus the observed frequency of
@@ -657,6 +662,19 @@ def hardyWeinbergInbreedingCoefficient(bVars, pVars, vVars, significance):
     # The inbreeding coefficient is unstable as the expected value approaches zero, and thus not useful for rare and
     # very common alleles. For: E = 0, O > 0, F = inf and E = 0, O = 0, F is undefined.
 
+    # from the Assortative Mating study on GALA data:
+    # Allele frequency differences between groups were calculated
+    # using standard chi-square tests. We tested for Hardy Weinberg
+    # equilibrium at marker loci by using the Z-statistic
+    # Z = (((n2 x n0) - n1^2 ) / (n2 + n1/2)(n0 + n1/2) ) N^1/2
+    # where n2 and n0 are the number of homozygotes and n1 the
+    # number of heterozygotes observed; N = n2 + n1 + n0. Under
+    # the null hypothesis of no within-locus allelic correlation, Z
+    # has a normal distribution with mean 0 and variance 1. We
+    # chose to use a one-sided test as opposed to a two-sided chisquare
+    # test because we specifically were searching for an
+    # excess of homozygotes, as predicted by assortative mating.
+
     for b in bVars:
         # 1. get E(f(Aa))
         bVars[b]['E(f(Aa))'] = 2 * bVars[b]['p'] * bVars[b]['q']
@@ -664,6 +682,13 @@ def hardyWeinbergInbreedingCoefficient(bVars, pVars, vVars, significance):
         # 3. calculate F
         try:
             bVars[b]['F'] = ( bVars[b]['E(f(Aa))'] - bVars[b]['Aa'] ) / ( bVars[b]['E(f(Aa))'] )
+            n0 = bVars[b]['aa']
+            n2 = bVars[b]['AA']
+            n1 = bVars[b]['Aa']
+            N = n0 + n1 + n2
+            bVars[b]['Z'] = ( (n2 * n0 - n1**2) / ((n2 + 0.5*n1) * (n0 + 0.5*n1)) ) * math.sqrt(N)
+
+
         except Exception as e:
             print('exception calculating F: ' + str(e))
             continue
@@ -679,6 +704,11 @@ def hardyWeinbergInbreedingCoefficient(bVars, pVars, vVars, significance):
         # 3. calculate F
         try:
             pVars[p]['F'] = ( pVars[p]['E(f(Aa))'] - pVars[p]['Aa'] ) / ( pVars[p]['E(f(Aa))'] )
+            n0 = pVars[p]['aa']
+            n2 = pVars[p]['AA']
+            n1 = pVars[p]['Aa']
+            N = n0 + n1 + n2
+            pVars[p]['Z'] = ((n2 * n0 - n1 ** 2) / ((n2 + 0.5 * n1) * (n0 + 0.5 * n1))) * math.sqrt(N)
         except Exception as e:
             print('exception calculating F: ' + str(e))
             continue
@@ -695,6 +725,11 @@ def hardyWeinbergInbreedingCoefficient(bVars, pVars, vVars, significance):
         # 3. calculate F
         try:
             vVars[v]['F'] = ( vVars[v]['E(f(Aa))'] - vVars[v]['Aa'] ) / ( vVars[v]['E(f(Aa))'] )
+            n0 = vVars[v]['aa']
+            n2 = vVars[v]['AA']
+            n1 = vVars[v]['Aa']
+            N = n0 + n1 + n2
+            vVars[v]['Z'] = ((n2 * n0 - n1 ** 2) / ((n2 + 0.5 * n1) * (n0 + 0.5 * n1))) * math.sqrt(N)
         except Exception as e:
             print('exception calculating F: ' + str(e))
             vVars[v]['F'] = 0.0
