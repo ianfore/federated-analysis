@@ -69,3 +69,4 @@ rm $CHR-homo.json
 rm $CHR-coocs.json
 rm $CHR-pretty.json
 rm $CHR-uniq.txt
+rm ${CHR}.txt
