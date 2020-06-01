@@ -20,8 +20,8 @@ logger.setLevel(logging.DEBUG)
 
 
 def main():
-    if len(sys.argv) != 8:
-        print('13-out.json 13-vpi.json 13-ipv.json brca-variants.tsv brca-regions.json /tmp/myout 16')
+    if len(sys.argv) != 9:
+        print('13-out.json 13-vpi.json 13-ipv.json brca-variants.tsv brca-regions.json /tmp/myout 16 filter-freq')
         sys.exit(1)
 
     variantsFileName =sys.argv[1]
@@ -31,6 +31,7 @@ def main():
     regionsFileName = sys.argv[5]
     outputDir = sys.argv[6]
     numProcesses = int(sys.argv[7])
+    frequencyFilter = float(sys.argv[8])
 
     logger.info('reading data from ' + vpiFileName)
     with open(vpiFileName, 'r') as f:
@@ -118,6 +119,9 @@ def main():
 
     ipvDict = getHardyWeinbergStats(vpiDict, variantsDict, ipvDict)
 
+    if frequencyFilter != 0:
+        ipvDict = filterOnFrequency(ipvDict, frequencyFilter)
+
     '''iphv = findIndividualsPerHomozygousVariant(vpiDict, variantsDict, 1.0)
     iphvFileName = 'iphv.json'
     logger.info('saving to ' + outputDir + '/' + iphvFileName)
@@ -138,6 +142,13 @@ def main():
     with open(ipvOut, 'w') as f:
         json.dump(ipvDict, f)
     f.close()
+
+def filterOnFrequency(ipvDict, frequencyFilter):
+    filteredIPVDict = dict()
+    for v in ipvDict:
+        if ipvDict[v]['maxFreq'] <= frequencyFilter or ipvDict[v]['cohortFreq'] <= frequencyFilter:
+            filteredIPVDict[v] = ipvDict[v]
+    return filteredIPVDict
 
 
 def plotRegionsPerVariant(inCIdomain, outputDir):

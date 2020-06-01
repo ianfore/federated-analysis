@@ -488,9 +488,10 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
                     variantsPerIndividual[individuals[i]]['benign'].append(((c, p, r, a), genotype))
                 elif (c, p, r, a) in pathogenicVariants:
                     variantsPerIndividual[individuals[i]]['pathogenic'].append(((c, p, r, a), genotype))
+
                 # if not a known VUS, it is a VUS now
                 else:
-                    variantsPerIndividual[individuals[i]]['vus'].append(((c, p, r, a), genotype))
+                    variantsPerIndividual[individuals[i]]['vus'].append(((c, p, r, a),  genotype))
 
                 # add variant info
                 if not str((c, p, r, a)) in individualsPerVariant:
