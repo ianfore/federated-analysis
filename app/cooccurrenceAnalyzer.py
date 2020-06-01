@@ -93,16 +93,14 @@ def main():
     with open(outputDir + '/' + genotypeCountsFileName, 'w') as f:
         json.dump(genotypeCounts, f)
     f.close()
-    plotGenotypeCounts(genotypeCounts, True, outputDir)'''
+    plotGenotypeCounts(genotypeCounts, True, outputDir)
 
     fpiFileName = 'fpi.json'
     logger.info('saving to ' + outputDir + '/' + fpiFileName)
     with open(outputDir + '/' + fpiFileName, 'w') as f:
         json.dump(frequenciesPerIndividual, f)
     f.close()
-
-
-    plotFrequenciesPerIndividual(frequenciesPerIndividual, outputDir)
+    plotFrequenciesPerIndividual(frequenciesPerIndividual, outputDir)'''
 
     variantCounts = countTotalVariants(vpiDict)
     print('benign counts: ' + str(len(variantCounts['benign'])))
