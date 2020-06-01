@@ -68,7 +68,8 @@ def main():
         print('p (AFR, ' + ethnicity + ') = ' + str(p))'''
 
 
-    logger.info('counting genotypes for variants on ' + str(numProcesses) + ' processes')
+
+    '''logger.info('counting genotypes for variants on ' + str(numProcesses) + ' processes')
     t = time.time()
     q1 = Queue()
     q2 = Queue()
@@ -87,20 +88,20 @@ def main():
     for i in range(numProcesses):
         processList[i].join()
     logger.debug('elapsed time in countTotalGenotypesForVariants() ' + str(time.time() - t))
-
-
     genotypeCountsFileName = 'genotypeCounts.json'
     logger.info('saving to ' + outputDir + '/' + genotypeCountsFileName)
     with open(outputDir + '/' + genotypeCountsFileName, 'w') as f:
         json.dump(genotypeCounts, f)
     f.close()
+    plotGenotypeCounts(genotypeCounts, True, outputDir)'''
+
     fpiFileName = 'fpi.json'
     logger.info('saving to ' + outputDir + '/' + fpiFileName)
     with open(outputDir + '/' + fpiFileName, 'w') as f:
         json.dump(frequenciesPerIndividual, f)
     f.close()
 
-    plotGenotypeCounts(genotypeCounts, True, outputDir)
+
     plotFrequenciesPerIndividual(frequenciesPerIndividual, outputDir)
 
     variantCounts = countTotalVariants(vpiDict)
@@ -119,12 +120,12 @@ def main():
 
     ipvDict = getHardyWeinbergStats(vpiDict, variantsDict, ipvDict)
 
-    iphv = findIndividualsPerHomozygousVariant(vpiDict, variantsDict, 1.0)
+    '''iphv = findIndividualsPerHomozygousVariant(vpiDict, variantsDict, 1.0)
     iphvFileName = 'iphv.json'
     logger.info('saving to ' + outputDir + '/' + iphvFileName)
     with open(outputDir + '/' + iphvFileName, 'w') as f:
         json.dump(iphv, f)
-    f.close()
+    f.close()'''
 
     inCIdomain = findRegionPerVariant(variantsDict, regionsDict)
     domainFileName = 'domain.json'
