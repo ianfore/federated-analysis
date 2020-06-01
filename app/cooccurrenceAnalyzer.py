@@ -114,6 +114,8 @@ def main():
     plotVUSByFrequency(variantsDict, 'maxPopFreq', outputDir)
     plotVUSByFrequency(variantsDict, 'cohortFreq', outputDir)
 
+    plotZygosityRatiosPerIndividual(frequenciesPerIndividual, outputDir)
+
     homoVhetero = countHomoAndHeteroPerIndividual(vpiDict, variantsDict, brcaDF, hgVersion)
     print(homoVhetero)
 
@@ -143,12 +145,14 @@ def main():
         json.dump(ipvDict, f)
     f.close()
 
+
 def filterOnFrequency(ipvDict, frequencyFilter):
     filteredIPVDict = dict()
     for v in ipvDict:
         if ipvDict[v]['maxFreq'] <= frequencyFilter or ipvDict[v]['cohortFreq'] <= frequencyFilter:
             filteredIPVDict[v] = ipvDict[v]
     return filteredIPVDict
+
 
 
 def plotRegionsPerVariant(inCIdomain, outputDir):
@@ -944,6 +948,31 @@ def plotVUSByPosition(variantsDict, outputDir):
         print('empty list')
     else:
         binPlot(locations, 10000, "chromosome position bins", "number of het VUS", int, 0, None, outputDir, 'heteroVUSPositions.png')
+
+def plotZygosityRatiosPerIndividual(frequenciesPerIndividual, outputDir):
+    benignRatios = list()
+    pathogenicRatios = list()
+    vusRatios = list()
+    for individual in frequenciesPerIndividual:
+        f1 = frequenciesPerIndividual[individual]['benign']['homo']
+        f2 = frequenciesPerIndividual[individual]['benign']['hetero']
+        if f2 != 0:
+            benignRatios.append(f1 / f2)
+        f1 = frequenciesPerIndividual[individual]['pathogenic']['homo']
+        f2 = frequenciesPerIndividual[individual]['pathogenic']['hetero']
+        if f2 != 0:
+            pathogenicRatios.append(f1 / f2)
+        f1 = frequenciesPerIndividual[individual]['vus']['homo']
+        f2 = frequenciesPerIndividual[individual]['vus']['hetero']
+        if f2 != 0:
+            vusRatios.append(f1 / f2)
+    binPlot(benignRatios, 10, "homozygous benign homo:hetero ratio", "number of individuals", int, 0, None,
+            outputDir, 'homoBenignRatios.png')
+    binPlot(pathogenicRatios, 10, "homozygous pathogenic homo:hetero ratio", "number of individuals", int, 0, None,
+            outputDir, 'homoPathogenicRatios.png')
+    binPlot(vusRatios, 10, "homozygous vus homo:hetero ratio", "number of individuals", int, 0, None,
+            outputDir, 'homoVUSRatios.png')
+
 
 def plotFrequenciesPerIndividual(frequenciesPerIndividual, outputDir):
     # count the number of individuals per frequency
