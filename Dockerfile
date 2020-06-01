@@ -8,13 +8,15 @@ RUN chmod 1777 /tmp /var/tmp
 
 RUN useradd -u 1968 -g games -s /bin/bash -d /home/myuser -m myuser 
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update
+
+RUN apt-get install -y \
     python3.7 \
     python3-pip \
     python3-dev 
 
 
-RUN pip3 install --no-cache-dir numpy pandas pandasql sklearn tabulate scipy pyensembl scikit-allel
+RUN pip3 install --no-cache-dir numpy pandas pandasql sklearn tabulate scipy pyensembl scikit-allel hmmlearn
 
 RUN apt-get install software-properties-common -y
 
