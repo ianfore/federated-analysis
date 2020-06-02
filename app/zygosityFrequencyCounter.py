@@ -71,7 +71,7 @@ def main():
     plt.hist(vusList, binList, alpha=0.5, label='vus')
 
     plt.legend(loc='upper right')
-    plt.show()
+    plt.savefig(outputDir + '/' + chrom + '-rpi.png')
 
     #homoVHet(ratios, outputDir, chrom + '-homovhet.png')
 
