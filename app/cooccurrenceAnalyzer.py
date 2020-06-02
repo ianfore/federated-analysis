@@ -70,7 +70,7 @@ def main():
 
 
 
-    '''logger.info('counting genotypes for variants on ' + str(numProcesses) + ' processes')
+    logger.info('counting genotypes for variants on ' + str(numProcesses) + ' processes')
     t = time.time()
     q1 = Queue()
     q2 = Queue()
@@ -95,13 +95,12 @@ def main():
         json.dump(genotypeCounts, f)
     f.close()
     plotGenotypeCounts(genotypeCounts, True, outputDir)
-
     fpiFileName = 'fpi.json'
     logger.info('saving to ' + outputDir + '/' + fpiFileName)
     with open(outputDir + '/' + fpiFileName, 'w') as f:
         json.dump(frequenciesPerIndividual, f)
     f.close()
-    plotFrequenciesPerIndividual(frequenciesPerIndividual, outputDir)'''
+    plotFrequenciesPerIndividual(frequenciesPerIndividual, outputDir)
 
     variantCounts = countTotalVariants(vpiDict)
     print('benign counts: ' + str(len(variantCounts['benign'])))
@@ -114,10 +113,6 @@ def main():
     plotVUSByFrequency(variantsDict, 'maxPopFreq', outputDir)
     plotVUSByFrequency(variantsDict, 'cohortFreq', outputDir)
 
-    plotZygosityRatiosPerIndividual(frequenciesPerIndividual, outputDir)
-
-    homoVhetero = countHomoAndHeteroPerIndividual(vpiDict, variantsDict, brcaDF, hgVersion)
-    print(homoVhetero)
 
     ipvDict = getHardyWeinbergStats(vpiDict, variantsDict, ipvDict)
 
@@ -352,34 +347,6 @@ def countTotalVariants(vpiDict):
 
     return variants
 
-def countHomoAndHeteroPerIndividual(vpiDict, variantsDict, brcaDF, hgVersion):
-    individualsPerVariant = defaultdict(list)
-    # look at each homo vus
-    for homoVUS in variantsDict['homozygous vus']:
-        foundOne = False
-        maxPopFreq = variantsDict['homozygous vus'][homoVUS]['maxPopFreq']
-        if  maxPopFreq > 0.001:
-            continue
-        for individual in vpiDict:
-            # find the individuals who have expressed this homo vus
-            for v in vpiDict[individual]['vus']:
-                if tuple(v[0]) == eval(homoVUS):
-
-                    for b in vpiDict[individual]['benign']:
-                        freq = getGnomadData(brcaDF, b[0], hgVersion, None)['max']['frequency']
-                        if b[1] == "1" or b[1] == "2" and  freq > 0.01:
-                            individualsPerVariant[homoVUS].append(individual)
-                            foundOne = True
-                            break
-                break
-            if foundOne:
-                break
-
-    # now see if the individuals who have the homo VUS also have common benign hetero SNPs
-    # this is evidence of genotype errors
-
-
-    return individualsPerVariant
 
 def findVariantsInBRCA(fileName):
     return pd.read_csv(fileName, sep='\t', header=0, dtype=str)
