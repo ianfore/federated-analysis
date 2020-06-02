@@ -25,7 +25,7 @@ def main():
         vpiDict = json.load(f)
     f.close()
 
-    freqDict, ratioArray = getRatiosAndRatios(vpiDict)
+    freqDict, ratioArray = getFrequenciesAndRatios(vpiDict)
     with open(outputDir + '/' + chrom + '-rpi.json', 'w') as f:
         json.dump(freqDict, f)
     f.close()
@@ -40,7 +40,7 @@ def main():
     homoVHet(ratios, outputDir, chrom + '-homovhet.png')'''
 
 
-def getRatiosAndRatios(vpiDict):
+def getFrequenciesAndRatios(vpiDict):
     frequencyDict = dict()
     ratioArray = np.zeros((len(vpiDict), 3))
     counter = 0
