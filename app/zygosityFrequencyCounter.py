@@ -113,7 +113,7 @@ def colorBinPlot(freqArray, outputDir, imageName, chrom):
     plt.xlabel('homozygosity ratio')
     plt.ylabel('number of individuals')
     plt.title('ratios for chr ' + chrom)
-    plt.xticks(np.arange(-0.1, 1.1, 0.1))
+    plt.xticks(np.arange(0.0, 1.1, 0.1))
 
 
     plt.savefig(outputDir + '/' + imageName)
