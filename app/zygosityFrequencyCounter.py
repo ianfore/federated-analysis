@@ -104,13 +104,10 @@ def homoVHet(ratios, outputDir, imageName):
 def colorBinPlot(freqArray, outputDir, imageName):
     n_bins = 10
 
-    fig, axes = plt.subplots(nrows=2, ncols=2)
-    ax0, ax1, ax2, ax3 = axes.flatten()
-
     colors = ['green', 'red', 'blue']
-    ax0.hist(freqArray, n_bins, density=True, histtype='bar', color=colors, label=['benign', 'pathogenic', 'vus'])
-    ax0.legend(prop={'size': 10})
-    ax0.set_title('freqs')
+    plt.hist(freqArray, n_bins, density=False, histtype='bar', color=colors, label=['benign', 'pathogenic', 'vus'])
+    plt.legend(prop={'size': 10})
+    plt.title('freqs')
 
     plt.savefig(outputDir + '/' + imageName)
 
