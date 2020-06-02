@@ -43,6 +43,7 @@ def main():
 def getFrequenciesAndRatios(vpiDict):
     frequencyDict = dict()
     ratioArray = np.zeros((len(vpiDict), 3))
+    print('num individuals = ' + str(len(vpiDict)))
     counter = 0
     for i in vpiDict:
         homoBSum = 0
@@ -54,32 +55,35 @@ def getFrequenciesAndRatios(vpiDict):
         for b in vpiDict[i]['benign']:
             if b[1] == "3":
                 homoBSum += 1
-            else:
+            elif b[1] == '1' or b[1] == '2':
                 hetBSum += 1
         for p in vpiDict[i]['pathogenic']:
             if p[1] == "3":
                 homoPSum += 1
-            else:
+            elif p[1] == '1' or p[1] == '2':
                 hetPSum += 1
         for v in vpiDict[i]['vus']:
             if v[1] == "3":
                 homoVSum += 1
-            else:
+            elif v[1] == '1' or v[1] == '2':
                 hetVSum += 1
 
         frequencyDict[i] = {'homoBSum': homoBSum, 'hetBSum': hetBSum,
                         'homoPSum': homoPSum, 'hetPSum': hetPSum,
                         'homoVSum': homoVSum, 'hetVSum': hetVSum }
         if homoBSum + hetBSum == 0:
-            ratioArray[counter][0] = 0
+            #ratioArray[counter][0] = 0
+            pass
         else:
             ratioArray[counter][0] = homoBSum / (homoBSum + hetBSum)
         if homoPSum + hetPSum == 0:
-            ratioArray[counter][1] = 0
+            #ratioArray[counter][1] = 0
+            pass
         else:
             ratioArray[counter][1] = homoPSum / (homoPSum + hetPSum)
         if homoVSum + hetVSum == 0:
-            ratioArray[counter][2] = 0
+            #ratioArray[counter][2] = 0
+            pass
         else:
             ratioArray[counter][2] = homoVSum / (homoVSum + hetVSum)
 
@@ -108,7 +112,7 @@ def colorBinPlot(freqArray, outputDir, imageName, chrom):
 
     fig = plt.figure()
     colors = ['green', 'red', 'blue']
-    plt.hist(freqArray, n_bins, density=False, histtype='bar', stacked=True, color=colors, label=['benign', 'pathogenic', 'vus'])
+    plt.hist(freqArray, n_bins, density=False, histtype='bar', stacked=False, color=colors, label=['benign', 'pathogenic', 'vus'])
     plt.legend(prop={'size': 10})
     plt.xlabel('homozygosity ratio')
     plt.ylabel('number of individuals')
