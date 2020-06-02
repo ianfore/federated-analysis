@@ -35,7 +35,7 @@ def main():
     '''ratioList = list()
     for i in ratios:
         ratioList.append(ratios[i][2])'''
-    binList = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1]
+    binList = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 
     benignList = list()
     pathogenicList = list()
@@ -69,7 +69,10 @@ def main():
     plt.hist([benignList, pathogenicList, vusList], binList, stacked = True, alpha=0.5, label=['benign', 'pathogenic', 'vus'])
     #plt.hist(pathogenicList, binList, stacked=True, alpha=0.5, label='pathogenic')
     #plt.hist(vusList, binList, stacked=True, alpha=0.5, label='vus')
-
+    plt.xlabel('homozygosity ratio')
+    plt.ylabel('number of individuals')
+    plt.title('ratios for chr ' + chrom)
+    plt.xticks(np.arange(0.0, 1.1, 0.1))
     plt.legend(loc='upper right')
     plt.savefig(outputDir + '/' + chrom + '-rpi.png')
 
