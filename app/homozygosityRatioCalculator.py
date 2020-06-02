@@ -33,10 +33,10 @@ def main():
     for i in ratios:
         ratioList.append(ratios[i][2])
 
-    binList = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    binList = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     binPlot(ratioList, 10, "homozygosity density", "number of individuals", float, 3, binList, outputDir, '13-hrpi.png')
 
-    scatterPlot(ratios, outputDir, '13-homovhet.png')
+    homoVHet(ratios, outputDir, '13-homovhet.png')
 
 def getRatios(vpiDict):
     ratioDict = dict()
@@ -64,14 +64,14 @@ def getRatios(vpiDict):
             ratioDict[i] = [homoSum, hetSum, float(homoSum) / float(homoSum + hetSum)]
     return ratioDict
 
-def scatterPlot(ratios, outputDir, imageName):
+def homoVHet(ratios, outputDir, imageName):
     plt.style.use('seaborn-whitegrid')
     homoList = list()
     hetList = list()
     for i in ratios:
         homoList.append(ratios[i][0])
         hetList.append(ratios[i][1])
-    fig = plt.figure()  # set up plot
+    fig = plt.figure()
     plt.xlabel('homozygosity frequency')
     plt.ylabel('heterozygosity frequency')
     plt.scatter(homoList, hetList, s=10, color='black')
