@@ -108,7 +108,7 @@ def colorBinPlot(freqArray, outputDir, imageName, chrom):
 
     fig = plt.figure()
     colors = ['green', 'red', 'blue']
-    plt.hist(freqArray, n_bins, density=False, histtype='bar', color=colors, label=['benign', 'pathogenic', 'vus'])
+    plt.hist(freqArray, n_bins, density=False, histtype='bar', stacked=True, color=colors, label=['benign', 'pathogenic', 'vus'])
     plt.legend(prop={'size': 10})
     plt.xlabel('homozygosity ratio')
     plt.ylabel('number of individuals')
