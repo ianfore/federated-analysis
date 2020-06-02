@@ -25,12 +25,12 @@ def main():
         vpiDict = json.load(f)
     f.close()
 
-    freqDict, freqArray = getFrequencies(vpiDict)
+    freqDict, ratioArray = getRatiosAndRatios(vpiDict)
     with open(outputDir + '/' + chrom + '-rpi.json', 'w') as f:
         json.dump(freqDict, f)
     f.close()
 
-    colorBinPlot(freqArray, outputDir, chrom + '-fpi.png')
+    colorBinPlot(ratioArray, outputDir, chrom + '-fpi.png', chrom)
 
     '''ratioList = list()
     for i in ratios:
@@ -40,9 +40,9 @@ def main():
     homoVHet(ratios, outputDir, chrom + '-homovhet.png')'''
 
 
-def getFrequencies(vpiDict):
+def getRatiosAndRatios(vpiDict):
     frequencyDict = dict()
-    frequencyArray = np.zeros((len(vpiDict), 3))
+    ratioArray = np.zeros((len(vpiDict), 3))
     counter = 0
     for i in vpiDict:
         homoBSum = 0
@@ -71,21 +71,21 @@ def getFrequencies(vpiDict):
                         'homoPSum': homoPSum, 'hetPSum': hetPSum,
                         'homoVSum': homoVSum, 'hetVSum': hetVSum }
         if homoBSum + hetBSum == 0:
-            frequencyArray[counter][0] = 0
+            ratioArray[counter][0] = 0
         else:
-            frequencyArray[counter][0] = homoBSum / (homoBSum + hetBSum)
+            ratioArray[counter][0] = homoBSum / (homoBSum + hetBSum)
         if homoPSum + hetPSum == 0:
-            frequencyArray[counter][1] = 0
+            ratioArray[counter][1] = 0
         else:
-            frequencyArray[counter][1] = homoPSum / (homoPSum + hetPSum)
+            ratioArray[counter][1] = homoPSum / (homoPSum + hetPSum)
         if homoVSum + hetVSum == 0:
-            frequencyArray[counter][2] = 0
+            ratioArray[counter][2] = 0
         else:
-            frequencyArray[counter][2] = homoVSum / (homoVSum + hetVSum)
+            ratioArray[counter][2] = homoVSum / (homoVSum + hetVSum)
 
         counter += 1
 
-    return frequencyDict, frequencyArray
+    return frequencyDict, ratioArray
 
 def homoVHet(ratios, outputDir, imageName):
     plt.style.use('seaborn-whitegrid')
@@ -101,13 +101,16 @@ def homoVHet(ratios, outputDir, imageName):
     plt.savefig(outputDir + '/' + imageName)
 
 
-def colorBinPlot(freqArray, outputDir, imageName):
+def colorBinPlot(freqArray, outputDir, imageName, chrom):
     n_bins = 10
 
     colors = ['green', 'red', 'blue']
     plt.hist(freqArray, n_bins, density=False, histtype='bar', color=colors, label=['benign', 'pathogenic', 'vus'])
     plt.legend(prop={'size': 10})
-    plt.title('freqs')
+    plt.xlabel('homozygosity ratio')
+    plt.ylabel('number of individuals')
+    plt.title('ratios for chr ' + chrom)
+    plt.xticks(np.arange(0.0, 1.1, 0.1))
 
     plt.savefig(outputDir + '/' + imageName)
 
