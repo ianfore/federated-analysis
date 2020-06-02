@@ -30,14 +30,50 @@ def main():
         json.dump(freqDict, f)
     f.close()
 
-    colorBinPlot(ratioArray, outputDir, chrom + '-fpi.png', chrom)
+    #colorBinPlot(ratioArray, outputDir, chrom + '-fpi.png', chrom)
 
     '''ratioList = list()
     for i in ratios:
-        ratioList.append(ratios[i][2])
-    binList = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-    binPlot(ratioList, 10, "homozygosity density", "number of individuals", float, 3, binList, outputDir, chrom + '-hrpi.png')
-    homoVHet(ratios, outputDir, chrom + '-homovhet.png')'''
+        ratioList.append(ratios[i][2])'''
+    binList = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1]
+
+    benignList = list()
+    pathogenicList = list()
+    vusList = list()
+    for individual in freqDict:
+        homo = freqDict[individual]['homoBSum']
+        het = freqDict[individual]['hetBSum']
+        if homo + het == 0:
+            pass
+        else:
+            benignList.append(float(homo)/float(homo + het))
+
+        homo = freqDict[individual]['homoPSum']
+        het = freqDict[individual]['hetPSum']
+        if homo + het == 0:
+            pass
+        else:
+            pathogenicList.append(float(homo) / float(homo + het))
+
+        homo = freqDict[individual]['homoVSum']
+        het = freqDict[individual]['hetVSum']
+        if homo + het == 0:
+            pass
+        else:
+            vusList.append(float(homo) / float(homo + het))
+
+    #binPlot(benignList, 10, "benign homozygosity density", "number of individuals", float, 3, binList, outputDir, chrom + '-benign-hrpi.png')
+    #binPlot(pathogenicList, 10, "pathogenic homozygosity density", "number of individuals", float, 3, binList, outputDir, chrom + '-pathogenic-hrpi.png')
+    #binPlot(vusList, 10, "vus homozygosity density", "number of individuals", float, 3, binList, outputDir, chrom + '-vus-hrpi.png')
+
+    plt.hist(benignList, binList, alpha=0.5, label='benign')
+    plt.hist(pathogenicList, binList, alpha=0.5, label='pathogenic')
+    plt.hist(vusList, binList, alpha=0.5, label='vus')
+
+    plt.legend(loc='upper right')
+    plt.show()
+
+    #homoVHet(ratios, outputDir, chrom + '-homovhet.png')
 
 
 def getFrequenciesAndRatios(vpiDict):
