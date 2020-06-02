@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+
+
 logging.basicConfig()
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -29,11 +31,12 @@ def main():
 
     ratioList = list()
     for i in ratios:
-        ratioList.append(ratios[i])
+        ratioList.append(ratios[i][2])
 
     binList = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     binPlot(ratioList, 10, "homozygosity density", "number of individuals", float, 3, binList, outputDir, '13-hrpi.png')
 
+    scatterPlot(ratios, outputDir, '13-homovhet.png')
 
 def getRatios(vpiDict):
     ratioDict = dict()
@@ -56,10 +59,24 @@ def getRatios(vpiDict):
             else:
                 hetSum += 1
         if homoSum + hetSum == 0:
-            ratioDict[i] = 0
+            ratioDict[i] = [0, 0, 0]
         else:
-            ratioDict[i] = float(homoSum) / float(homoSum + hetSum)
+            ratioDict[i] = [homoSum, hetSum, float(homoSum) / float(homoSum + hetSum)]
     return ratioDict
+
+def scatterPlot(ratios, outputDir, imageName):
+    plt.style.use('seaborn-whitegrid')
+    homoList = list()
+    hetList = list()
+    for i in ratios:
+        homoList.append(ratios[i][0])
+        hetList.append(ratios[i][1])
+    fig = plt.figure()  # set up plot
+    plt.xlabel('homozygosity frequency')
+    plt.ylabel('heterozygosity frequency')
+    plt.scatter(homoList, hetList, s=10, color='black')
+    plt.savefig(outputDir + '/' + imageName)
+
 
 def binPlot(theList, binSize, xlabel, ylabel, dtype, sigDigs, binList, outputDir, imageName):
     customBinList = False
