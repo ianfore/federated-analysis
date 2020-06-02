@@ -102,15 +102,19 @@ def homoVHet(ratios, outputDir, imageName):
 
 
 def colorBinPlot(freqArray, outputDir, imageName, chrom):
+    import matplotlib.ticker as ticker
+
     n_bins = 10
 
+    fig = plt.figure()
     colors = ['green', 'red', 'blue']
     plt.hist(freqArray, n_bins, density=False, histtype='bar', color=colors, label=['benign', 'pathogenic', 'vus'])
     plt.legend(prop={'size': 10})
     plt.xlabel('homozygosity ratio')
     plt.ylabel('number of individuals')
     plt.title('ratios for chr ' + chrom)
-    plt.xticks(np.arange(0.0, 1.1, 0.1))
+    plt.xticks(np.arange(-0.1, 1.1, 0.1))
+
 
     plt.savefig(outputDir + '/' + imageName)
 
