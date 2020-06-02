@@ -13,56 +13,79 @@ logger.setLevel(logging.DEBUG)
 
 
 def main():
-    if len(sys.argv) != 3:
-        print('13-vpi.json outputDir')
+    if len(sys.argv) != 4:
+        print('13 13-vpi.json outputDir')
         sys.exit(1)
 
-    vpiFileName = sys.argv[1]
-    outputDir = sys.argv[2]
+    chrom = sys.argv[1]
+    vpiFileName = sys.argv[2]
+    outputDir = sys.argv[3]
 
     with open(vpiFileName, 'r') as f:
         vpiDict = json.load(f)
     f.close()
 
-    ratios = getRatios(vpiDict)
-    with open(outputDir + '/hrpi.json', 'w') as f:
-        json.dump(ratios, f)
+    freqDict, freqArray = getFrequencies(vpiDict)
+    with open(outputDir + '/' + chrom + '-rpi.json', 'w') as f:
+        json.dump(freqDict, f)
     f.close()
 
-    ratioList = list()
+    colorBinPlot(freqArray, outputDir, chrom + '-fpi.png')
+
+    '''ratioList = list()
     for i in ratios:
         ratioList.append(ratios[i][2])
-
     binList = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-    binPlot(ratioList, 10, "homozygosity density", "number of individuals", float, 3, binList, outputDir, '13-hrpi.png')
+    binPlot(ratioList, 10, "homozygosity density", "number of individuals", float, 3, binList, outputDir, chrom + '-hrpi.png')
+    homoVHet(ratios, outputDir, chrom + '-homovhet.png')'''
 
-    homoVHet(ratios, outputDir, '13-homovhet.png')
 
-def getRatios(vpiDict):
-    ratioDict = dict()
+def getFrequencies(vpiDict):
+    frequencyDict = dict()
+    frequencyArray = np.zeros((len(vpiDict), 3))
+    counter = 0
     for i in vpiDict:
-        homoSum = 0
-        hetSum = 0
+        homoBSum = 0
+        homoPSum = 0
+        homoVSum = 0
+        hetBSum = 0
+        hetPSum = 0
+        hetVSum = 0
         for b in vpiDict[i]['benign']:
             if b[1] == "3":
-                homoSum += 1
+                homoBSum += 1
             else:
-                hetSum += 1
+                hetBSum += 1
         for p in vpiDict[i]['pathogenic']:
             if p[1] == "3":
-                homoSum += 1
+                homoPSum += 1
             else:
-                hetSum += 1
+                hetPSum += 1
         for v in vpiDict[i]['vus']:
             if v[1] == "3":
-                homoSum += 1
+                homoVSum += 1
             else:
-                hetSum += 1
-        if homoSum + hetSum == 0:
-            ratioDict[i] = [0, 0, 0]
+                hetVSum += 1
+
+        frequencyDict[i] = {'homoBSum': homoBSum, 'hetBSum': hetBSum,
+                        'homoPSum': homoPSum, 'hetPSum': hetPSum,
+                        'homoVSum': homoVSum, 'hetVSum': hetVSum }
+        if homoBSum + hetBSum == 0:
+            frequencyArray[counter][0] = 0
         else:
-            ratioDict[i] = [homoSum, hetSum, float(homoSum) / float(homoSum + hetSum)]
-    return ratioDict
+            frequencyArray[counter][0] = homoBSum / (homoBSum + hetBSum)
+        if homoPSum + hetPSum == 0:
+            frequencyArray[counter][1] = 0
+        else:
+            frequencyArray[counter][1] = homoPSum / (homoPSum + hetPSum)
+        if homoVSum + hetVSum == 0:
+            frequencyArray[counter][2] = 0
+        else:
+            frequencyArray[counter][2] = homoVSum / (homoVSum + hetVSum)
+
+        counter += 1
+
+    return frequencyDict, frequencyArray
 
 def homoVHet(ratios, outputDir, imageName):
     plt.style.use('seaborn-whitegrid')
@@ -75,6 +98,20 @@ def homoVHet(ratios, outputDir, imageName):
     plt.xlabel('homozygosity frequency')
     plt.ylabel('heterozygosity frequency')
     plt.scatter(homoList, hetList, s=10, color='black')
+    plt.savefig(outputDir + '/' + imageName)
+
+
+def colorBinPlot(freqArray, outputDir, imageName):
+    n_bins = 10
+
+    fig, axes = plt.subplots(nrows=2, ncols=2)
+    ax0, ax1, ax2, ax3 = axes.flatten()
+
+    colors = ['green', 'red', 'blue']
+    ax0.hist(freqArray, n_bins, density=True, histtype='bar', color=colors, label=['benign', 'pathogenic', 'vus'])
+    ax0.legend(prop={'size': 10})
+    ax0.set_title('freqs')
+
     plt.savefig(outputDir + '/' + imageName)
 
 
