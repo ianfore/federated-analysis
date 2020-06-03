@@ -15,7 +15,7 @@ def main():
 
     genoArray = allel.GenotypeArray(vcf['calldata/GT'])
 
-    alleleFrequency = genoArray.count_alleles().to_frequencies()
+    '''alleleFrequency = genoArray.count_alleles().to_frequencies()
 
     expectedHeterozygosity = allel.heterozygosity_expected(alleleFrequency, ploidy=2)
     print('expected: ' + str(expectedHeterozygosity))
@@ -29,7 +29,7 @@ def main():
     diff = list()
     for i in range(len(expectedHeterozygosity)):
         diff.append(expectedHeterozygosity[i] - observedHeterozygosity[i])
-    print('diff: ' + str(diff))
+    print('diff: ' + str(diff))'''
 
     numVariants = len(genoArray)
     numSamples = len(vcf['samples'])
