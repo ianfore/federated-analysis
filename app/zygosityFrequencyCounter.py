@@ -13,13 +13,14 @@ logger.setLevel(logging.DEBUG)
 
 
 def main():
-    if len(sys.argv) != 4:
-        print('13 13-vpi.json outputDir')
+    if len(sys.argv) != 5:
+        print('13 13-vpi.json genotypeCounts.json outputDir')
         sys.exit(1)
 
     chrom = sys.argv[1]
     vpiFileName = sys.argv[2]
-    outputDir = sys.argv[3]
+    gtFileName = sys.argv[3]
+    outputDir = sys.argv[4]
 
     with open(vpiFileName, 'r') as f:
         vpiDict = json.load(f)
@@ -31,6 +32,12 @@ def main():
     f.close()
 
     #colorBinPlot(ratioArray, outputDir, chrom + '-fpi.png', chrom)
+
+    with open(gtFileName, 'r') as f:
+        genotypeCounts = json.load(f)
+    f.close()
+    plotGenotypeCounts(genotypeCounts, False, outputDir)
+
 
     '''ratioList = list()
     for i in ratios:
@@ -77,6 +84,58 @@ def main():
     plt.savefig(outputDir + '/' + chrom + '-rpi.png')
 
     #homoVHet(ratios, outputDir, chrom + '-homovhet.png')
+
+def plotGenotypeCounts(genotypeCounts, rare, outputDir):
+    homoCounts = [0 if genotypeCounts['benign']['homo'] == 0 else genotypeCounts['benign']['homo'],
+                 0 if genotypeCounts['pathogenic']['homo'] == 0 else genotypeCounts['pathogenic']['homo'],
+                 0 if genotypeCounts['vus']['homo'] == 0 else genotypeCounts['vus']['homo']]
+    heteroCounts = [0 if genotypeCounts['benign']['hetero'] == 0 else genotypeCounts['benign']['hetero'],
+                 0 if genotypeCounts['pathogenic']['hetero'] == 0 else genotypeCounts['pathogenic']['hetero'],
+                 0 if genotypeCounts['vus']['hetero'] == 0 else genotypeCounts['vus']['hetero']]
+
+
+    # plot bar graph
+    '''labels = ['benign', 'pathogenic', 'vus']
+    x = np.arange(len(labels))
+    width = 0.35
+    fig, ax = plt.subplots()
+    ax.bar(x - width/2, homoCounts, width, label = 'homozygous')
+    ax.bar(x + width/2, heteroCounts, width, label = 'heterozygous')
+    ax.set_ylabel('log10(counts)')
+    ax.set_title('count per zygosity per classification')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.legend(loc='upper center')
+    fig.tight_layout()
+    #plt.ylim(0, 7)
+    plt.show()'''
+
+    # plot pie chart
+    # Pie chart, where the slices will be ordered and plotted counter-clockwise:
+    plt.rcParams['font.size'] = 18
+    fig1, ax1 = plt.subplots()
+
+    if rare:
+        labels = ['Homo VUS',  'Hetero VUS']
+        colors = ['green', 'brown']
+        sizes = [genotypeCounts['vus']['homo'], genotypeCounts['vus']['hetero']]
+        explode = (0, 0)
+        ax1.pie(sizes, explode=explode, colors=colors, labels=labels, shadow=False, startangle=90)
+
+    else:
+        labels = ['Homo benign', 'Homo path', 'Homo VUS', 'Hetero benign', 'Hetero path', 'Hetero VUS']
+        sizes = [genotypeCounts['benign']['homo'], genotypeCounts['pathogenic']['homo'],
+                    genotypeCounts['vus']['homo'], genotypeCounts['benign']['hetero'],
+                    genotypeCounts['pathogenic']['hetero'], genotypeCounts['vus']['hetero']]
+        colors = ['red', 'yellow', 'green', 'orange', 'blue', 'brown']
+        explode = (0.1, 0.1, 0.1, 0, 0, 0)
+        #ax1.pie(sizes, explode=explode, labels=labels, colors = colors, autopct='%1.3f%%', shadow=False, startangle=90)
+        ax1.pie(sizes, explode=explode, labels=labels, colors = colors, shadow=False, startangle=90)
+
+    ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+    #plt.show()
+    plt.savefig(outputDir + '/genotypeCounts.png')
+
 
 
 def getFrequenciesAndRatios(vpiDict):
