@@ -112,7 +112,7 @@ def plotGenotypeCounts(genotypeCounts, rare, outputDir):
 
     # plot pie chart
     # Pie chart, where the slices will be ordered and plotted counter-clockwise:
-    plt.rcParams['font.size'] = 18
+    plt.rcParams['font.size'] = 10
     fig1, ax1 = plt.subplots()
 
     if rare:
