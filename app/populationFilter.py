@@ -27,9 +27,12 @@ def main():
         for pop in row.columns[1:]:
             # pop = 107046    0.7787
             #       Name: Sub_Saharan_Africa, dtype: float64
-            if float(row[pop].values[0]) > tempMax:
-                tempPop = row[pop].name
-                tempMax = row[pop].values[0]
+            try:
+                if float(row[pop].values[0]) > tempMax:
+                    tempPop = row[pop].name
+                    tempMax = row[pop].values[0]
+            except Exception as e:
+                continue
         populationPerIndividual[individual] = (tempPop, tempMax)
 
     with open(outputDir + '/ancestries.json', 'w') as f:
