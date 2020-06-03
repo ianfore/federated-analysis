@@ -8,7 +8,7 @@ import pandas as pd
 
 def main():
     vcfFileName = sys.argv[1]
-    rohOutputFileName = sys.argv[2]
+    outputDir = sys.argv[2]
 
     vcf = allel.read_vcf(vcfFileName, fields=['samples', 'calldata/GT', 'variants/ALT', 'variants/CHROM',
             'variants/FILTER_PASS', 'variants/ID', 'variants/POS', 'variants/QUAL','variants/REF', 'variants/INFO'])
@@ -34,16 +34,18 @@ def main():
     numVariants = len(genoArray)
     numSamples = len(vcf['samples'])
     posArray = np.asarray([i for i in range(numVariants)])
-    print('pos = ' + str(posArray))
     isAccessible = np.asarray([True for i in range(numVariants)])
-    runsOfHomozygosity = defaultdict()
+    runsOfHomozygosity = dict()
     for i in range(numSamples):
         genoVector = genoArray[:,i]
-        runsOfHomozygosity[i] = allel.roh_mhmm(genoVector, posArray, is_accessible=isAccessible)
+        roh = allel.roh_mhmm(genoVector, posArray, is_accessible=isAccessible)
+        if not roh[0].empty:
+            runsOfHomozygosity[i] = {'individual': i, 'roh': allel.roh_mhmm(genoVector, posArray, is_accessible=isAccessible)}
 
 
-    with open(rohOutputFileName, 'w') as f:
-        f.write(str(runsOfHomozygosity))
+
+    with open(outputDir + '/roh.json', 'w') as f:
+        pd.DataFrame(runsOfHomozygosity).to_csv(f)
     f.close()
 
 if __name__ == "__main__":
