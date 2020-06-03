@@ -36,7 +36,7 @@ def main():
         populationPerIndividual[individual] = (tempPop, tempMax)
 
     with open(outputDir + '/ancestries.json', 'w') as f:
-        json.dump(populationPerIndividual)
+        json.dump(populationPerIndividual, f)
     f.close()
 
 if __name__ == "__main__":
