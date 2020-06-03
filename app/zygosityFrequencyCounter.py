@@ -66,7 +66,7 @@ def main():
     #binPlot(pathogenicList, 10, "pathogenic homozygosity density", "number of individuals", float, 3, binList, outputDir, chrom + '-pathogenic-hrpi.png')
     #binPlot(vusList, 10, "vus homozygosity density", "number of individuals", float, 3, binList, outputDir, chrom + '-vus-hrpi.png')
 
-    plt.hist([benignList, pathogenicList, vusList], binList, stacked = True, alpha=0.5, label=['benign', 'pathogenic', 'vus'])
+    plt.hist([benignList, pathogenicList, vusList], binList, stacked = True, alpha=0.5, color=['green', 'red', 'blue'], label=['benign', 'pathogenic', 'vus'])
     #plt.hist(pathogenicList, binList, stacked=True, alpha=0.5, label='pathogenic')
     #plt.hist(vusList, binList, stacked=True, alpha=0.5, label='vus')
     plt.xlabel('homozygosity ratio')
