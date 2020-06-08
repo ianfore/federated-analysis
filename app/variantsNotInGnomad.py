@@ -38,6 +38,7 @@ def main():
         p = int(vcf['variants/POS'][variant])
         r = str(vcf['variants/REF'][variant])
         a = str(vcf['variants/ALT'][variant][0])
+        logger.debug((c,p,r,a))
         if not checkGnomad(brcaDF, (c,p,r,a), 38):
             varsNotInGnomad.append((c,p,r,a))
 
