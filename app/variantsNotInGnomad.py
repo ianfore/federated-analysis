@@ -34,13 +34,12 @@ def main():
     varsNotInGnomad = list()
 
     for variant in range(len(vcf['calldata/GT'])):
-        if 1 in vcf['calldata/GT'][variant][0]:
-            c = int(vcf['variants/CHROM'][variant].replace('chr', ''))
-            p = int(vcf['variants/POS'][variant])
-            r = str(vcf['variants/REF'][variant])
-            a = str(vcf['variants/ALT'][variant][0])
-            if not checkGnomad(brcaDF, (c,p,r,a), 38):
-                varsNotInGnomad.append((c,p,r,a))
+        c = int(vcf['variants/CHROM'][variant].replace('chr', ''))
+        p = int(vcf['variants/POS'][variant])
+        r = str(vcf['variants/REF'][variant])
+        a = str(vcf['variants/ALT'][variant][0])
+        if not checkGnomad(brcaDF, (c,p,r,a), 38):
+            varsNotInGnomad.append((c,p,r,a))
 
     with open(outputFile, 'w') as f:
         json.dump(varsNotInGnomad, f)
@@ -78,10 +77,10 @@ def checkGnomad(brcaDF, vus, hgVersion):
 
     alleleFrequencies = [v for v in gnomad if 'Allele_frequency' in v]
     allDict['max'] = getMaxGnomad(brcaDF, hgString, hgVersion, alleleFrequencies)
-    if allDict['max']:
-        return True
-    else:
+    if allDict['max']['population'] is None:
         return False
+    else:
+        return True
 
 
 def getMaxGnomad(brcaDF, hgString, hgVersion, alleleFrequencies):
