@@ -33,17 +33,14 @@ def main():
 
     varsNotInGnomad = list()
 
-    n = len(list(vcf['samples']))
-    for i in range(0, n):
-
-        for variant in range(len(vcf['calldata/GT'])):
-            if 1 in vcf['calldata/GT'][variant][i]:
-                c = int(vcf['variants/CHROM'][variant].replace('chr', ''))
-                p = int(vcf['variants/POS'][variant])
-                r = str(vcf['variants/REF'][variant])
-                a = str(vcf['variants/ALT'][variant][0])
-                if not checkGnomad(brcaDF, (c,p,r,a), 38):
-                    varsNotInGnomad.append((c,p,r,a))
+    for variant in range(len(vcf['calldata/GT'])):
+        if 1 in vcf['calldata/GT'][variant][0]:
+            c = int(vcf['variants/CHROM'][variant].replace('chr', ''))
+            p = int(vcf['variants/POS'][variant])
+            r = str(vcf['variants/REF'][variant])
+            a = str(vcf['variants/ALT'][variant][0])
+            if not checkGnomad(brcaDF, (c,p,r,a), 38):
+                varsNotInGnomad.append((c,p,r,a))
 
     with open(outputFile, 'r') as f:
         json.dump(varsNotInGnomad, f)
