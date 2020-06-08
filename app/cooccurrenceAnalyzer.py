@@ -1054,7 +1054,7 @@ def countTotalGenotypesForVariants(q1, q2, vpiDF, rareThreshold, brcaDF, hgVersi
     for individual in vpiDF:
         individuals.append(individual)
     n = len(individuals)
-    print('total number of individuals = ' + str(n))
+    logger.info('total number of individuals = ' + str(n))
     partitionSizes = divide(n, numProcesses)
     start, end = getStartAndEnd(partitionSizes, threadID)
 
@@ -1098,9 +1098,7 @@ def countTotalGenotypesForVariants(q1, q2, vpiDF, rareThreshold, brcaDF, hgVersi
                     genotypeCounts['vus']['hetero'] += 1
                     frequenciesPerIndividual[individual]['vus']['hetero'] += 1
 
-        logger.debug('individual: ' + str(individual))
-        logger.debug('df: ' + str(vpiDF[individual]))
-        logger.debug('fpi: ' + str(frequenciesPerIndividual[individual]))
+        
     q1.put(genotypeCounts)
     q2.put(frequenciesPerIndividual)
     logger.debug('finished putting results in queue')
