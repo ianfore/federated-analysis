@@ -42,7 +42,7 @@ def main():
             if not checkGnomad(brcaDF, (c,p,r,a), 38):
                 varsNotInGnomad.append((c,p,r,a))
 
-    with open(outputFile, 'r') as f:
+    with open(outputFile, 'w') as f:
         json.dump(varsNotInGnomad, f)
     f.close()
 
