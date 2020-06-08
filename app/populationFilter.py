@@ -39,5 +39,15 @@ def main():
         json.dump(populationPerIndividual, f)
     f.close()
 
+    '''HGDP	GNOMAD
+    Sub_Saharan_Africa	AFR
+    Central_and_South_Asia	SAS
+    East_Asia	EAS
+    Europe	NFE
+    Native_America	AMR
+    Oceania	OTH
+    Middle_East	OTH'''
+
+
 if __name__ == "__main__":
     main()

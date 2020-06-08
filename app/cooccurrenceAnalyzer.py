@@ -75,9 +75,13 @@ def main():
     q1 = Queue()
     q2 = Queue()
     processList = list()
+    if frequencyFilter == 0.0:
+        rare = False
+    else:
+        rare = True
     for i in range(numProcesses):
         p = Process(target=countTotalGenotypesForVariants,
-                    args=(q1, q2, vpiDF, 0.001, brcaDF, hgVersion, True, i, numProcesses,))
+                    args=(q1, q2, vpiDF, frequencyFilter, brcaDF, hgVersion, rare, i, numProcesses,))
         p.start()
         processList.append(p)
     logger.info('joining results from forked threads')
@@ -1094,7 +1098,9 @@ def countTotalGenotypesForVariants(q1, q2, vpiDF, rareThreshold, brcaDF, hgVersi
                     genotypeCounts['vus']['hetero'] += 1
                     frequenciesPerIndividual[individual]['vus']['hetero'] += 1
 
-
+        logger.debug('individual: ' + str(individual))
+        logger.debug('df: ' + str(vpiDF[individual]))
+        logger.debug('fpi: ' + str(frequenciesPerIndividual[individual]))
     q1.put(genotypeCounts)
     q2.put(frequenciesPerIndividual)
     logger.debug('finished putting results in queue')
