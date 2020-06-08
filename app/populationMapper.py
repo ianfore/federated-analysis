@@ -1,7 +1,6 @@
 import pandas as pd
 import sys
 import json
-from collections import defaultdict
 
 
 def main():
@@ -35,7 +34,7 @@ def main():
     topmed2gnomAD['Middle_East'] = 'OTH'
 
 
-    populationPerIndividual = defaultdict()
+    populationPerIndividual = dict()
     for individual in cohort[0]:
         row = ancestry.loc[ancestry['individual'] == individual]
         # row = Index(['individual', 'Sub_Saharan_Africa', 'Central_and_South_Asia',
@@ -52,6 +51,8 @@ def main():
                     tempMax = row[pop].values[0]
             except Exception as e:
                 continue
+        if not individual in populationPerIndividual:
+            populationPerIndividual[individual] = dict()
         populationPerIndividual[individual]['topmedPop'] = (tempPop, tempMax)
         populationPerIndividual[individual]['gnomadPop'] = topmed2gnomAD[tempPop]
 
