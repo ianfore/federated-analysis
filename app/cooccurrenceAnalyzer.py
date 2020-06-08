@@ -186,10 +186,7 @@ def plotRegionsPerVariant(inCIdomain, outputDir):
     for l in labels:
         sizes.append(counts[l])
     print(sizes)
-    # ax1.pie(sizes, explode=explode, labels=labels, colors = colors, autopct='%1.3f%%', shadow=False, startangle=90)
-    #ax1.pie(sizes, explode=explode, labels=labels, colors=colors, shadow=False, startangle=90)
     ax1.pie(sizes, labels=labels, shadow=False, startangle=90)
-
     ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
     #plt.show()
     plt.savefig(outputDir + '/regionsPerVariant.png')
@@ -1017,6 +1014,10 @@ def plotGenotypeCounts(genotypeCounts, rare, outputDir):
                     genotypeCounts['pathogenic']['hetero'], genotypeCounts['vus']['hetero']]
         colors = ['red', 'yellow', 'green', 'orange', 'blue', 'brown']
         explode = (0.1, 0.1, 0.1, 0, 0, 0)
+
+        patches, texts = ax1.pie(sizes, explode=explode, colors=colors, shadow=False, startangle=90)
+        plt.legend(patches, labels, fontsize=8)
+
         #ax1.pie(sizes, explode=explode, labels=labels, colors = colors, autopct='%1.3f%%', shadow=False, startangle=90)
         ax1.pie(sizes, explode=explode, labels=labels, colors = colors, shadow=False, startangle=90)
 
