@@ -1,6 +1,7 @@
 import pandas as pd
 import sys
 import json
+from collections import defaultdict
 
 
 def main():
@@ -34,7 +35,7 @@ def main():
     topmed2gnomAD['Middle_East'] = 'OTH'
 
 
-    populationPerIndividual = dict()
+    populationPerIndividual = defaultdict()
     for individual in cohort[0]:
         row = ancestry.loc[ancestry['individual'] == individual]
         # row = Index(['individual', 'Sub_Saharan_Africa', 'Central_and_South_Asia',
