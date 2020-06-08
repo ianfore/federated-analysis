@@ -16,6 +16,24 @@ def main():
 
     cohort = pd.read_csv(cohortFileName, header=None)
 
+    '''Sub_Saharan_Africa      AFR
+    Central_and_South_Asia  SAS
+    East_Asia       EAS
+    Europe  NFE
+    Native_America  AMR
+    Oceania OTH
+    Middle_East     OTH'''
+
+    topmed2gnomAD = dict()
+    topmed2gnomAD['Sub_Saharan_Africa'] = 'AFR'
+    topmed2gnomAD['Central_and_South_Asia'] = 'SAS'
+    topmed2gnomAD['East_Asia'] = 'EAS'
+    topmed2gnomAD['Europe'] = 'NFE'
+    topmed2gnomAD['Native_America'] = 'AMR'
+    topmed2gnomAD['Oceania'] = 'OTH'
+    topmed2gnomAD['Middle_East'] = 'OTH'
+
+
     populationPerIndividual = dict()
     for individual in cohort[0]:
         row = ancestry.loc[ancestry['individual'] == individual]
@@ -33,7 +51,8 @@ def main():
                     tempMax = row[pop].values[0]
             except Exception as e:
                 continue
-        populationPerIndividual[individual] = (tempPop, tempMax)
+        populationPerIndividual[individual]['topmedPop'] = (tempPop, tempMax)
+        populationPerIndividual[individual]['gnomadPop'] = topmed2gnomAD[tempPop]
 
     with open(outputDir + '/ancestries.json', 'w') as f:
         json.dump(populationPerIndividual, f)

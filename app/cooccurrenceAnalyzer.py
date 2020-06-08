@@ -1019,7 +1019,7 @@ def plotGenotypeCounts(genotypeCounts, rare, outputDir):
         plt.legend(patches, labels, fontsize=8)
 
         #ax1.pie(sizes, explode=explode, labels=labels, colors = colors, autopct='%1.3f%%', shadow=False, startangle=90)
-        ax1.pie(sizes, explode=explode, labels=labels, colors = colors, shadow=False, startangle=90)
+        ax1.pie(sizes, explode=explode, colors = colors, shadow=False, startangle=90)
 
     ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
     #plt.show()
