@@ -52,10 +52,12 @@ def main():
         variantsDict = json.load(f)
     f.close()
 
+    logger.info('reading data from ' + regionsFileName)
     with open(regionsFileName, 'r') as f:
         regionsDict = json.load(f)
     f.close()
 
+    logger.info('reading data from ' + ancestriesFileName)
     with open(ancestriesFileName, 'r') as f:
         ancestriesDict = json.load(f)
     f.close()
@@ -440,7 +442,7 @@ def getPopulationGnomadData(brcaDF, hgString, hgVersion, alleleFrequencies):
 
     if not ethData[genomeFreq]:
         return 0.0
-    
+
     if ethData[genomeFreq][0] == math.nan or ethData[genomeFreq][0] == '-':
         return 0.0
     else:
