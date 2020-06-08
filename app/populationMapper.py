@@ -54,7 +54,10 @@ def main():
         if not individual in populationPerIndividual:
             populationPerIndividual[individual] = dict()
         populationPerIndividual[individual]['topmedPop'] = (tempPop, tempMax)
-        populationPerIndividual[individual]['gnomadPop'] = topmed2gnomAD[tempPop]
+        try:
+            populationPerIndividual[individual]['gnomadPop'] = topmed2gnomAD[tempPop]
+        except:
+            populationPerIndividual[individual]['gnomadPop'] = 'OTH'
 
     with open(outputDir + '/ancestries.json', 'w') as f:
         json.dump(populationPerIndividual, f)
