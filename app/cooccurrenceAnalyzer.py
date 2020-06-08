@@ -20,8 +20,8 @@ logger.setLevel(logging.DEBUG)
 
 
 def main():
-    if len(sys.argv) != 9:
-        print('13-out.json 13-vpi.json 13-ipv.json brca-variants.tsv brca-regions.json /tmp/myout 16 filter-freq')
+    if len(sys.argv) != 10:
+        print('13-out.json 13-vpi.json 13-ipv.json brca-variants.tsv brca-regions.json ancestries.json /tmp/myout 16 filter-freq')
         sys.exit(1)
 
     variantsFileName =sys.argv[1]
@@ -29,9 +29,10 @@ def main():
     ipvFileName = sys.argv[3]
     brcaFileName = sys.argv[4]
     regionsFileName = sys.argv[5]
-    outputDir = sys.argv[6]
-    numProcesses = int(sys.argv[7])
-    frequencyFilter = float(sys.argv[8])
+    ancestriesFileName = sys.argv[6]
+    outputDir = sys.argv[7]
+    numProcesses = int(sys.argv[8])
+    frequencyFilter = float(sys.argv[9])
 
     logger.info('reading data from ' + vpiFileName)
     with open(vpiFileName, 'r') as f:
@@ -55,7 +56,9 @@ def main():
         regionsDict = json.load(f)
     f.close()
 
-
+    with open(ancestriesFileName, 'r') as f:
+        ancestriesDict = json.load(f)
+    f.close()
 
     '''gnomadEthnicities = [ 'AFR', 'AMR', 'ASJ', 'EAS', 'FIN', 'NFE', 'OTH', 'SAS']
     for ethnicity in gnomadEthnicities:
@@ -69,11 +72,11 @@ def main():
         print('p (AFR, ' + ethnicity + ') = ' + str(p))'''
 
 
-
     logger.info('counting genotypes for variants on ' + str(numProcesses) + ' processes')
     t = time.time()
     q1 = Queue()
     q2 = Queue()
+    q3 = Queue()
     processList = list()
     if frequencyFilter == 0.0:
         rare = False
@@ -81,15 +84,17 @@ def main():
         rare = True
     for i in range(numProcesses):
         p = Process(target=countTotalGenotypesForVariants,
-                    args=(q1, q2, vpiDF, frequencyFilter, brcaDF, hgVersion, rare, i, numProcesses,))
+                    args=(q1, q2, q3, vpiDF, frequencyFilter, brcaDF, ancestriesDict, hgVersion, rare, i, numProcesses,))
         p.start()
         processList.append(p)
     logger.info('joining results from forked threads')
     genotypeCounts = dict()
     frequenciesPerIndividual = dict()
+    topmedNotGnomad = list()
     for i in range(numProcesses):
         genotypeCounts.update(q1.get())
         frequenciesPerIndividual.update(q2.get())
+        topmedNotGnomad.update(q3.get())
     for i in range(numProcesses):
         processList[i].join()
     logger.debug('elapsed time in countTotalGenotypesForVariants() ' + str(time.time() - t))
@@ -105,6 +110,10 @@ def main():
         json.dump(frequenciesPerIndividual, f)
     f.close()
     plotFrequenciesPerIndividual(frequenciesPerIndividual, outputDir)
+    logger.info('saving to ' + outputDir + '/' + 'topmedNotGnomad.json')
+    with open (outputDir + '/' + 'topmedNotGnomad.json', 'w') as f:
+        json.dump(topmedNotGnomad)
+    f.close()
 
     variantCounts = countTotalVariants(vpiDict)
     print('benign counts: ' + str(len(variantCounts['benign'])))
@@ -403,18 +412,6 @@ def getGnomadData(brcaDF, vus, hgVersion, ethnicity):
     # return population, frequency, count, and number
     # replace "frequency" with "count" and "number" in Allele_frequency_genome_AFR_GnomAD
 
-    '''if ethnicity == 'max':
-        alleleFrequencies = [v for v in gnomad if 'Allele_frequency' in v]
-        return getMaxGnomad(brcaDF, hgString, hgVersion, alleleFrequencies)
-
-    elif ethnicity == 'min':
-        alleleFrequencies = [v for v in gnomad if 'Allele_frequency' in v]
-        return getMinGnomad(brcaDF, hgString, hgVersion, alleleFrequencies)
-
-    #elif ethnicity in [ 'AFR', 'AMR', 'ASJ', 'EAS', 'FIN', 'NFE', 'OTH', 'SAS']:
-    #    return getPopulationGnomadData(brcaDF, hgString, hgVersion, alleleFrequencies)
-
-    else:'''
     allDict = dict()
 
     alleleFrequencies = [v for v in gnomad if 'Allele_frequency' in v]
@@ -423,14 +420,38 @@ def getGnomadData(brcaDF, vus, hgVersion, ethnicity):
 
     if ethnicity is not None:
         alleleFrequencies = [v for v in gnomad if ethnicity in v]
-        allDict[ethnicity] = getPopulationGnomadData(brcaDF, hgString, hgVersion, alleleFrequencies)
+        x =  getPopulationGnomadData(brcaDF, hgString, hgVersion, alleleFrequencies)
+        allDict[ethnicity] = x
     return allDict
 
 def getPopulationGnomadData(brcaDF, hgString, hgVersion, alleleFrequencies):
     ethData = dict()
-    for af in alleleFrequencies:
+    alleleFrequencies2 = [v for v in alleleFrequencies if 'Allele_frequency' in v]
+    for af in alleleFrequencies2:
         ethData[af] = brcaDF[brcaDF[coordinateColumnBase + str(hgVersion)] == hgString][af].tolist()
-    return ethData
+
+    # alleleFrequencies2 = [Allele_frequency_genome_NFE_GnomAD, Allele_frequency_exome_NFE_GnomAD, Allele_frequency_NFE_GnomAD]
+    # we want just the genome which is [0] and that is a list of one element, so we want [0] of that so [0][0]
+
+    if not ethData:
+        return 0.0
+
+    genomeFreq = alleleFrequencies2[0]
+
+    if not ethData[genomeFreq]:
+        return 0.0
+    
+    if ethData[genomeFreq][0] == math.nan or ethData[genomeFreq][0] == '-':
+        return 0.0
+    else:
+        return float(ethData[genomeFreq][0])
+    '''maxFreq = 0.0
+    for af in ethData:
+        if ethData[af][0] == math.nan or ethData[af][0] == '-':
+            continue
+        elif float(ethData[af][0]) > maxFreq:
+            maxFreq = float(ethData[af][0])
+    return maxFreq'''
 
 def getMinGnomad(brcaDF, hgString, hgVersion, alleleFrequencies):
     minData = {'frequency': 1.1, 'population': None}
@@ -1045,12 +1066,13 @@ def getStartAndEnd(partitionSizes, threadID):
 
     return start, end
 
-def countTotalGenotypesForVariants(q1, q2, vpiDF, rareThreshold, brcaDF, hgVersion, rare, threadID, numProcesses):
+def countTotalGenotypesForVariants(q1, q2, q3, vpiDF, rareThreshold, brcaDF, ancestriesDict, hgVersion, rare, threadID, numProcesses):
 
     genotypeCounts = {'benign': {'homo':0, 'hetero': 0},
                      'pathogenic': {'homo': 0, 'hetero': 0},
                      'vus': {'homo': 0, 'hetero': 0}}
     frequenciesPerIndividual = dict()
+    notInGnomad = {'benign': [], 'pathogenic': [], 'vus': []}
     individuals = list()
     for individual in vpiDF:
         individuals.append(individual)
@@ -1062,6 +1084,7 @@ def countTotalGenotypesForVariants(q1, q2, vpiDF, rareThreshold, brcaDF, hgVersi
     logger.info('threadID = ' + str(threadID) + ' processing from ' + str(start) + ' to ' + str(end))
     for i in range(start, end):
         individual = individuals[i]
+        ethnicity = ancestriesDict[individual]['gnomadPop']
         logger.debug(individual)
         frequenciesPerIndividual[individual] = {'benign': {'homo': 0, 'hetero': 0},
                                             'pathogenic': {'homo': 0, 'hetero': 0},
@@ -1069,9 +1092,13 @@ def countTotalGenotypesForVariants(q1, q2, vpiDF, rareThreshold, brcaDF, hgVersi
 
         for b in vpiDF[individual]['benign']:
             if b:
-                if rare and getGnomadData(brcaDF, tuple(b[0]), hgVersion, None)['max']['frequency'] > rareThreshold:
+                #if rare and getGnomadData(brcaDF, tuple(b[0]), hgVersion, None)['max']['frequency'] > rareThreshold:
+                gnomadData = getGnomadData(brcaDF, tuple(b[0]), hgVersion, ethnicity)
+                if gnomadData[ethnicity] > rareThreshold:
                     continue
-                elif b[1] == '3':
+                elif gnomadData[ethnicity] == 0.0:
+                    notInGnomad['benign'].append(b)
+                if b[1] == '3':
                     genotypeCounts['benign']['homo'] += 1
                     frequenciesPerIndividual[individual]['benign']['homo'] += 1
                 else:
@@ -1079,9 +1106,13 @@ def countTotalGenotypesForVariants(q1, q2, vpiDF, rareThreshold, brcaDF, hgVersi
                     frequenciesPerIndividual[individual]['benign']['hetero'] += 1
         for p in vpiDF[individual]['pathogenic']:
             if p:
-                if rare and getGnomadData(brcaDF, tuple(p[0]), hgVersion, None)['max']['frequency'] > rareThreshold:
+                #if rare and getGnomadData(brcaDF, tuple(p[0]), hgVersion, ethnicity)['max']['frequency'] > rareThreshold:
+                gnomadData = getGnomadData(brcaDF, tuple(p[0]), hgVersion, ethnicity)
+                if gnomadData[ethnicity] > rareThreshold:
                     continue
-                elif p[1] == '3':
+                elif gnomadData[ethnicity] == 0.0:
+                    notInGnomad['pathogenic'].append(p)
+                if p[1] == '3':
                     genotypeCounts['pathogenic']['homo'] += 1
                     frequenciesPerIndividual[individual]['pathogenic']['homo'] += 1
                 else:
@@ -1089,9 +1120,13 @@ def countTotalGenotypesForVariants(q1, q2, vpiDF, rareThreshold, brcaDF, hgVersi
                     frequenciesPerIndividual[individual]['pathogenic']['hetero'] += 1
         for v in vpiDF[individual]['vus']:
             if v:
-                if rare and getGnomadData(brcaDF, tuple(v[0]), hgVersion, None)['max']['frequency'] > rareThreshold:
+                #if rare and getGnomadData(brcaDF, tuple(v[0]), hgVersion, ethnicity)['max']['frequency'] > rareThreshold:
+                gnomadData = getGnomadData(brcaDF, tuple(v[0]), hgVersion, ethnicity)
+                if gnomadData[ethnicity] > rareThreshold:
                     continue
-                elif v[1] == '3':
+                elif gnomadData[ethnicity] == 0.0:
+                    notInGnomad['vus'].append(v)
+                if v[1] == '3':
                     genotypeCounts['vus']['homo'] += 1
                     frequenciesPerIndividual[individual]['vus']['homo'] += 1
 
@@ -1102,6 +1137,7 @@ def countTotalGenotypesForVariants(q1, q2, vpiDF, rareThreshold, brcaDF, hgVersi
         
     q1.put(genotypeCounts)
     q2.put(frequenciesPerIndividual)
+    q3.put(notInGnomad)
     logger.debug('finished putting results in queue')
 
 if __name__ == "__main__":
