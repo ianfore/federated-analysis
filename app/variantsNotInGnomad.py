@@ -6,7 +6,6 @@ import time
 import json
 
 coordinateColumnBase = 'Genomic_Coordinate_hg'
-brcaFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/brca-variants.tsv'
 hgVersion = 38
 
 logging.basicConfig()
@@ -106,3 +105,7 @@ def getMaxGnomad(brcaDF, hgString, hgVersion, alleleFrequencies):
                 maxData['frequency'] = freq
                 maxData['population'] = af
     return maxData
+
+
+if __name__ == "__main__":
+    main()
