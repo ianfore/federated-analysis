@@ -33,6 +33,7 @@ def main():
 
     varsNotInGnomad = list()
 
+
     for variant in range(len(vcf['calldata/GT'])):
         c = int(vcf['variants/CHROM'][variant].replace('chr', ''))
         p = int(vcf['variants/POS'][variant])
@@ -42,8 +43,9 @@ def main():
         if not checkGnomad(brcaDF, (c,p,r,a), 38):
             varsNotInGnomad.append((c,p,r,a))
 
-    with open(outputFile, 'w') as f:
-        json.dump(varsNotInGnomad, f)
+    with open(outputFile, 'a') as f:
+        for i in range(len(varsNotInGnomad)):
+            f.write(varsNotInGnomad[i], f)
     f.close()
 
 def readVCFFile(vcfFileName):
@@ -74,20 +76,17 @@ def checkGnomad(brcaDF, vus, hgVersion):
     # return population, frequency, count, and number
     # replace "frequency" with "count" and "number" in Allele_frequency_genome_AFR_GnomAD
 
-    allDict = dict()
-
     alleleFrequencies = [v for v in gnomad if 'Allele_frequency' in v]
-    allDict['max'] = getMaxGnomad(brcaDF, hgString, hgVersion, alleleFrequencies)
-    if allDict['max']['population'] is None:
-        return False
-    else:
+    retValue = getInGnomad(brcaDF, hgString, hgVersion, alleleFrequencies)
+    if retValue:
         return True
+    else:
+        return False
 
 
-def getMaxGnomad(brcaDF, hgString, hgVersion, alleleFrequencies):
-    maxData = {'frequency': 0.0, 'population': None}
+def getInGnomad(brcaDF, hgString, hgVersion, alleleFrequencies):
     for af in alleleFrequencies:
-        freq = 0.0
+        freq = None
         alleleFreqList = brcaDF[brcaDF[coordinateColumnBase + str(hgVersion)] == hgString][af].tolist()
         if alleleFreqList:
             try:
@@ -95,13 +94,10 @@ def getMaxGnomad(brcaDF, hgString, hgVersion, alleleFrequencies):
                     print('more than one')
                 # yes, it always returns a list of length 0
                 freq = float(alleleFreqList[0])
+                return freq
             except ValueError:
                 continue
-            if freq > maxData['frequency']:
-                # TODO get homo and abs counts as well
-                maxData['frequency'] = freq
-                maxData['population'] = af
-    return maxData
+    return freq
 
 
 if __name__ == "__main__":
