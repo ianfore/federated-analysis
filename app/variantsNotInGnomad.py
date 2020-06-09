@@ -42,7 +42,7 @@ def main():
         logger.debug((c,p,r,a))
         if not checkGnomad(brcaDF, (c,p,r,a), 38):
             #varsNotInGnomad.append((c,p,r,a))
-            f.write(str(c) + '\t' + str(p) + '\t' + str(r) + '\t' + str(a) + '\n', f)
+            f.write(str(c) + '\t' + str(p) + '\t' + str(r) + '\t' + str(a) + '\n')
     f.close()
 
 def readVCFFile(vcfFileName):
