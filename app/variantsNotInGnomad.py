@@ -33,7 +33,7 @@ def main():
 
     varsNotInGnomad = list()
 
-
+    f = open(outputFile, 'a')
     for variant in range(len(vcf['calldata/GT'])):
         c = int(vcf['variants/CHROM'][variant].replace('chr', ''))
         p = int(vcf['variants/POS'][variant])
@@ -41,11 +41,8 @@ def main():
         a = str(vcf['variants/ALT'][variant][0])
         logger.debug((c,p,r,a))
         if not checkGnomad(brcaDF, (c,p,r,a), 38):
-            varsNotInGnomad.append((c,p,r,a))
-
-    with open(outputFile, 'a') as f:
-        for i in range(len(varsNotInGnomad)):
-            f.write(varsNotInGnomad[i], f)
+            #varsNotInGnomad.append((c,p,r,a))
+            f.write(str(c) + '\t' + str(p) + '\t' + str(r) + '\t' + str(a) + '\n', f)
     f.close()
 
 def readVCFFile(vcfFileName):
