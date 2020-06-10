@@ -20,7 +20,7 @@ their sum.'''
 
 def main():
     if len(sys.argv) != 6:
-        print('vcf-input brca-input mc-file output-file')
+        print('vcf-input brca-input mc-file notinsubset-file inubset-file')
         sys.exit(1)
 
     vcfFileName = sys.argv[1]
@@ -54,7 +54,7 @@ def main():
         #    f.write('chr' + str(c) + '\t' + str(p) + '\t' + str(r) + '\t' + str(a) + '\n')
         exomeDelta, genomeDelta = checkMelissaTable((c,p,r,a), mcDF, brcaDF)
         if exomeDelta in effectivelyZeroValues and genomeDelta in effectivelyZeroValues:
-            notInSubset.write('chr' + str(c) + '\t' + str(p) + '\t' + str(r) + '\t' + str(a) + '\n')
+            notInSubset.write('chr' + str(c) + '\t' + str(p) + '\t' + '.' + '\t' + str(r) + '\t' + str(a) + '\n')
         else:
             ed = 0.0
             gd = 0.0
