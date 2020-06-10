@@ -13,10 +13,9 @@ logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 
-'''TODO Hi James, here is the file that reports on the number of observations in gnomAD that came from topmed.  
-The columns that will be most useful are the genome_ac_hom_delta and exome_ac_hom_delta, which describe the number of 
-homozygous observations in gnomAD that came from topmed for the genome and exome data respectively.  The sum of these 
-two counts is probably what’s most useful to you right now.  Thanks!'''
+'''TODO  genome_ac_hom_delta and exome_ac_hom_delta, which describe the number of 
+homozygous observations in gnomAD that came from topmed for the genome and exome data respectively. Take
+their sum.'''
 
 
 def main():
@@ -57,7 +56,18 @@ def main():
         if exomeDelta in effectivelyZeroValues and genomeDelta in effectivelyZeroValues:
             notInSubset.write('chr' + str(c) + '\t' + str(p) + '\t' + str(r) + '\t' + str(a) + '\n')
         else:
-            inSubset.write('chr' + str(c) + '\t' + str(p) + '\t' + str(r) + '\t' + str(a) + '\n')
+            ed = 0.0
+            gd = 0.0
+            try:
+                ed = float(exomeDelta)
+            except:
+                pass
+            try:
+                gd = float(genomeDelta)
+            except:
+                pass
+            deltaSum = ed + gd
+            inSubset.write('chr' + str(c) + '\t' + str(p) + '\t' + '.' + '\t' + str(r) + '\t' + str(a)  + '\t' + str(deltaSum) + '\n')
 
     inSubset.close()
     notInSubset.close()
