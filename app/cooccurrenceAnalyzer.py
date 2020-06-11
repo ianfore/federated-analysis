@@ -481,7 +481,7 @@ def getMaxGnomad(brcaDF, hgString, hgVersion, alleleFrequencies):
                 maxData['population'] = af
     return maxData
 
-def getHardyWeinbergStats(vpiDict, variantsDict, individualsPerVariant):
+'''def getHardyWeinbergStats(vpiDict, variantsDict, individualsPerVariant):
     bVars, pVars, vVars = calculateZygosityFrequenciesPerVariant(vpiDict)
     bVars, pVars, vVars = hardyWeinbergChiSquareTest(bVars, pVars, vVars, len(vpiDict))
     bVars, pVars, vVars = hardyWeinbergStatistics(bVars, pVars, vVars, significance=0.01)
@@ -592,7 +592,7 @@ def getHardyWeinbergStats(vpiDict, variantsDict, individualsPerVariant):
     print('list of vus rejecting both HW and F: ' + str(vusRejectingBothHWandF))
     print('length list of vus rejecting both HW and F: ' + str(len(vusRejectingBothHWandF)))
 
-    return individualsPerVariant
+    return individualsPerVariant'''
 
 def calculateZygosityFrequenciesPerVariant(vpiDict):
     benignVariants = dict()

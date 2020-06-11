@@ -52,9 +52,9 @@ def main():
         logger.debug((c,p,r,a))
         #if not checkGnomad(brcaDF, (c,p,r,a), 38, keyStrings):
         #    f.write('chr' + str(c) + '\t' + str(p) + '\t' + str(r) + '\t' + str(a) + '\n')
-        exomeDelta, genomeDelta = checkMelissaTable((c,p,r,a), mcDF, brcaDF)
+        exomeDelta, genomeDelta, hg37 = checkMelissaTable((c,p,r,a), mcDF, brcaDF)
         if exomeDelta in effectivelyZeroValues and genomeDelta in effectivelyZeroValues:
-            notInSubset.write('chr' + str(c) + '\t' + str(p) + '\t' + '.' + '\t' + str(r) + '\t' + str(a) + '\n')
+            notInSubset.write('chr' + str(c) + '\t' + str(p) + '\t' + '.' + '\t' + str(r) + '\t' + str(a) + '\t' + str(hg37) + '\n')
         else:
             ed = 0.0
             gd = 0.0
@@ -67,7 +67,7 @@ def main():
             except:
                 pass
             deltaSum = ed + gd
-            inSubset.write('chr' + str(c) + '\t' + str(p) + '\t' + '.' + '\t' + str(r) + '\t' + str(a)  + '\t' + str(deltaSum) + '\n')
+            inSubset.write('chr' + str(c) + '\t' + str(p) + '\t' + '.' + '\t' + str(r) + '\t' + str(a)  + '\t' + str(hg37) + '\t' + str(deltaSum) + '\n')
 
     inSubset.close()
     notInSubset.close()
@@ -80,16 +80,16 @@ def checkMelissaTable(variant, mcDF, brcaDF):
     hgString = 'chr' + str(chrom) + ':g.' + str(pos) + ':' + str(ref) + '>' + str(alt)
     row = brcaDF[brcaDF[coordinateColumnBase + str(hgVersion)] == hgString]
     if len(row) == 0:
-        return None, None
+        return None, None, 0
     coord = str(row['Genomic_Coordinate_hg37'])
     pos_37 = int(coord.split(':')[1].split('.')[1])
     row = mcDF[(mcDF['chrom'] == str(chrom)) & (mcDF['pos'] == str(pos_37)) & (mcDF['ref'] == ref) & (mcDF['alt'] == alt)]
     if len(row) == 0:
-        return None, None
+        return None, None, pos_37
     exomeDelta = row['exome_ac_hom_delta'].iloc[0]
     genomeDelta = row['genome_ac_hom_delta'].iloc[0]
 
-    return exomeDelta, genomeDelta
+    return exomeDelta, genomeDelta, pos_37
 
 
 

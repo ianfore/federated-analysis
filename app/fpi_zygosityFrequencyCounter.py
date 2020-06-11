@@ -13,18 +13,18 @@ logger.setLevel(logging.DEBUG)
 
 def main():
     if len(sys.argv) != 4:
-        print('13 13-vpi.json outputDir')
+        print('13 13-fpi.json outputDir')
         sys.exit(1)
 
     chrom = sys.argv[1]
-    vpiFileName = sys.argv[2]
+    fpiFileName = sys.argv[2]
     outputDir = sys.argv[3]
 
-    with open(vpiFileName, 'r') as f:
-        vpiDict = json.load(f)
+    with open(fpiFileName, 'r') as f:
+        fpiDict = json.load(f)
     f.close()
 
-    freqDict, ratioArray = getFrequenciesAndRatios(vpiDict)
+    freqDict, ratioArray = getFrequenciesAndRatios(fpiDict)
     with open(outputDir + '/' + chrom + '-rpi.json', 'w') as f:
         json.dump(freqDict, f)
     f.close()
@@ -68,33 +68,18 @@ def main():
 
 
 
-def getFrequenciesAndRatios(vpiDict):
+def getFrequenciesAndRatios(fpiDict):
     frequencyDict = dict()
-    ratioArray = np.zeros((len(vpiDict), 3))
-    print('num individuals = ' + str(len(vpiDict)))
+    ratioArray = np.zeros((len(fpiDict), 3))
+    print('num individuals = ' + str(len(fpiDict)))
     counter = 0
-    for i in vpiDict:
-        homoBSum = 0
-        homoPSum = 0
-        homoVSum = 0
-        hetBSum = 0
-        hetPSum = 0
-        hetVSum = 0
-        for b in vpiDict[i]['benign']:
-            if b[1] == "3":
-                homoBSum += 1
-            elif b[1] == '1' or b[1] == '2':
-                hetBSum += 1
-        for p in vpiDict[i]['pathogenic']:
-            if p[1] == "3":
-                homoPSum += 1
-            elif p[1] == '1' or p[1] == '2':
-                hetPSum += 1
-        for v in vpiDict[i]['vus']:
-            if v[1] == "3":
-                homoVSum += 1
-            elif v[1] == '1' or v[1] == '2':
-                hetVSum += 1
+    for i in fpiDict:
+        homoBSum = fpiDict[i]['benign']['homo']
+        homoPSum = fpiDict[i]['pathogenic']['homo']
+        homoVSum = fpiDict[i]['vus']['homo']
+        hetBSum = fpiDict[i]['benign']['hetero']
+        hetPSum = fpiDict[i]['pathogenic']['hetero']
+        hetVSum = fpiDict[i]['vus']['hetero']
 
         frequencyDict[i] = {'homoBSum': homoBSum, 'hetBSum': hetBSum,
                         'homoPSum': homoPSum, 'hetPSum': hetPSum,
