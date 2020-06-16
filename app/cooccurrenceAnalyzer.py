@@ -782,8 +782,8 @@ def hardyWeinbergFisherExactTest(bVars, pVars, vVars, N, pValue):
     # then p(NAB = nAB|N,nA) = (W / X) x (Y / Z)
 
     for b in bVars:
-        nA = 2 * bVars[b]['aa'] - bVars[b]['Aa']
-        nB = 2 * bVars[b]['AA'] - bVars[b]['Aa']
+        nA = abs(2 * bVars[b]['aa'] - bVars[b]['Aa'])
+        nB = abs(2 * bVars[b]['AA'] - bVars[b]['Aa'])
         nAA = bVars[b]['aa']
         nBB = bVars[b]['AA']
         nAB = bVars[b]['Aa']
@@ -809,8 +809,8 @@ def hardyWeinbergFisherExactTest(bVars, pVars, vVars, N, pValue):
             bVars[b]['accept hw'] = True
 
     for p in pVars:
-        nA = 2 * pVars[p]['aa'] - pVars[p]['Aa']
-        nB = 2 * pVars[p]['AA'] - pVars[p]['Aa']
+        nA = abs(2 * pVars[p]['aa'] - pVars[p]['Aa'])
+        nB = abs(2 * pVars[p]['AA'] - pVars[p]['Aa'])
         nAA = pVars[p]['aa']
         nBB = pVars[p]['AA']
         nAB = pVars[p]['Aa']
@@ -837,8 +837,8 @@ def hardyWeinbergFisherExactTest(bVars, pVars, vVars, N, pValue):
 
     for v in vVars:
 
-        nA = 2 * vVars[v]['aa'] - vVars[v]['Aa']
-        nB = 2 * vVars[v]['AA'] - vVars[v]['Aa']
+        nA = abs(2 * vVars[v]['aa'] - vVars[v]['Aa'])
+        nB = abs(2 * vVars[v]['AA'] - vVars[v]['Aa'])
         nAA = vVars[v]['aa']
         nBB = vVars[v]['AA']
         nAB = vVars[v]['Aa']
