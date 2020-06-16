@@ -15,21 +15,21 @@ def main():
 
     genoArray = allel.GenotypeArray(vcf['calldata/GT'])
 
-    '''alleleFrequency = genoArray.count_alleles().to_frequencies()
+    alleleFrequency = genoArray.count_alleles().to_frequencies()
 
     expectedHeterozygosity = allel.heterozygosity_expected(alleleFrequency, ploidy=2)
-    print('expected: ' + str(expectedHeterozygosity))
+    #print('expected: ' + str(expectedHeterozygosity))
 
     observedHeterozygosity = allel.heterozygosity_observed(genoArray)
-    print('observed: ' + str(observedHeterozygosity))
+    #print('observed: ' + str(observedHeterozygosity))
 
     inbreedingCoefficient = allel.inbreeding_coefficient(genoArray)
-    print('ibc: ' + str(inbreedingCoefficient))
+    #print('ibc: ' + str(inbreedingCoefficient))
 
     diff = list()
     for i in range(len(expectedHeterozygosity)):
         diff.append(expectedHeterozygosity[i] - observedHeterozygosity[i])
-    print('diff: ' + str(diff))'''
+    #print('diff: ' + str(diff))
 
     numVariants = len(genoArray)
     numSamples = len(vcf['samples'])
@@ -43,6 +43,13 @@ def main():
             runsOfHomozygosity[i] = {'individual': i, 'roh': allel.roh_mhmm(genoVector, posArray, is_accessible=isAccessible)}
 
 
+    with open(outputDir + '/ibc.txt', 'w') as f:
+        f.write(inbreedingCoefficient)
+    f.close()
+
+    with open(outputDir + '/zygosityDelta.txt', 'w') as f:
+        f.write(diff)
+    f.close()
 
     with open(outputDir + '/roh.json', 'w') as f:
         pd.DataFrame(runsOfHomozygosity).to_csv(f)
