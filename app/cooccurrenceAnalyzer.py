@@ -8,6 +8,9 @@ import logging
 import time
 from multiprocessing import Process, Queue, cpu_count
 import math
+import scipy.stats as stats
+import subprocess
+
 
 coordinateColumnBase = 'Genomic_Coordinate_hg'
 brcaFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/brca-variants.tsv'
@@ -481,9 +484,46 @@ def getMaxGnomad(brcaDF, hgString, hgVersion, alleleFrequencies):
                 maxData['population'] = af
     return maxData
 
-'''def getHardyWeinbergStats(vpiDict, variantsDict, individualsPerVariant):
+def getFisherExact(results, key, allValues):
+    # create 2x2 contingency table
+    a = results[key]['with'][allValues[0]]
+    b = results[key]['without'][allValues[0]]
+    c = results[key]['with'][allValues[1]]
+    d = results[key]['without'][allValues[1]]
+
+    # run fisher exact test
+    oddsRatio, pValue = stats.fisher_exact([[a, b], [c, d]])
+
+    # get confidence interval for odds ratio: CI = e^(ln(OR) +/- [1.96 * sqrt(1/a + 1/b + 1/c + 1/d)])
+    '''logOR = log(oddsRatio)
+    SE_logOR = sqrt(1/a + 1/b + 1/c + 1/d)
+    lowerBound = logOR - 1.96 * SE_logOR
+    upperBound = logOR + 1.96 * SE_logOR
+
+    CI95_lower = exp(lowerBound)
+    CI95_upper = exp(upperBound)'''
+
+    # use R fisher.test to get confidence interval for LOR
+    row1 = str('c(' + str(a) + ',' + str(b) + ')')
+    row2 = str('c(' + str(c) + ',' + str(d) + ')')
+    CIcmd_1 = str('/usr/bin/Rscript -e "fisher.test(rbind(' + row1 + ',' +  row2 + '))"')
+    CIcmd_2 = str('| grep -A1 confidence | sed -n "2,2 p" | xargs')
+    CIcmd = str(CIcmd_1 + CIcmd_2)
+    lb, ub = subprocess.check_output(CIcmd, shell=True).split()
+
+    # cast result = b'0.002439905 19.594803004\n' to floats
+    lb = float(lb)
+    ub = float(ub)
+
+    # insert OR and p-value into results dict
+    results[key]['OR'] = round(oddsRatio, 3)
+    results[key]['P value'] =  round(pValue, 3)
+    results[key]['95% CI'] = (round(lb, 2), round(ub, 2))
+
+def getHardyWeinbergStats(vpiDict, variantsDict, individualsPerVariant):
     bVars, pVars, vVars = calculateZygosityFrequenciesPerVariant(vpiDict)
-    bVars, pVars, vVars = hardyWeinbergChiSquareTest(bVars, pVars, vVars, len(vpiDict))
+    #bVars, pVars, vVars = hardyWeinbergChiSquareTest(bVars, pVars, vVars, len(vpiDict))
+    bVars, pVars, vVars = hardyWeinbergFisherExactTest(bVars, pVars, vVars, len(vpiDict), 0.05)
     bVars, pVars, vVars = hardyWeinbergStatistics(bVars, pVars, vVars, significance=0.01)
     rejectHW = {'benign': 0, 'pathogenic': 0, 'vus': 0}
     acceptHW = {'benign': 0, 'pathogenic': 0, 'vus': 0}
@@ -592,7 +632,7 @@ def getMaxGnomad(brcaDF, hgString, hgVersion, alleleFrequencies):
     print('list of vus rejecting both HW and F: ' + str(vusRejectingBothHWandF))
     print('length list of vus rejecting both HW and F: ' + str(len(vusRejectingBothHWandF)))
 
-    return individualsPerVariant'''
+    return individualsPerVariant
 
 def calculateZygosityFrequenciesPerVariant(vpiDict):
     benignVariants = dict()
@@ -731,6 +771,100 @@ def hardyWeinbergStatistics(bVars, pVars, vVars, significance):
 
     return bVars, pVars, vVars
 
+
+def hardyWeinbergFisherExactTest(bVars, pVars, vVars, N, pValue):
+    # http://europepmc.org/backend/ptpmcrender.fcgi?accid=PMC1199378&blobtype=pdf
+    # p(NAB = nAB|N,nA) = [ (2**nAB x N!) / (nAA!nAB!nBB!) ] x (nA! x nB!)/(2N)!
+    # let W = (2**nAB x N!)
+    # let X = (nAA!nAB!nBB!)
+    # let Y = nA! x nB!
+    # let Z = (2N)!
+    # then p(NAB = nAB|N,nA) = (W / X) x (Y / Z)
+
+    for b in bVars:
+        nA = 2 * bVars[b]['aa'] - bVars[b]['Aa']
+        nB = 2 * bVars[b]['AA'] - bVars[b]['Aa']
+        nAA = bVars[b]['aa']
+        nBB = bVars[b]['AA']
+        nAB = bVars[b]['Aa']
+        # calculate W
+        W = (2**nAB) * math.factorial(N)
+
+        # calculate X
+        X = math.factorial(nAA) * math.factorial(nAB) * math.factorial(nBB)
+
+        # calculate Y
+        Y = math.factorial(nA) * math.factorial(nB)
+
+        # calculate Z
+        Z = math.factorial(2 * N)
+
+        # calculate p
+        bVars[b]['fisher'] = (W / X) * (Y / Z)
+
+        # 8. compare against p-value for 1 degree of freedom at 0.05 significance (3.84)
+        if bVars[b]['fisher'] >= pValue:
+            bVars[b]['accept hw'] = False
+        else:
+            bVars[b]['accept hw'] = True
+
+    for p in pVars:
+        nA = 2 * pVars[p]['aa'] - pVars[p]['Aa']
+        nB = 2 * pVars[p]['AA'] - pVars[p]['Aa']
+        nAA = pVars[p]['aa']
+        nBB = pVars[p]['AA']
+        nAB = pVars[p]['Aa']
+        # calculate W
+        W = (2 ** nAB) * math.factorial(N)
+
+        # calculate X
+        X = math.factorial(nAA) * math.factorial(nAB) * math.factorial(nBB)
+
+        # calculate Y
+        Y = math.factorial(nA) * math.factorial(nB)
+
+        # calculate Z
+        Z = math.factorial(2 * N)
+
+        # calculate p
+        pVars[p]['fisher'] = (W / X) * (Y / Z)
+
+        # 8. compare against p-value for 1 degree of freedom at 0.05 significance (3.84)
+        if pVars[p]['fisher'] >= pValue:
+            pVars[p]['accept hw'] = False
+        else:
+            pVars[p]['accept hw'] = True
+
+    for v in vVars:
+
+        nA = 2 * vVars[v]['aa'] - vVars[v]['Aa']
+        nB = 2 * vVars[v]['AA'] - vVars[v]['Aa']
+        nAA = vVars[v]['aa']
+        nBB = vVars[v]['AA']
+        nAB = vVars[v]['Aa']
+        # calculate W
+        W = (2 ** nAB) * math.factorial(N)
+
+        # calculate X
+        X = math.factorial(nAA) * math.factorial(nAB) * math.factorial(nBB)
+
+        # calculate Y
+        Y = math.factorial(nA) * math.factorial(nB)
+
+        # calculate Z
+        Z = math.factorial(2 * N)
+
+        # calculate p
+        vVars[v]['fisher'] = (W / X) * (Y / Z)
+
+        # 8. compare against p-value for 1 degree of freedom at 0.05 significance (3.84)
+        if vVars[v]['fisher'] >= pValue:
+            vVars[v]['accept hw'] = False
+        else:
+            vVars[v]['accept hw'] = True
+
+    return bVars, pVars, vVars
+
 def hardyWeinbergChiSquareTest(bVars, pVars, vVars, n):
     # https://en.wikipedia.org/wiki/Hardy-Weinberg_principle
     # degrees of freedom = 1
@@ -759,6 +893,7 @@ def hardyWeinbergChiSquareTest(bVars, pVars, vVars, n):
             bVars[b]['chisquare'] = 1.0/expAA * (bVars[b]['AA'] - expAA)**2 + \
                                     1.0/expAa * (bVars[b]['Aa'] - expAa)**2 + \
                                     1.0/expaa * (bVars[b]['aa'] - expaa)**2
+
         # 8. compare against p-value for 1 degree of freedom at 0.05 significance (3.84)
         if bVars[b]['chisquare'] >= criticalValue:
             bVars[b]['accept hw'] = False
@@ -782,12 +917,12 @@ def hardyWeinbergChiSquareTest(bVars, pVars, vVars, n):
         expaa = n * pVars[p]['q'] **2
 
         # 7. calculate chi-square = sum[ (O - E)**2 / E ]
-        if expAA == 0 or expAa == 0 or expaa == 0:
+        '''if expAA == 0 or expAa == 0 or expaa == 0:
             pVars[p]['chisquare'] = 0
         else:
             pVars[p]['chisquare'] = 1.0/expAA * (pVars[p]['AA'] - expAA)**2 + \
                                     1.0/expAa * (pVars[p]['Aa'] - expAa)**2 + \
-                                    1.0/expaa * (pVars[p]['aa'] - expaa)**2
+                                    1.0/expaa * (pVars[p]['aa'] - expaa)**2'''
         # 8. compare against p-value for 1 degree of freedom at 0.05 significance (3.84)
         if pVars[p]['chisquare'] >= criticalValue:
             pVars[p]['accept hw'] = False
