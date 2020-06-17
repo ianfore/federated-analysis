@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 FDA_PATH=$(pwd)
 APP_PATH=${FDA_PATH}/app
@@ -17,10 +17,10 @@ then
 
 elif [ $# -eq 1 -a $1 == 'analyze' ]
 then
-	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 -w / --user=`id -u`:`id -g` -v ${APP_PATH}:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data ${DOCKER_IMAGE_NAME} /usr/bin/python3 /app/dataAnalyzer.py /config/conf.json 
+	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 -w / --user=`id -u`:`id -g` -v ${APP_PATH}/pathology:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data ${DOCKER_IMAGE_NAME} /usr/bin/python3 /app/dataAnalyzer.py /config/conf.json 
 	exit 0
 
-elif [ $# -eq 10 ]
+elif [ $# -eq 11 ]
 then
 
 	VCF_FILE=$1
@@ -32,12 +32,13 @@ then
 	GENE=$7
 	SAVE_VARS=$8
         BRCA_VARS=$9
-	VARIANTS_FILE=${10}
+	IPV_FILE=${10}
+	VPI_FILE=${11}
 
 
 	docker build -t ${DOCKER_IMAGE_NAME} - < Dockerfile 
 
-	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 --user=`id -u`:`id -g` -v ${APP_PATH}:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder.py  --v ${VCF_FILE} --o ${OUTPUT_FILE} --h $HG_VERSION --e $ENSEMBL_RELEASE --c $CHROM --p $PHASED --s ${SAVE_VARS} --g $GENE --b $BRCA_VARS  --d /var/tmp/pyensembl-cache --f $VARIANTS_FILE 
+	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 --user=`id -u`:`id -g` -v ${APP_PATH}/cooccurrence:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder.py  --v ${VCF_FILE} --o ${OUTPUT_FILE} --h $HG_VERSION --e $ENSEMBL_RELEASE --c $CHROM --p $PHASED --s ${SAVE_VARS} --g $GENE --b $BRCA_VARS  --d /var/tmp/pyensembl-cache --ipv $IPV_FILE  --vpi $VPI_FILE
 
 
 

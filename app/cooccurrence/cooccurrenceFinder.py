@@ -63,7 +63,7 @@ def main():
 
     parser.add_argument("--o", dest="o", help="name of JSON-formatted output file, default=None", default=None)
 
-    parser.add_argument("--f", dest="f", help="name of JSON-formatted variants per individual file, default=None", default=None)
+    parser.add_argument("--vpi", dest="vpi", help="name of JSON-formatted variants per individual file, default=None", default=None)
 
     parser.add_argument("--ipv", dest="ipv", help="name of JSON-formatted individuals per variant file, default=None", default=None)
 
@@ -112,7 +112,7 @@ def main():
     b_options = options.b
     v_options = options.v
     o_options = options.o
-    f_options = options.f
+    vpi_options = options.vpi
     ipv_options = options.ipv
     c_options = options.c
     d_options = options.d
@@ -127,7 +127,7 @@ def main():
 
 
     run(h_options, e_options, c_options, g_options, p_options, v_options, o_options, s_options,
-        n_options, b_options, d_options, r_options, f_options, ipv_options)
+        n_options, b_options, d_options, r_options, vpi_options, ipv_options)
 
 def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, outputFileName, saveVarsPerIndivid, numProcs,
         brcaFileName, pyensemblDir, rareCutoff, variantsPerIndividualFileName, individualsPerVariantFileName):
