@@ -13,7 +13,7 @@ import subprocess
 
 
 coordinateColumnBase = 'Genomic_Coordinate_hg'
-brcaFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data/brca-variants.tsv'
+brcaFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis-cooccurrence/data/brca-variants.tsv'
 hgVersion = 38
 
 logging.basicConfig()
