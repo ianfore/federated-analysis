@@ -4,8 +4,8 @@ FDA_PATH=$(pwd)
 APP_PATH=${FDA_PATH}/app
 CONF_PATH=${FDA_PATH}/config
 DATA_PATH=${FDA_PATH}/data
-COOCCUR_DOCKER_IMAGE_NAME=brcachallenge/federated-analysis-coccurrence
-PATHOLOGY_DOCKER_IMAGE_NAME=brcachallenge/federated-analysis-pathology
+COOCCUR_DOCKER_IMAGE_NAME=brcachallenge/federated-analysis:cooccurrence
+PATHOLOGY_DOCKER_IMAGE_NAME=brcachallenge/federated-analysis:pathology
 
 if [ $# -eq 0 ]
 then
