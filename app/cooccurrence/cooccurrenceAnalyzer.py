@@ -22,8 +22,8 @@ logger.setLevel(logging.DEBUG)
 
 
 def main():
-    if len(sys.argv) != 11:
-        print('13-out.json 13-vpi.json 13-ipv.json brca-variants.tsv brca-regions.json ancestries.tsv hgdp_to_gnomad.tsv /tmp/myout 16 filter-freq')
+    if len(sys.argv) != 10:
+        print('13-out.json 13-vpi.json 13-ipv.json brca-variants.tsv brca-regions.json ancestries.tsv /tmp/myout 16 filter-freq')
         sys.exit(1)
 
     variantsFileName =sys.argv[1]
@@ -32,10 +32,9 @@ def main():
     brcaFileName = sys.argv[4]
     regionsFileName = sys.argv[5]
     ancestriesFileName = sys.argv[6]
-    hgdpFileName = sys.argv[7]
-    outputDir = sys.argv[8]
-    numProcesses = int(sys.argv[9])
-    frequencyFilter = float(sys.argv[10])
+    outputDir = sys.argv[7]
+    numProcesses = int(sys.argv[8])
+    frequencyFilter = float(sys.argv[9])
 
     logger.info('reading data from ' + vpiFileName)
     with open(vpiFileName, 'r') as f:
@@ -63,12 +62,7 @@ def main():
 
     logger.info('reading data from ' + ancestriesFileName)
     with open(ancestriesFileName, 'r') as f:
-        ancestriesDF = pd.read_csv(f, sep='\t', header=0)
-    f.close()
-
-    logger.info('reading data from ' + hgdpFileName)
-    with open(hgdpFileName, 'r') as f:
-        hgdp_to_gnomad = json.load(f)
+        ancestriesDF = json.load(f)
     f.close()
 
     logger.info('counting genotypes for variants on ' + str(numProcesses) + ' processes')
@@ -82,7 +76,7 @@ def main():
         rare = True
     for i in range(numProcesses):
         p = Process(target=countTotalGenotypesForVariants,
-                    args=(q1, q2, vpiDF, frequencyFilter, brcaDF, ancestriesDF, hgdp_to_gnomad, hgVersion, rare, i, numProcesses,))
+                    args=(q1, q2, vpiDF, frequencyFilter, brcaDF, ancestriesDF, hgVersion, rare, i, numProcesses,))
         p.start()
         processList.append(p)
     logger.info('joining results from forked threads')
@@ -1206,7 +1200,7 @@ def getMaxAncestry(row):
     return maxAncestry
 
 
-def countTotalGenotypesForVariants(q1, q2, vpiDF, rareThreshold, brcaDF, ancestriesDF, hgdp_to_gnomad, hgVersion, rare, threadID, numProcesses):
+def countTotalGenotypesForVariants(q1, q2, vpiDF, rareThreshold, brcaDF, ancestriesDF, hgVersion, rare, threadID, numProcesses):
 
     genotypeCounts = {'benign': {'homo':0, 'hetero': 0},
                      'pathogenic': {'homo': 0, 'hetero': 0},
@@ -1224,10 +1218,9 @@ def countTotalGenotypesForVariants(q1, q2, vpiDF, rareThreshold, brcaDF, ancestr
     logger.info('threadID = ' + str(threadID) + ' processing from ' + str(start) + ' to ' + str(end))
     for i in range(start, end):
         individual = individuals[i]
-        #ethnicity = ancestriesDict[individual]['gnomadPop']
-        ancestry = getMaxAncestry(ancestriesDF[ancestriesDF['individual'] == individual])
-        print('ancestry = ' + ancestry)
-        ethnicity = hgdp_to_gnomad[ancestry]
+        ethnicity = ancestriesDF[individual]['gnomadPop']
+        '''ancestry = getMaxAncestry(ancestriesDF[ancestriesDF['individual'] == individual])
+        ethnicity = hgdp_to_gnomad[ancestry]'''
         logger.debug(individual)
         frequenciesPerIndividual[individual] = {'benign': {'homo': 0, 'hetero': 0},
                                             'pathogenic': {'homo': 0, 'hetero': 0},
