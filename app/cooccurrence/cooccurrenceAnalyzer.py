@@ -13,7 +13,6 @@ import subprocess
 
 
 coordinateColumnBase = 'Genomic_Coordinate_hg'
-brcaFileName = '/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis-cooccurrence/data/brca-variants.tsv'
 hgVersion = 38
 
 logging.basicConfig()
@@ -23,8 +22,8 @@ logger.setLevel(logging.DEBUG)
 
 
 def main():
-    if len(sys.argv) != 10:
-        print('13-out.json 13-vpi.json 13-ipv.json brca-variants.tsv brca-regions.json ancestries.json /tmp/myout 16 filter-freq')
+    if len(sys.argv) != 11:
+        print('13-out.json 13-vpi.json 13-ipv.json brca-variants.tsv brca-regions.json ancestries.tsv hgdp_to_gnomad.tsv /tmp/myout 16 filter-freq')
         sys.exit(1)
 
     variantsFileName =sys.argv[1]
@@ -33,9 +32,10 @@ def main():
     brcaFileName = sys.argv[4]
     regionsFileName = sys.argv[5]
     ancestriesFileName = sys.argv[6]
-    outputDir = sys.argv[7]
-    numProcesses = int(sys.argv[8])
-    frequencyFilter = float(sys.argv[9])
+    hgdpFileName = sys.argv[7]
+    outputDir = sys.argv[8]
+    numProcesses = int(sys.argv[9])
+    frequencyFilter = float(sys.argv[10])
 
     logger.info('reading data from ' + vpiFileName)
     with open(vpiFileName, 'r') as f:
@@ -51,6 +51,7 @@ def main():
     logger.info('finding variants from ' + brcaFileName)
     brcaDF = findVariantsInBRCA(brcaFileName)
 
+    logger.info('reading variants from ' + variantsFileName)
     with open(variantsFileName, 'r') as f:
         variantsDict = json.load(f)
     f.close()
@@ -62,7 +63,12 @@ def main():
 
     logger.info('reading data from ' + ancestriesFileName)
     with open(ancestriesFileName, 'r') as f:
-        ancestriesDict = json.load(f)
+        ancestriesDF = pd.read_csv(f, sep='\t', header=0)
+    f.close()
+
+    logger.info('reading data from ' + hgdpFileName)
+    with open(hgdpFileName, 'r') as f:
+        hgdp_to_gnomad = json.load(f)
     f.close()
 
     logger.info('counting genotypes for variants on ' + str(numProcesses) + ' processes')
@@ -76,7 +82,7 @@ def main():
         rare = True
     for i in range(numProcesses):
         p = Process(target=countTotalGenotypesForVariants,
-                    args=(q1, q2, vpiDF, frequencyFilter, brcaDF, ancestriesDict, hgVersion, rare, i, numProcesses,))
+                    args=(q1, q2, vpiDF, frequencyFilter, brcaDF, ancestriesDF, hgdp_to_gnomad, hgVersion, rare, i, numProcesses,))
         p.start()
         processList.append(p)
     logger.info('joining results from forked threads')
@@ -522,8 +528,8 @@ def getFisherExact(results, key, allValues):
 
 def getHardyWeinbergStats(vpiDict, variantsDict, individualsPerVariant):
     bVars, pVars, vVars = calculateZygosityFrequenciesPerVariant(vpiDict)
-    #bVars, pVars, vVars = hardyWeinbergChiSquareTest(bVars, pVars, vVars, len(vpiDict))
-    bVars, pVars, vVars = hardyWeinbergFisherExactTest(bVars, pVars, vVars, len(vpiDict), 0.05)
+    bVars, pVars, vVars = hardyWeinbergChiSquareTest(bVars, pVars, vVars, len(vpiDict))
+    #bVars, pVars, vVars = hardyWeinbergFisherExactTest(bVars, pVars, vVars, len(vpiDict), 0.05)
     bVars, pVars, vVars = hardyWeinbergStatistics(bVars, pVars, vVars, significance=0.01)
     rejectHW = {'benign': 0, 'pathogenic': 0, 'vus': 0}
     acceptHW = {'benign': 0, 'pathogenic': 0, 'vus': 0}
@@ -917,12 +923,12 @@ def hardyWeinbergChiSquareTest(bVars, pVars, vVars, n):
         expaa = n * pVars[p]['q'] **2
 
         # 7. calculate chi-square = sum[ (O - E)**2 / E ]
-        '''if expAA == 0 or expAa == 0 or expaa == 0:
+        if expAA == 0 or expAa == 0 or expaa == 0:
             pVars[p]['chisquare'] = 0
         else:
             pVars[p]['chisquare'] = 1.0/expAA * (pVars[p]['AA'] - expAA)**2 + \
                                     1.0/expAa * (pVars[p]['Aa'] - expAa)**2 + \
-                                    1.0/expaa * (pVars[p]['aa'] - expaa)**2'''
+                                    1.0/expaa * (pVars[p]['aa'] - expaa)**2
         # 8. compare against p-value for 1 degree of freedom at 0.05 significance (3.84)
         if pVars[p]['chisquare'] >= criticalValue:
             pVars[p]['accept hw'] = False
@@ -1184,12 +1190,23 @@ def getStartAndEnd(partitionSizes, threadID):
     start = 0
     for i in range(threadID):
         start += partitionSizes[i]
-
     end = start + partitionSizes[threadID]
 
     return start, end
 
-def countTotalGenotypesForVariants(q1, q2, vpiDF, rareThreshold, brcaDF, ancestriesDict, hgVersion, rare, threadID, numProcesses):
+def getMaxAncestry(row):
+    max = 0.0
+    maxAncestry = None
+    for ancestry in row.columns[1:]:
+        a = list(row[ancestry])[0]
+        if a > max:
+            max = a
+            maxAncestry = ancestry
+
+    return maxAncestry
+
+
+def countTotalGenotypesForVariants(q1, q2, vpiDF, rareThreshold, brcaDF, ancestriesDF, hgdp_to_gnomad, hgVersion, rare, threadID, numProcesses):
 
     genotypeCounts = {'benign': {'homo':0, 'hetero': 0},
                      'pathogenic': {'homo': 0, 'hetero': 0},
@@ -1207,7 +1224,10 @@ def countTotalGenotypesForVariants(q1, q2, vpiDF, rareThreshold, brcaDF, ancestr
     logger.info('threadID = ' + str(threadID) + ' processing from ' + str(start) + ' to ' + str(end))
     for i in range(start, end):
         individual = individuals[i]
-        ethnicity = ancestriesDict[individual]['gnomadPop']
+        #ethnicity = ancestriesDict[individual]['gnomadPop']
+        ancestry = getMaxAncestry(ancestriesDF[ancestriesDF['individual'] == individual])
+        print('ancestry = ' + ancestry)
+        ethnicity = hgdp_to_gnomad[ancestry]
         logger.debug(individual)
         frequenciesPerIndividual[individual] = {'benign': {'homo': 0, 'hetero': 0},
                                             'pathogenic': {'homo': 0, 'hetero': 0},
@@ -1215,7 +1235,7 @@ def countTotalGenotypesForVariants(q1, q2, vpiDF, rareThreshold, brcaDF, ancestr
 
         for b in vpiDF[individual]['benign']:
             if b:
-                if rare and getGnomadData(brcaDF, tuple(b[0]), hgVersion, None)['max']['frequency'] > rareThreshold:
+                if rare and getGnomadData(brcaDF, tuple(b[0]), hgVersion, ethnicity)['max']['frequency'] > rareThreshold:
                     continue
                     '''gnomadData = getGnomadData(brcaDF, tuple(b[0]), hgVersion, ethnicity)
                     if gnomadData[ethnicity] > rareThreshold:
