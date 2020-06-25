@@ -29,7 +29,7 @@ $ chmod a+r federated-analysis/data/*.vcf
 ```
  
 
-### Run co-occurrence analysis
+### Run co-occurrence analysis container from command line
 To run the co-occurrence analysis, perform the following steps:
 
 1. Change directory to the top-level directory of the repository.
@@ -41,46 +41,80 @@ $ cd federated-analysis/
 2. Run the runMe.sh script as follows:
 
 ```console
-$ ./runMe.sh BreastCancer.shuffle.vcf myout.json 37 75 False 
+$ ./runMe.sh BreastCancer.shuffle.vcf output.json 38 99 13 True BRCA2 True brca-variants.tsv 13-ipv.json 13-vpi.json 
 ```
 
 where:
-* BreastCancer.shuffle.vcf is the name of the VCF file in the federated/analysis/data directory
+* BreastCancer.shuffle.vcf is the name of the VCF file in the federated-analysis/data directory
 
-* myout.json is the name of the JSON output file in the federated/analysis/data directory
+* output.json is the name of the JSON output file in the federated-analysis/data directory
 
-* 37 is the version of the human genome for the coordinates in the VCF file (38 is also supported)
+* 38 is the version of the human genome for the coordinates in the VCF file (37 is also supported)
 
-* 75 is the build of ensembl for retrieving gene names for the coordinates (use 99 for hg38)
+* 99 is the build of ensembl for retrieving gene names for the coordinates (use 75 for hg37)
 
-* False is a boolean value for whether the VCF data is phased (True) or not (False)
+* 13 is the chromosome to filter in the VCF file
 
-3. This will generate a report in federated-analysis/data called myout.json which contains a list of VUS, each in the following format:
+* True is a boolean value for whether the VCF data is phased (True) or not (False)
+
+* BRCA2 is the name of the gene of interest on the chromosome of interest
+
+* True is the boolean value for whether or not to save variants per individual
+
+* brca-variants.tsv is the latest release of BRCA variants from https://brcaexchange.org
+
+* 13-ipv.json is the name of the JSON file containing individuals per variant
+
+* 13-vpi.json is the name of the JSON file containing variants per individual
+
+3. This will generate a report in federated-analysis/data called output.json which contains a list of VUS, each in the following format:
 
 ```json
-"(13, 32914461, 'A', 'C')": [ 	<-- VUS
-        0.0005026755310523755,  <-- P(VUS is benign with a pathogenic variant in trans) 
-        0.0001,			<-- P(VUS is pathogenic with another pathogenic variant in trans)
-        82,			<-- n = number of times this VUS occurred in cohort
-        2,			<-- k = number of times this VUS co-occurred with pathogenic variants
-        0.04087136171331834,	<-- likelihood this variant is pathogenic = (p2^k)*(1-p2)^(n-k) / (p1^k)*(1-p1)^(n-k)
-        [
-            [			<-- co-occurring pathogenic variant #1
-                13,
-                32914936,
-                "TATTAA",
-                "T"
+"(13, 32317399, 'T', 'G')": {
+            "likelihood data": {
+                "p1": 0.25,
+                "p2": 0.001,
+                "n": 2,
+                "k": 2,
+                "likelihood": 1.6e-05
+            },
+            "allele frequencies": {
+                "maxPop": "Allele_frequency_genome_AMR_GnomAD",
+                "maxPopFreq": 0.001179,
+                "cohortFreq": 1.0
+            },
+            "pathogenic variants": [
+                [
+                    13,
+                    32338277,
+                    "G",
+                    "T"
+                ]
             ],
-            [			<-- co-occurring pathogenic variant #2
-                13,
-                32920978,
-                "C",
-                "T"
-            ]
-        ]
-    ],
+            "RARE": true
+
 ```
 
+
+### Run co-occurrence analysis container from WDL
+Define the environment variables for the workflow, such as the following example shows:
+```
+PYTHON_SCRIPT=/home/jcasalet/src/cooccurrenceFinder.py
+VCF_FILE=/data/chr13_brca2.vcf 
+BRCA_FILE=/data/brca-variants.tsv 
+OUTPUT_FILENAME=13-out.json 
+HG_VERSION=38 
+ENSEMBL_RELEASE=99 
+PHASED=True 
+SAVE_VARS=True 
+CHROM=13 
+GENE=BRCA2 
+NUM_CORES=16
+INDIVIDUALS_FILENAME=13-vpi.json
+VARIANTS_FILENAME=13-ipv.json
+```
+
+Then run the WDL workflow using the values of the environment variables defined above.
 
 ## Basic stats and validity checking
 
