@@ -77,7 +77,7 @@ def main():
 
     parser.add_argument("--p", dest="p", help="Phased (boolean). Default=False", default='True')
 
-    parser.add_argument("--s", dest="s", help="Save variants per individual. Default=False", default='False')
+    parser.add_argument("--s", dest="s", help="Save variants per individual. Default=True", default='True')
 
     parser.add_argument("--i", dest="i", help="Include pathog vars per VUS in report. Default=True", default='True')
 

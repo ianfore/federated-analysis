@@ -12,10 +12,9 @@ OUTPUT_FILENAME=13-notinsubset-out.json \
 HG_VERSION=38 \
 ENSEMBL_RELEASE=99 \
 PHASED=True \
-SAVE_VARS=True \
 CHROM=13 \
 GENE=BRCA2 \
 NUM_CORES=$(grep -c processor /proc/cpuinfo) \
-INDIVIDUALS_FILENAME=13-notinsubset-vpi.json \
-VARIANTS_FILENAME=13-notinsubset-ipv.json \
+VPI_FILENAME=13-notinsubset-vpi.json \
+IPV_FILENAME=13-notinsubset-ipv.json \
 -c /private/groups/patenlab/jcasalet/WDL/cromwell.local.conf 
