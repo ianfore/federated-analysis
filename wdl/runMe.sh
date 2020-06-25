@@ -1,10 +1,9 @@
 #!/bin/bash
 
-#DATA_DIR=/private/groups/patenlab/jcasalet/TOPMED_WORKDIR/75530/topmed-dcc/exchange/phs000951_TOPMed_WGS_COPDGene/Combined_Study_Data/Genotypes/freeze.8/phased
-#DATA_DIR=/private/groups/patenlab/jcasalet/TOPMED_WORKDIR/DATA/BROAD
 DATA_DIR=/private/groups/patenlab/jcasalet/TOPMED_WORKDIR/DATA/BROAD/13/GNOMAD/MC
 TOP_DIR=/private/groups/patenlab/jcasalet/federated-analysis
 PYTHON_SCRIPT=${TOP_DIR}/app/cooccurrence/cooccurrenceFinder.py
+
 miniwdl cromwell /private/groups/patenlab/jcasalet/WDL/myVusCooccur.wdl \
 PYTHON_SCRIPT=${PYTHON_SCRIPT} \
 VCF_FILE=${DATA_DIR}/NOTINSUBSET/broad_chr13_brca2_notinsubset.vcf \
