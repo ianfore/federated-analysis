@@ -19,7 +19,7 @@ then
 elif [ $# -eq 1 -a $1 == 'analyze' ]
 then
 
-	docker build -t ${PATHOLOGY_DOCKER_IMAGE_NAME} - < Dockerfile-pathology
+	docker build -t ${PATHOLOGY_DOCKER_IMAGE_NAME} - < docker/pathology/Dockerfile
 
 	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 -w / --user=`id -u`:`id -g` -v ${APP_PATH}/pathology:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data ${PATHOLOGY_DOCKER_IMAGE_NAME} /usr/bin/python3 /app/dataAnalyzer.py /config/conf.json 
 	exit 0
@@ -40,7 +40,7 @@ then
 	VPI_FILE=${11}
 
 
-	docker build -t ${COOCCUR_DOCKER_IMAGE_NAME} - < Dockerfile-cooccurrence
+	docker build -t ${COOCCUR_DOCKER_IMAGE_NAME} - < docker/cooccurrence/Dockerfile
 
 	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 --user=`id -u`:`id -g` -v ${APP_PATH}/cooccurrence:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${COOCCUR_DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder.py  --v ${VCF_FILE} --o ${OUTPUT_FILE} --h $HG_VERSION --e $ENSEMBL_RELEASE --c $CHROM --p $PHASED --s ${SAVE_VARS} --g $GENE --b $BRCA_VARS  --d /var/tmp/pyensembl-cache --ipv $IPV_FILE  --vpi $VPI_FILE
 

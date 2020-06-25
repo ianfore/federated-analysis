@@ -16,14 +16,6 @@ def main():
 
     cohort = pd.read_csv(cohortFileName, header=None)
 
-    '''Sub_Saharan_Africa      AFR
-    Central_and_South_Asia  SAS
-    East_Asia       EAS
-    Europe  NFE
-    Native_America  AMR
-    Oceania OTH
-    Middle_East     OTH'''
-
     topmed2gnomAD = dict()
     topmed2gnomAD['Sub_Saharan_Africa'] = 'AFR'
     topmed2gnomAD['Central_and_South_Asia'] = 'SAS'
@@ -62,15 +54,6 @@ def main():
     with open(outputDir + '/ancestries.json', 'w') as f:
         json.dump(populationPerIndividual, f)
     f.close()
-
-    '''HGDP	GNOMAD
-    Sub_Saharan_Africa	AFR
-    Central_and_South_Asia	SAS
-    East_Asia	EAS
-    Europe	NFE
-    Native_America	AMR
-    Oceania	OTH
-    Middle_East	OTH'''
 
 
 if __name__ == "__main__":
