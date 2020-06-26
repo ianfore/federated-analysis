@@ -16,8 +16,6 @@ workflow cooccurrence {
 	String NUM_CORES
 	}
 
-  
-
 	call run_cooccurrence {
 	input: 
 		python_script=PYTHON_SCRIPT,
