@@ -53,11 +53,14 @@ task run_cooccurrence {
 	command <<<
 		export PYTHONPATH=/ 
 		export PYTHONIOENCODING=UTF-8 
-		/usr/bin/python3  ~{python_script} --v ~{vcf_file} --o ~{output_filename} --h ~{hg_version} --e ~{ensembl_release} --c ~{chrom} --g ~{gene} --p ~{phased} --n ~{num_cores} --b ~{brca_file} --f ~{individuals_filename} --ipv ~{variants_filename}
+		/usr/bin/python3  ~{python_script} --v ~{vcf_file} --o ~{output_filename} --h ~{hg_version} --e ~{ensembl_release} --c ~{chrom} --g ~{gene} --p ~{phased} --n ~{num_cores} --b ~{brca_file} --vpi ~{individuals_filename} --ipv ~{variants_filename}
 	>>>
 
 	runtime {
 		docker: 'brcachallenge/federated-analysis:cooccurrence'
+    		memory: "8192 MB"
+    		disk: "local-disk 20 HDD"   ## hardcoded disk size (20) and type (HDD)
+  }
 	} 
 }
 
