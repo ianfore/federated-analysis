@@ -60,7 +60,7 @@ task run_cooccurrence {
 		docker: 'brcachallenge/federated-analysis:cooccurrence'
     		memory: "8192 MB"
     		#disk: "local-disk 20 HDD"   ## hardcoded disk size (20) and type (HDD)
-    		disk: "local-disk 200 HDD"   ## hardcoded disk size (200) and type (HDD)
+    		disk: "local-disk 100 SSD"   ## hardcoded disk size (100) and type (SSD)
 	} 
 }
 
