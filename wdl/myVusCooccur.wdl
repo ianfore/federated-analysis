@@ -75,7 +75,7 @@ task run_cooccurrence {
     		memory: "8192 MB"
     		#disk: "local-disk 20 HDD"   ## hardcoded disk size (20) and type (HDD)
     		#disk: "local-disk 200"   ## hardcoded disk size (20) and type (HDD)
-		bootDiskSizeGB: 20
+		bootDiskSizeGB: 50
 	} 
 }
 
