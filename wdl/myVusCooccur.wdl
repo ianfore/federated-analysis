@@ -29,8 +29,14 @@ workflow cooccurrence {
 		num_cores=NUM_CORES,
 		output_filename=OUTPUT_FILENAME,
 		individuals_filename=VPI_FILENAME,
-		variants_filename=IPV_FILENAME,
+		variants_filename=IPV_FILENAME
 	}
+	output { 
+		File ipv_file = IPV_FILENAME
+                File vpi_file = VPI_FILENAME 
+                File out_file = OUTPUT_FILENAME 
+	}
+
 		
 }
 
@@ -39,15 +45,15 @@ task run_cooccurrence {
 		File python_script
 		File vcf_file
 		File brca_file
-		String output_filename
-		String individuals_filename
-		String variants_filename
 		String hg_version
 		String ensembl_release
 		String phased
 		String chrom
 		String gene
 		String num_cores
+		String output_filename
+		String individuals_filename
+		String variants_filename
 	}
 
 	command <<<
@@ -55,13 +61,20 @@ task run_cooccurrence {
 		export PYTHONIOENCODING=UTF-8 
 		/usr/bin/python3  ~{python_script} --v ~{vcf_file} --o ~{output_filename} --h ~{hg_version} --e ~{ensembl_release} --c ~{chrom} --g ~{gene} --p ~{phased} --n ~{num_cores} --b ~{brca_file} --vpi ~{individuals_filename} --ipv ~{variants_filename}
 	>>>
+	
+	output {
+		File actual_ipv_file = "~{variants_filename}"
+		File actual_vpi_file = "~{individuals_filename}"
+		File actual_out_file = "~{output_filename}"
+		
+
+	}
 
 	runtime {
 		docker: 'brcachallenge/federated-analysis:cooccurrence'
     		memory: "8192 MB"
-		bootDiskSizeGb: 50
-    		#disks: "local-disk 200 HDD"   ## hardcoded disk size (200) and type (HDD)
-    		#disks: "local-disk 100 SSD"   ## hardcoded disk size (100) and type (SSD)
+    		#disk: "local-disk 20 HDD"   ## hardcoded disk size (20) and type (HDD)
+    		disk: "local-disk 200"   ## hardcoded disk size (20) and type (HDD)
 	} 
 }
 
