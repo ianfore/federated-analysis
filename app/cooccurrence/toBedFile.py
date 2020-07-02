@@ -21,9 +21,9 @@ def generateBedDict(coocs, homos, inGnomad, notGnomad):
                'both-in':[],
                'both-not':[]}
     for c in coocs:
-        chrom = c[0]
-        pos = c[1]
-        length = max(len(c[2]), len(c[3]))
+        chrom = eval(c)[0]
+        pos = eval(c)[1]
+        length = max(len(eval(c)[2]), len(eval(c)[3]))
         if c in homos:
             if c in inGnomad:
                 bedDict['both-in'].append((chrom, pos, length))
@@ -36,9 +36,9 @@ def generateBedDict(coocs, homos, inGnomad, notGnomad):
                 bedDict['cooc-not'].append((chrom, pos, length))
 
     for h in homos:
-        chrom = h[0]
-        pos = h[1]
-        length = max(len(h[2]), len(h[3]))
+        chrom = eval(h)[0]
+        pos = eval(h)[1]
+        length = max(len(eval(h)[2]), len(eval(h)[3]))
         if h in coocs:
             if h in inGnomad:
                 bedDict['both-in'].append((chrom, pos, length))
