@@ -38,7 +38,7 @@ def generateBedDict(coocs, homos, inGnomad, notGnomad):
     for h in homos:
         chrom = h[0]
         pos = h[1]
-        length = max(len(h[2], h[3]))
+        length = max(len(h[2]), len(h[3]))
         if h in coocs:
             if h in inGnomad:
                 bedDict['both-in'].append((chrom, pos, length))
