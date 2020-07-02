@@ -10,7 +10,9 @@ def main():
 
     bedDict = generateBedDict(coocs, homos, inGnomad, notGnomad)
 
-    print(bedDict)
+
+def writeBedFiles(bedDict, inputDir, chrom):
+
 
 
 def generateBedDict(coocs, homos, inGnomad, notGnomad):
