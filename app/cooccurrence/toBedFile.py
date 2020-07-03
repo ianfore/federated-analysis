@@ -7,6 +7,8 @@ cooccurringInGnomad = 'cooc-in'
 cooccurringNotInGnomad = 'cooc-not'
 bothInGnomad = 'both-in'
 bothNotInGnomad = 'both-not'
+inGnomad = 'in'
+notInGnomad = 'not'
 
 def main():
     if len(sys.argv) != 3:
@@ -28,6 +30,8 @@ def writeBedFiles(bedDict, inputDir, chrom):
     coocNotInFile = inputDir + '/' + chrom + '-' + cooccurringNotInGnomad + '.bed'
     bothInFile = inputDir + '/' + chrom + '-' + bothInGnomad + '.bed'
     bothNotInFile = inputDir + '/' + chrom + '-' + bothNotInGnomad + '.bed'
+    inFile = inputDir + '/' + chrom + '-' + inGnomad + '.bed'
+    notFile = inputDir + '/' + chrom + '-' + notInGnomad + '.bed'
 
     with open(homoInFile, 'w') as f:
         for item in bedDict[homozygousInGnomad]:
@@ -56,6 +60,16 @@ def writeBedFiles(bedDict, inputDir, chrom):
 
     with open(bothNotInFile, 'w') as f:
         for item in bedDict[bothNotInGnomad]:
+            f.write(str(item[0]) + '\t' + str(item[1]) + '\t' + str(item[2]) + '\n')
+    f.close()
+
+    with open(inFile, 'w') as f:
+        for item in bedDict[inGnomad]:
+            f.write(str(item[0]) + '\t' + str(item[1]) + '\t' + str(item[2]) + '\n')
+    f.close()
+
+    with open(notFile, 'w') as f:
+        for item in bedDict[notInGnomad]:
             f.write(str(item[0]) + '\t' + str(item[1]) + '\t' + str(item[2]) + '\n')
     f.close()
 
@@ -115,6 +129,25 @@ def generateBedDict(coocs, homos, inGnomad, notGnomad):
             else:
                 print('error: ' + str(h) + ' not in gnomad or not gnomad files!')
                 sys.exit(1)
+
+    for i in inGnomad:
+        chrom = eval(i)[0]
+        if not type(chrom) is str or not chrom.startswith('chr'):
+            chrom = 'chr' + str(chrom)
+        start = eval(i)[1]
+        length = max(len(eval(i)[2]), len(eval(i)[3]))
+        end = start + length
+        bedDict[inGnomad].append((chrom, start, end))
+
+    for n in notInGnomad:
+        chrom = eval(n)[0]
+        if not type(chrom) is str or not chrom.startswith('chr'):
+            chrom = 'chr' + str(chrom)
+        start = eval(n)[1]
+        length = max(len(eval(n)[2]), len(eval(n)[3]))
+        end = start + length
+        bedDict[notInGnomad].append((chrom, start, end))
+
 
     return bedDict
 
