@@ -72,21 +72,22 @@ def generateBedDict(coocs, homos, inGnomad, notGnomad):
         chrom = eval(c)[0]
         if not type(chrom) is str or not chrom.startswith('chr'):
             chrom = 'chr' + str(chrom)
-        pos = eval(c)[1]
+        start = eval(c)[1]
         length = max(len(eval(c)[2]), len(eval(c)[3]))
+        end = start + length
         if c in homos:
             if c in inGnomad:
-                bedDict[bothInGnomad].append((chrom, pos, length))
+                bedDict[bothInGnomad].append((chrom, start, end))
             elif c in notGnomad:
-                bedDict[bothNotInGnomad].append((chrom, pos, length))
+                bedDict[bothNotInGnomad].append((chrom, start, end))
             else:
                 print('error: ' + str(c) + ' not in gnomad or not gnomad files!')
                 sys.exit(1)
         else:
             if c in inGnomad:
-                bedDict[cooccurringInGnomad].append((chrom, pos, length))
+                bedDict[cooccurringInGnomad].append((chrom, start, end))
             elif c in notGnomad:
-                bedDict[cooccurringNotInGnomad].append((chrom, pos, length))
+                bedDict[cooccurringNotInGnomad].append((chrom, start, end))
             else:
                 print('error: ' + str(c) + ' not in gnomad or not gnomad files!')
                 sys.exit(1)
@@ -95,21 +96,22 @@ def generateBedDict(coocs, homos, inGnomad, notGnomad):
         chrom = eval(h)[0]
         if not type(chrom) is str or not chrom.startswith('chr'):
             chrom = 'chr' + str(chrom)
-        pos = eval(h)[1]
+        start = eval(h)[1]
         length = max(len(eval(h)[2]), len(eval(h)[3]))
+        end = start + length
         if h in coocs:
             if h in inGnomad:
-                bedDict[bothInGnomad].append((chrom, pos, length))
+                bedDict[bothInGnomad].append((chrom, start, end))
             elif h in notGnomad:
-                bedDict[bothNotInGnomad].append((chrom, pos, length))
+                bedDict[bothNotInGnomad].append((chrom, start, end))
             else:
                 print('error: ' + str(h) + ' not in gnomad or not gnomad files!')
                 sys.exit(1)
         else:
             if h in inGnomad:
-                bedDict[homozygousInGnomad].append((chrom, pos, length))
+                bedDict[homozygousInGnomad].append((chrom, start, end))
             elif h in notGnomad:
-                bedDict[homozygousNotInGnomad].append((chrom, pos, length))
+                bedDict[homozygousNotInGnomad].append((chrom, start, end))
             else:
                 print('error: ' + str(h) + ' not in gnomad or not gnomad files!')
                 sys.exit(1)
