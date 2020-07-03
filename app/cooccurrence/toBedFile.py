@@ -35,7 +35,7 @@ def writeBedFiles(bedDict, inputDir, chrom):
 
     with open(homoInFile, 'w') as f:
         for item in bedDict[homozygousInGnomad]:
-            f.write(str(item))
+            f.write(str(item[0]) + '\t' + str(item[1]) + '\t' + str(item[2]) + '\n')
     f.close()
 
     with open(homoNotInFile, 'w') as f:
