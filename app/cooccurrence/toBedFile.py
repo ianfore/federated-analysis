@@ -1,5 +1,13 @@
 import sys
 
+
+homozygousInGnomad = 'homo-in'
+homozygousNotInGnomad = 'homo-not'
+cooccurringInGnomad = 'cooc-in'
+cooccurringNotInGnomad = 'cooc-not'
+bothInGnomad = 'both-in'
+bothNotInGnomad = 'both-not'
+
 def main():
     if len(sys.argv) != 3:
         print('inputDir chrom')
@@ -10,32 +18,70 @@ def main():
 
     bedDict = generateBedDict(coocs, homos, inGnomad, notGnomad)
 
+    writeBedFiles(bedDict, sys.argv[1], sys.argv[2])
+
 
 def writeBedFiles(bedDict, inputDir, chrom):
+    homoInFile = inputDir + '/' + chrom + '-' + homozygousInGnomad
+    homoNotInFile = inputDir + '/' + chrom + '-' + homozygousNotInGnomad
+    coocInFile = inputDir + '/' + chrom + '-' + cooccurringInGnomad
+    coocNotInFile = inputDir + '/' + chrom + '-' + cooccurringNotInGnomad
+    bothInFile = inputDir + '/' + chrom + '-' + bothInGnomad
+    bothNotInFile = inputDir + '/' + chrom + '-' + bothNotInGnomad
+
+    with open(homoInFile, 'w') as f:
+        f.write(bedDict[homozygousInGnomad])
+    f.close()
+
+    with open(homoNotInFile, 'w') as f:
+        f.write(bedDict[homozygousNotInGnomad])
+    f.close()
+
+    with open(coocInFile, 'w') as f:
+        f.write(bedDict[cooccurringInGnomad])
+    f.close()
+
+    with open(coocNotInFile, 'w') as f:
+        f.write(bedDict[cooccurringNotInGnomad])
+    f.close()
+
+    with open(bothInFile, 'w') as f:
+        f.write(bedDict[bothInGnomad])
+    f.close()
+
+    with open(bothNotInFile, 'w') as f:
+        f.write(bedDict[bothNotInGnomad])
+    f.close()
 
 
 
 def generateBedDict(coocs, homos, inGnomad, notGnomad):
-    bedDict = {'homo-in':[],
-               'homo-not': [],
-               'cooc-in':[],
-               'cooc-not':[],
-               'both-in':[],
-               'both-not':[]}
+    bedDict = {homozygousInGnomad:[],
+               homozygousNotInGnomad: [],
+               cooccurringInGnomad:[],
+               cooccurringNotInGnomad:[],
+               bothInGnomad:[],
+               bothNotInGnomad:[]}
     for c in coocs:
         chrom = eval(c)[0]
         pos = eval(c)[1]
         length = max(len(eval(c)[2]), len(eval(c)[3]))
         if c in homos:
             if c in inGnomad:
-                bedDict['both-in'].append((chrom, pos, length))
+                bedDict[bothInGnomad].append((chrom, pos, length))
+            elif c in notGnomad:
+                bedDict[bothNotInGnomad].append((chrom, pos, length))
             else:
-                bedDict['both-not'].append((chrom, pos, length))
+                print('error: ' + str(c) + ' not in gnomad or not gnomad files!')
+                sys.exit(1)
         else:
             if c in inGnomad:
-                bedDict['cooc-in'].append((chrom, pos, length))
+                bedDict[cooccurringInGnomad].append((chrom, pos, length))
+            elif c in notGnomad:
+                bedDict[cooccurringNotInGnomad].append((chrom, pos, length))
             else:
-                bedDict['cooc-not'].append((chrom, pos, length))
+            print('error: ' + str(c) + ' not in gnomad or not gnomad files!')
+            sys.exit(1)
 
     for h in homos:
         chrom = eval(h)[0]
@@ -43,43 +89,43 @@ def generateBedDict(coocs, homos, inGnomad, notGnomad):
         length = max(len(eval(h)[2]), len(eval(h)[3]))
         if h in coocs:
             if h in inGnomad:
-                bedDict['both-in'].append((chrom, pos, length))
+                bedDict[bothInGnomad].append((chrom, pos, length))
+            elif h in notGnomad:
+                bedDict[bothNotInGnomad].append((chrom, pos, length))
             else:
-                bedDict['both-not'].append((chrom, pos, length))
+                print('error: ' + str(h) + ' not in gnomad or not gnomad files!')
+                sys.exit(1)
         else:
             if h in inGnomad:
-                bedDict['homo-in'].append((chrom, pos, length))
+                bedDict[homozygousInGnomad].append((chrom, pos, length))
+            elif h in notGnomad:
+                bedDict[homozygousNotInGnomad].append((chrom, pos, length))
             else:
-                bedDict['homo-not'].append((chrom, pos, length))
+                print('error: ' + str(h) + ' not in gnomad or not gnomad files!')
+                sys.exit(1)
 
     return bedDict
 
 
 def readFiles(inputDir, chrom):
-    inputDir = sys.argv[1]
-    chrom = sys.argv[2]
 
     coocsFileName = inputDir + '/' + chrom + '-coocs.txt'
-    coocs = list()
     with open(coocsFileName, 'r') as f:
         coocs = [line.rstrip() for line in f]
     f.close()
 
     homosFileName = inputDir + '/' + chrom + '-homos.txt'
-    homos = list()
     with open(homosFileName, 'r') as f:
         homos = [line.rstrip() for line in f]
     f.close()
 
     inFileName = inputDir + '/' + chrom + '-in.txt'
-    inGnomad = list()
     with open(inFileName, 'r') as f:
         inGnomad = [line.rstrip() for line in f]
     f.close()
 
     notFileName = inputDir + '/' + chrom + '-not.txt'
-    notGnomad = list()
-    with open(inFileName, 'r') as f:
+    with open(notFileName, 'r') as f:
          notGnomad = [line.rstrip() for line in f]
     f.close()
 
