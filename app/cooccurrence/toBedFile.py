@@ -22,12 +22,12 @@ def main():
 
 
 def writeBedFiles(bedDict, inputDir, chrom):
-    homoInFile = inputDir + '/' + chrom + '-' + homozygousInGnomad
-    homoNotInFile = inputDir + '/' + chrom + '-' + homozygousNotInGnomad
-    coocInFile = inputDir + '/' + chrom + '-' + cooccurringInGnomad
-    coocNotInFile = inputDir + '/' + chrom + '-' + cooccurringNotInGnomad
-    bothInFile = inputDir + '/' + chrom + '-' + bothInGnomad
-    bothNotInFile = inputDir + '/' + chrom + '-' + bothNotInGnomad
+    homoInFile = inputDir + '/' + chrom + '-' + homozygousInGnomad + '.bed'
+    homoNotInFile = inputDir + '/' + chrom + '-' + homozygousNotInGnomad + '.bed'
+    coocInFile = inputDir + '/' + chrom + '-' + cooccurringInGnomad + '.bed'
+    coocNotInFile = inputDir + '/' + chrom + '-' + cooccurringNotInGnomad + '.bed'
+    bothInFile = inputDir + '/' + chrom + '-' + bothInGnomad + '.bed'
+    bothNotInFile = inputDir + '/' + chrom + '-' + bothNotInGnomad + '.bed'
 
     with open(homoInFile, 'w') as f:
         for item in bedDict[homozygousInGnomad]:
@@ -36,27 +36,27 @@ def writeBedFiles(bedDict, inputDir, chrom):
 
     with open(homoNotInFile, 'w') as f:
         for item in bedDict[homozygousNotInGnomad]:
-            f.write(str(item))
+            f.write(str(item[0]) + '\t' + str(item[1]) + '\t' + str(item[2]) + '\n')
     f.close()
 
     with open(coocInFile, 'w') as f:
         for item in bedDict[cooccurringInGnomad]:
-            f.write(str(item))
+            f.write(str(item[0]) + '\t' + str(item[1]) + '\t' + str(item[2]) + '\n')
     f.close()
 
     with open(coocNotInFile, 'w') as f:
         for item in bedDict[cooccurringNotInGnomad]:
-            f.write(str(item))
+            f.write(str(item[0]) + '\t' + str(item[1]) + '\t' + str(item[2]) + '\n')
     f.close()
 
     with open(bothInFile, 'w') as f:
         for item in bedDict[bothInGnomad]:
-            f.write(str(item))
+            f.write(str(item[0]) + '\t' + str(item[1]) + '\t' + str(item[2]) + '\n')
     f.close()
 
     with open(bothNotInFile, 'w') as f:
         for item in bedDict[bothNotInGnomad]:
-            f.write(str(item))
+            f.write(str(item[0]) + '\t' + str(item[1]) + '\t' + str(item[2]) + '\n')
     f.close()
 
 
