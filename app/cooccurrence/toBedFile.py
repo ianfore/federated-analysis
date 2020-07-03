@@ -30,27 +30,33 @@ def writeBedFiles(bedDict, inputDir, chrom):
     bothNotInFile = inputDir + '/' + chrom + '-' + bothNotInGnomad
 
     with open(homoInFile, 'w') as f:
-        f.write(bedDict[homozygousInGnomad])
+        for item in bedDict[homozygousInGnomad]:
+            f.write(item)
     f.close()
 
     with open(homoNotInFile, 'w') as f:
-        f.write(bedDict[homozygousNotInGnomad])
+        for item in bedDict[homozygousNotInGnomad]:
+            f.write(item)
     f.close()
 
     with open(coocInFile, 'w') as f:
-        f.write(bedDict[cooccurringInGnomad])
+        for item in bedDict[cooccurringInGnomad]:
+            f.write(item)
     f.close()
 
     with open(coocNotInFile, 'w') as f:
-        f.write(bedDict[cooccurringNotInGnomad])
+        for item in bedDict[cooccurringNotInGnomad]:
+            f.write(item)
     f.close()
 
     with open(bothInFile, 'w') as f:
-        f.write(bedDict[bothInGnomad])
+        for item in bedDict[bothInGnomad]:
+            f.write(item)
     f.close()
 
     with open(bothNotInFile, 'w') as f:
-        f.write(bedDict[bothNotInGnomad])
+        for item in bedDict[bothNotInGnomad]:
+            f.write(item)
     f.close()
 
 
