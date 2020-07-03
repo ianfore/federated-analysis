@@ -7,8 +7,8 @@ cooccurringInGnomad = 'cooc-in'
 cooccurringNotInGnomad = 'cooc-not'
 bothInGnomad = 'both-in'
 bothNotInGnomad = 'both-not'
-inGnomad = 'in'
-notInGnomad = 'not'
+inGnomad = 'all-in'
+notInGnomad = 'all-not'
 
 def main():
     if len(sys.argv) != 3:
