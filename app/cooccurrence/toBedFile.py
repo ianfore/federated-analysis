@@ -70,7 +70,7 @@ def generateBedDict(coocs, homos, inGnomad, notGnomad):
                bothNotInGnomad:[]}
     for c in coocs:
         chrom = eval(c)[0]
-        if type(chrom) is str and not chrom.startswith('chr'):
+        if not type(chrom) is str and not chrom.startswith('chr'):
             chrom = 'chr' + str(chrom)
         pos = eval(c)[1]
         length = max(len(eval(c)[2]), len(eval(c)[3]))
@@ -93,7 +93,7 @@ def generateBedDict(coocs, homos, inGnomad, notGnomad):
 
     for h in homos:
         chrom = eval(h)[0]
-        if type(chrom) is str and not chrom.startswith('chr'):
+        if not type(chrom) is str and not chrom.startswith('chr'):
             chrom = 'chr' + str(chrom)
         pos = eval(h)[1]
         length = max(len(eval(h)[2]), len(eval(h)[3]))
