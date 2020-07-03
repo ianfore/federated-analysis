@@ -80,8 +80,8 @@ def generateBedDict(coocs, homos, inGnomad, notGnomad):
             elif c in notGnomad:
                 bedDict[cooccurringNotInGnomad].append((chrom, pos, length))
             else:
-            print('error: ' + str(c) + ' not in gnomad or not gnomad files!')
-            sys.exit(1)
+                print('error: ' + str(c) + ' not in gnomad or not gnomad files!')
+                sys.exit(1)
 
     for h in homos:
         chrom = eval(h)[0]
