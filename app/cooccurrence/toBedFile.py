@@ -81,7 +81,9 @@ def generateBedDict(coocs, homos, inGnomad, notGnomad):
                cooccurringInGnomad:[],
                cooccurringNotInGnomad:[],
                bothInGnomad:[],
-               bothNotInGnomad:[]}
+               bothNotInGnomad:[],
+               allInGnomad:[],
+               allNotInGnomad:[]}
     for c in coocs:
         chrom = eval(c)[0]
         if not type(chrom) is str or not chrom.startswith('chr'):
