@@ -88,9 +88,9 @@ def generateBedDict(coocs, homos, inGnomad, notGnomad):
         chrom = eval(c)[0]
         if not type(chrom) is str or not chrom.startswith('chr'):
             chrom = 'chr' + str(chrom)
-        start = eval(c)[1]
+        end = eval(c)[1]
         length = max(len(eval(c)[2]), len(eval(c)[3]))
-        end = start + length
+        start = end - length
         if c in homos:
             if c in inGnomad:
                 bedDict[bothInGnomad].append((chrom, start, end))
@@ -112,9 +112,9 @@ def generateBedDict(coocs, homos, inGnomad, notGnomad):
         chrom = eval(h)[0]
         if not type(chrom) is str or not chrom.startswith('chr'):
             chrom = 'chr' + str(chrom)
-        start = eval(h)[1]
+        end = eval(h)[1]
         length = max(len(eval(h)[2]), len(eval(h)[3]))
-        end = start + length
+        start = end - length
         if h in coocs:
             if h in inGnomad:
                 bedDict[bothInGnomad].append((chrom, start, end))
@@ -136,18 +136,18 @@ def generateBedDict(coocs, homos, inGnomad, notGnomad):
         chrom = eval(i)[0]
         if not type(chrom) is str or not chrom.startswith('chr'):
             chrom = 'chr' + str(chrom)
-        start = eval(i)[1]
+        end = eval(i)[1]
         length = max(len(eval(i)[2]), len(eval(i)[3]))
-        end = start + length
+        start = end - length
         bedDict[allInGnomad].append((chrom, start, end))
 
     for n in notGnomad:
         chrom = eval(n)[0]
         if not type(chrom) is str or not chrom.startswith('chr'):
             chrom = 'chr' + str(chrom)
-        start = eval(n)[1]
+        end = eval(n)[1]
         length = max(len(eval(n)[2]), len(eval(n)[3]))
-        end = start + length
+        start = end - length
         bedDict[allNotInGnomad].append((chrom, start, end))
 
 
