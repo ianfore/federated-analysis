@@ -189,7 +189,10 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
     homozygousPerVus = countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, gene, rareCutoff)
     logger.info('elapsed time in countHomozygousPerVus() ' + str(time.time() -t))
 
-
+    logger.info('finding homozygous individuals per benign')
+    t = time.time()
+    homozygousPerBenign = countHomozygousPerBenign(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, gene, rareCutoff)
+    logger.info('elapsed time in countHomozygousPerBenign() ' + str(time.time() - t))
 
     logger.info('finding individuals per cooc')
     t = time.time()
@@ -216,7 +219,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
     logger.info('putting all the data together per vus')
     dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, p1, n, k, brcaDF, hgVersion, cohortSize, rareCutoff)
 
-    data_set = {"cooccurring vus": dataPerVus, "homozygous vus": homozygousPerVus}
+    data_set = {"cooccurring vus": dataPerVus, "homozygous vus": homozygousPerVus, "homozygous benign": homozygousPerBenign}
     json_dump = json.dumps(data_set, cls=NpEncoder)
 
     logger.info('saving final VUS data  to ' + outputFileName)
@@ -317,6 +320,34 @@ def getGnomadData(brcaDF, vus, hgVersion):
                 maxPopulation = af
 
     return (maxPopulation, maxFrequency)
+
+def countHomozygousPerBenign(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, geneOfInterest, rareCutoff):
+    homozygousPerBenign = dict()
+
+    for individual in variantsPerIndividual:
+        for ben in variantsPerIndividual[individual]['benign']:
+            if (ben[1] == '3') and (getGenesForVariant(ben[0], ensemblRelease, geneOfInterest)):
+                if str(ben[0]) not in homozygousPerBenign:
+                    homozygousPerBenign[str(ben[0])] = dict()
+                    homozygousPerBenign[str(ben[0])]['count'] = 0
+                    maxPop, maxPopFreq = getGnomadData(brcaDF, ben[0], hgVersion)
+                    homozygousPerBenign[str(ben[0])]['maxPop'] = maxPop
+                    homozygousPerBenign[str(ben[0])]['maxPopFreq'] = maxPopFreq
+                homozygousPerBenign[str(ben[0])]['count'] += 1
+
+    cohortSize = len(variantsPerIndividual)
+    for ben in homozygousPerBenign:
+        maxPopFreq = homozygousPerBenign[ben]['maxPopFreq']
+        cohortFreq = float(homozygousPerBenign[ben]['count'])/ float(cohortSize)
+        homozygousPerBenign[ben]['cohortFreq'] = float(cohortFreq)
+        if cohortFreq < rareCutoff or (maxPopFreq != 0 and maxPopFreq < rareCutoff):
+            homozygousPerBenign[ben]['RARE']= True
+        else:
+            homozygousPerBenign[ben]['RARE'] = False
+
+
+    return homozygousPerBenign
+
 
 def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, geneOfInterest, rareCutoff):
     homozygousPerVus = dict()
