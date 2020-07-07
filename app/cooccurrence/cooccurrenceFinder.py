@@ -205,7 +205,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
     # calculate total number of benign, pathogenic, and vus variants in cohort
     logger.info('getting all variants for cohort')
     allVariants = getAllVariantsPerClass(variantsPerIndividual)
-    numBenign = len(allVariants['benign'])
+    numBenign = len(set(allVariants['benign']))
     p1 =  0.5 * numBenign / cohortSize
     logger.info('saving all variants to ' + allVariantsFileName)
     json_dump = json.dumps(allVariants, cls=NpEncoder)
@@ -247,17 +247,17 @@ def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, brcaDF, hgV
 
 def getAllVariantsPerClass(vpi):
     allVariants = dict()
-    allVariants['benign'] = set()
-    allVariants['pathogenic'] = set()
-    allVariants['vus'] = set()
+    allVariants['benign'] = list()
+    allVariants['pathogenic'] = list()
+    allVariants['vus'] = list()
 
     for i in vpi:
         for b in vpi[i]['benign']:
-            allVariants['benign'].add(b)
+            allVariants['benign'].append(b)
         for p in vpi[i]['pathogenic']:
-            allVariants['pathogenic'].add(p)
+            allVariants['pathogenic'].append(p)
         for v in vpi[i]['vus']:
-            allVariants['vus'].add(v)
+            allVariants['vus'].append(v)
 
     return allVariants
 
