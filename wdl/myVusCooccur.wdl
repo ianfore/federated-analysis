@@ -8,6 +8,7 @@ workflow cooccurrence {
 	String OUTPUT_FILENAME
 	String VPI_FILENAME
 	String IPV_FILENAME
+	String ALL_FILENAME
 	String HG_VERSION
 	String ENSEMBL_RELEASE
 	String PHASED
@@ -29,12 +30,14 @@ workflow cooccurrence {
 		num_cores=NUM_CORES,
 		output_filename=OUTPUT_FILENAME,
 		individuals_filename=VPI_FILENAME,
+		all_filename=ALL_FILENAME,
 		variants_filename=IPV_FILENAME
 	}
 	output { 
 		File ipv_file = IPV_FILENAME
                 File vpi_file = VPI_FILENAME 
                 File out_file = OUTPUT_FILENAME 
+		File all_file = ALL_FILENAME
 	}
 
 		
@@ -54,18 +57,20 @@ task run_cooccurrence {
 		String output_filename
 		String individuals_filename
 		String variants_filename
+		String all_filename
 	}
 
 	command <<<
 		export PYTHONPATH=/ 
 		export PYTHONIOENCODING=UTF-8 
-		/usr/bin/python3  ~{python_script} --v ~{vcf_file} --o ~{output_filename} --h ~{hg_version} --e ~{ensembl_release} --c ~{chrom} --g ~{gene} --p ~{phased} --n ~{num_cores} --b ~{brca_file} --vpi ~{individuals_filename} --ipv ~{variants_filename}
+		/usr/bin/python3  ~{python_script} --vcf ~{vcf_file} --out ~{output_filename} --h ~{hg_version} --e ~{ensembl_release} --c ~{chrom} --g ~{gene} --p ~{phased} --n ~{num_cores} --b ~{brca_file} --vpi ~{individuals_filename} --ipv ~{variants_filename} --all ~{all_filename}
 	>>>
 	
 	output {
 		File actual_ipv_file = "~{variants_filename}"
 		File actual_vpi_file = "~{individuals_filename}"
 		File actual_out_file = "~{output_filename}"
+		File actual_all_file = "~{all_filename}"
 		
 
 	}

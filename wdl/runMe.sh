@@ -8,13 +8,14 @@ miniwdl cromwell /private/groups/patenlab/jcasalet/WDL/myVusCooccur.wdl \
 PYTHON_SCRIPT=${PYTHON_SCRIPT} \
 VCF_FILE=${DATA_DIR}/NOTINSUBSET/broad_chr13_brca2_notinsubset.vcf \
 BRCA_FILE=${TOP_DIR}/data/brca-variants.tsv \
-OUTPUT_FILENAME=13-notinsubset-out.json \
+OUTPUT_FILENAME=13-out.json \
+ALL_FILENAME=13-all.json \
+VPI_FILENAME=13-vpi.json \
+IPV_FILENAME=13-ipv.json \
 HG_VERSION=38 \
 ENSEMBL_RELEASE=99 \
 PHASED=True \
 CHROM=13 \
 GENE=BRCA2 \
 NUM_CORES=$(grep -c processor /proc/cpuinfo) \
-VPI_FILENAME=13-notinsubset-vpi.json \
-IPV_FILENAME=13-notinsubset-ipv.json \
 -c /private/groups/patenlab/jcasalet/WDL/cromwell.local.conf 

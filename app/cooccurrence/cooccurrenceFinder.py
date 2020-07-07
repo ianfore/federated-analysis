@@ -58,9 +58,15 @@ def main():
 
     parser = argparse.ArgumentParser(usage="cooccurrenceFinder args [options]")
 
-    parser.add_argument("--v", dest="v", help="name of file containing VCF data, default=None", default=None)
+    parser.add_argument("--vcf", dest="vcf", help="name of file containing VCF data, default=None", default=None)
 
-    parser.add_argument("--o", dest="o", help="output directory, default=None", default=None)
+    parser.add_argument("--ipv", dest="ipv", help="ipv file name, default=ipv.json", default='ipv.json')
+
+    parser.add_argument("--vpi", dest="vpi", help="vpi file name, default=vpi.json", default='vpi.json')
+
+    parser.add_argument("--out", dest="out", help="output file name, default=out.json", default='out.json')
+
+    parser.add_argument("--all", dest="all", help="all vars file name, default=all.json", default='all.json')
 
     parser.add_argument("--h", dest="h", help="Human genome version (37 or 38). Default=None", default=None)
 
@@ -105,8 +111,11 @@ def main():
 
     g_options = options.g
     b_options = options.b
-    v_options = options.v
-    o_options = options.o
+    v_options = options.vcf
+    ipv_options = options.ipv
+    vpi_options = options.vpi
+    all_options = options.all
+    out_options = options.out
     c_options = options.c
     d_options = options.d
     p_options = bool(eval(options.p))
@@ -119,11 +128,11 @@ def main():
     print(options)
 
 
-    run(h_options, e_options, c_options, g_options, p_options, v_options, o_options, s_options,
-        n_options, b_options, d_options, r_options)
+    run(h_options, e_options, c_options, g_options, p_options, v_options, s_options,
+        n_options, b_options, d_options, r_options, ipv_options, vpi_options, all_options, out_options)
 
-def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, outputDirName, saveVarsPerIndivid, numProcs,
-        brcaFileName, pyensemblDir, rareCutoff):
+def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVarsPerIndivid, numProcs,
+        brcaFileName, pyensemblDir, rareCutoff, ipvFileName, vpiFileName, allVariantsFileName, outputFileName):
 
 
     logger.info('setting pyensembl dir to ' + pyensemblDir)
@@ -166,12 +175,10 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, output
                                            hgVersion, cohortSize)
 
     if saveVarsPerIndivid:
-        vpiFileName = outputDirName + '/' + str(chromosome) + '-vpi.json'
         logger.info('saving variantsPerIndividual to ' + vpiFileName)
         with open(vpiFileName, 'w') as f:
             json.dump(variantsPerIndividual, f, cls=NpEncoder)
         f.close()
-        ipvFileName = outputDirName + '/' + str(chromosome) + '-ipv.json'
         with open(ipvFileName, 'w') as f:
             json.dump(individualsPerVariant, f, cls=NpEncoder)
         f.close()
@@ -200,7 +207,6 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, output
     allVariants = getAllVariantsPerClass(variantsPerIndividual)
     numBenign = len(allVariants['benign'])
     p1 =  0.5 * numBenign / cohortSize
-    allVariantsFileName = outputDirName + '/' + str(chromosome) + '-allVariants.json'
     logger.info('saving all variants to ' + allVariantsFileName)
     json_dump = json.dumps(allVariants, cls=NpEncoder)
     with open(allVariantsFileName, 'w') as f:
@@ -213,7 +219,6 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, output
     data_set = {"cooccurring vus": dataPerVus, "homozygous vus": homozygousPerVus}
     json_dump = json.dumps(data_set, cls=NpEncoder)
 
-    outputFileName = outputDirName + '/' + str(chromosome) + '-out.json'
     logger.info('saving final VUS data  to ' + outputFileName)
     with open(outputFileName, 'w') as f:
         f.write(json_dump)
