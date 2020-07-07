@@ -29,7 +29,6 @@ classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely ben
 sigColName = 'Clinical_significance_ENIGMA'
 coordinateColumnBase = 'Genomic_Coordinate_hg'
 alleleFrequencyName = 'Allele_frequency_ExAC'
-variantsPerIndividualFileName = 'variantsPerIndividual.json'
 
 
 class NpEncoder(json.JSONEncoder):
@@ -61,11 +60,7 @@ def main():
 
     parser.add_argument("--v", dest="v", help="name of file containing VCF data, default=None", default=None)
 
-    parser.add_argument("--o", dest="o", help="name of JSON-formatted output file, default=None", default=None)
-
-    parser.add_argument("--vpi", dest="vpi", help="name of JSON-formatted variants per individual file, default=None", default=None)
-
-    parser.add_argument("--ipv", dest="ipv", help="name of JSON-formatted individuals per variant file, default=None", default=None)
+    parser.add_argument("--o", dest="o", help="output directory, default=None", default=None)
 
     parser.add_argument("--h", dest="h", help="Human genome version (37 or 38). Default=None", default=None)
 
@@ -112,8 +107,6 @@ def main():
     b_options = options.b
     v_options = options.v
     o_options = options.o
-    vpi_options = options.vpi
-    ipv_options = options.ipv
     c_options = options.c
     d_options = options.d
     p_options = bool(eval(options.p))
@@ -127,10 +120,10 @@ def main():
 
 
     run(h_options, e_options, c_options, g_options, p_options, v_options, o_options, s_options,
-        n_options, b_options, d_options, r_options, vpi_options, ipv_options)
+        n_options, b_options, d_options, r_options)
 
-def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, outputFileName, saveVarsPerIndivid, numProcs,
-        brcaFileName, pyensemblDir, rareCutoff, variantsPerIndividualFileName, individualsPerVariantFileName):
+def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, outputDirName, saveVarsPerIndivid, numProcs,
+        brcaFileName, pyensemblDir, rareCutoff):
 
 
     logger.info('setting pyensembl dir to ' + pyensemblDir)
@@ -173,16 +166,18 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, output
                                            hgVersion, cohortSize)
 
     if saveVarsPerIndivid:
-        logger.info('saving variantsPerIndividual to ' + variantsPerIndividualFileName)
-        with open(variantsPerIndividualFileName, 'w') as f:
+        vpiFileName = outputDirName + '/' + str(chromosome) + '-vpi.json'
+        logger.info('saving variantsPerIndividual to ' + vpiFileName)
+        with open(vpiFileName, 'w') as f:
             json.dump(variantsPerIndividual, f, cls=NpEncoder)
         f.close()
-        with open(individualsPerVariantFileName, 'w') as f:
+        ipvFileName = outputDirName + '/' + str(chromosome) + '-ipv.json'
+        with open(ipvFileName, 'w') as f:
             json.dump(individualsPerVariant, f, cls=NpEncoder)
         f.close()
 
 
-    logger.info('finding homozygous  individuals per vus')
+    logger.info('finding homozygous individuals per vus')
     t = time.time()
     homozygousPerVus = countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, gene, rareCutoff)
     logger.info('elapsed time in countHomozygousPerVus() ' + str(time.time() -t))
@@ -201,18 +196,16 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, output
     # p1 = P(VUS is benign and patient carries a path variant in trans) = 0.5 * overall freq of path muts in cohort
 
     # calculate total number of benign, pathogenic, and vus variants in cohort
-
-    totals=calculateTotalPerClass(variantsPerIndividual)
-
-    numBenign = len(totals['benign'])
-    numPathogenic = len(totals['pathogenic'])
-    numVUS = len(totals['vus'])
-
-    print('num benign = ' + str(numBenign))
-    print('num pathogenic = ' + str(numPathogenic))
-    print('num vus = ' + str(numVUS))
-
+    logger.info('getting all variants for cohort')
+    allVariants = getAllVariantsPerClass(variantsPerIndividual)
+    numBenign = len(allVariants['benign'])
     p1 =  0.5 * numBenign / cohortSize
+    allVariantsFileName = outputDirName + '/' + str(chromosome) + '-allVariants.json'
+    logger.info('saving all variants to ' + allVariantsFileName)
+    json_dump = json.dumps(allVariants, cls=NpEncoder)
+    with open(allVariantsFileName, 'w') as f:
+        f.write(json_dump)
+    f.close()
 
     logger.info('putting all the data together per vus')
     dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, p1, n, k, brcaDF, hgVersion, cohortSize, rareCutoff)
@@ -220,10 +213,8 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, output
     data_set = {"cooccurring vus": dataPerVus, "homozygous vus": homozygousPerVus}
     json_dump = json.dumps(data_set, cls=NpEncoder)
 
+    outputFileName = outputDirName + '/' + str(chromosome) + '-out.json'
     logger.info('saving final VUS data  to ' + outputFileName)
-    with open(outputFileName, 'w') as f:
-        json.dump(data_set, f, cls=NpEncoder)
-
     with open(outputFileName, 'w') as f:
         f.write(json_dump)
     f.close()
@@ -249,21 +240,21 @@ def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, brcaDF, hgV
 
     return individualsPerVariant
 
-def calculateTotalPerClass(vpi):
-    totals = dict()
-    totals['benign'] = set()
-    totals['pathogenic'] = set()
-    totals['vus'] = set()
+def getAllVariantsPerClass(vpi):
+    allVariants = dict()
+    allVariants['benign'] = set()
+    allVariants['pathogenic'] = set()
+    allVariants['vus'] = set()
 
     for i in vpi:
         for b in vpi[i]['benign']:
-            totals['benign'].add(b)
+            allVariants['benign'].add(b)
         for p in vpi[i]['pathogenic']:
-            totals['pathogenic'].add(p)
+            allVariants['pathogenic'].add(p)
         for v in vpi[i]['vus']:
-            totals['vus'].add(v)
+            allVariants['vus'].add(v)
 
-    return totals
+    return allVariants
 
 def findVariantsInBRCA(fileName, classStrings, hgVersion):
     brcaDF = pandas.read_csv(fileName, sep='\t', header=0, dtype=str)
