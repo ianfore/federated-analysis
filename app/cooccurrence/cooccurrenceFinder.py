@@ -479,7 +479,7 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
      'variants/NMZ', 'variants/NS_NREF', 'variants/QUAL', 'variants/STZ', 'variants/SVM']'''
 
     variantsPerIndividual = dict()
-    individualsPerVariant = defaultdict(dict)
+    individualsPerVariant = dict()
     individuals = list(vcf['samples'])
     n = len(individuals)
     partitionSizes = divide(n, numProcesses)
@@ -515,6 +515,7 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
 
                 # add variant info
                 if not str((c, p, r, a)) in individualsPerVariant:
+                    individualsPerVariant[str((c, p, r, a))] = dict()
                     individualsPerVariant[str((c, p, r, a))]['homozygous individuals'] = list()
                     individualsPerVariant[str((c, p, r, a))]['heterozygous individuals'] = list()
                 if genotype == '3':
