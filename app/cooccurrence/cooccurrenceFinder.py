@@ -168,9 +168,38 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
         processList[i].join()
     logger.info('elapsed time in findVariantsPerIndividual() ' + str(time.time() -t))
 
-    cohortSize = len(variantsPerIndividual)
 
-    # add infos
+    # find individuals per variant
+    individualsPerVariant = dict()
+    for individual in variantsPerIndividual:
+        for b in variantsPerIndividual[individual]['benign']:
+            v = str((b[0][0], b[0][1], b[0][2], b[0][3]))
+            if not v in individualsPerVariant:
+                individualsPerVariant[v] = {'heterozygous individuals': list(),
+                                            'homozygous individuals': list()}
+            if b[1] == '1' or b[1] == 2:
+                individualsPerVariant[v]['heterozygous individuals'].append(individual)
+            else:
+                individualsPerVariant[v]['homozygous individuals'].append(individual)
+        for p in variantsPerIndividual[individual]['pathogenic']:
+            v = str((p[0][0], p[0][1], p[0][2], p[0][3]))
+            if not v in individualsPerVariant:
+                individualsPerVariant[v] = {'heterozygous individuals': list(),
+                                            'homozygous individuals': list()}
+            if p[1] == '1' or p[1] == 2:
+                individualsPerVariant[v]['heterozygous individuals'].append(individual)
+            else:
+                individualsPerVariant[v]['homozygous individuals'].append(individual)
+        for vus in variantsPerIndividual[individual]['vus']:
+            v = str((vus[0][0], vus[0][1], vus[0][2], vus[0][3]))
+            if not v in individualsPerVariant:
+                individualsPerVariant[v] = {'heterozygous individuals': list(),
+                                            'homozygous individuals': list()}
+            if vus[1] == '1' or vus[1] == 2:
+                individualsPerVariant[v]['heterozygous individuals'].append(individual)
+            else:
+                individualsPerVariant[v]['homozygous individuals'].append(individual)
+    cohortSize = len(variantsPerIndividual)
     individualsPerVariant = addVariantInfo(individualsPerVariant, vcf, chromosome, ['FIBC_I', 'FIBC_P'], brcaDF,
                                            hgVersion, cohortSize)
 
@@ -514,7 +543,7 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
                     variantsPerIndividual[individuals[i]]['vus'].append(((c, p, r, a),  genotype))
 
                 # add variant info
-                if not str((c, p, r, a)) in individualsPerVariant:
+                '''if not str((c, p, r, a)) in individualsPerVariant:
                     individualsPerVariant[str((c, p, r, a))] = dict()
                     individualsPerVariant[str((c, p, r, a))]['homozygous individuals'] = list()
                     individualsPerVariant[str((c, p, r, a))]['heterozygous individuals'] = list()
@@ -529,7 +558,7 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
                         print('added hetero ' + individuals[i])
                         print(individualsPerVariant[str((c,p,r,a))]['heterozygous individuals'])
                 else:
-                    print('genotype = ' + str(genotype) + ' for individual ' + str(individuals[i]))
+                    print('genotype = ' + str(genotype) + ' for individual ' + str(individuals[i]))'''
 
     q.put(variantsPerIndividual)
     w.put(individualsPerVariant)
