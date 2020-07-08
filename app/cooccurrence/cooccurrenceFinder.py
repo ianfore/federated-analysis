@@ -179,7 +179,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
                                             'homozygous individuals': set()}
             if b[1] == '1' or b[1] == 2:
                 individualsPerVariant[v]['heterozygous individuals'].add(individual)
-            else:
+            elif b[1] == '3':
                 individualsPerVariant[v]['homozygous individuals'].add(individual)
         for p in variantsPerIndividual[individual]['pathogenic']:
             v = str((p[0][0], p[0][1], p[0][2], p[0][3]))
@@ -188,7 +188,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
                                             'homozygous individuals': set()}
             if p[1] == '1' or p[1] == 2:
                 individualsPerVariant[v]['heterozygous individuals'].add(individual)
-            else:
+            elif p[1] == '3':
                 individualsPerVariant[v]['homozygous individuals'].add(individual)
         for vus in variantsPerIndividual[individual]['vus']:
             v = str((vus[0][0], vus[0][1], vus[0][2], vus[0][3]))
@@ -197,7 +197,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
                                             'homozygous individuals': set()}
             if vus[1] == '1' or vus[1] == 2:
                 individualsPerVariant[v]['heterozygous individuals'].add(individual)
-            else:
+            elif vus[1] == '3':
                 individualsPerVariant[v]['homozygous individuals'].add(individual)
     cohortSize = len(variantsPerIndividual)
     individualsPerVariant = addVariantInfo(individualsPerVariant, vcf, chromosome, ['FIBC_I', 'FIBC_P'], brcaDF,
