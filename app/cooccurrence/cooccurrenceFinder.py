@@ -177,7 +177,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
             if not v in individualsPerVariant:
                 individualsPerVariant[v] = {'heterozygous individuals': set(),
                                             'homozygous individuals': set()}
-            if b[1] == '1' or b[1] == 2:
+            if b[1] == '1' or b[1] == '2':
                 individualsPerVariant[v]['heterozygous individuals'].add(individual)
             elif b[1] == '3':
                 individualsPerVariant[v]['homozygous individuals'].add(individual)
@@ -186,7 +186,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
             if not v in individualsPerVariant:
                 individualsPerVariant[v] = {'heterozygous individuals': set(),
                                             'homozygous individuals': set()}
-            if p[1] == '1' or p[1] == 2:
+            if p[1] == '1' or p[1] == '2':
                 individualsPerVariant[v]['heterozygous individuals'].add(individual)
             elif p[1] == '3':
                 individualsPerVariant[v]['homozygous individuals'].add(individual)
@@ -195,7 +195,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
             if not v in individualsPerVariant:
                 individualsPerVariant[v] = {'heterozygous individuals': set(),
                                             'homozygous individuals': set()}
-            if vus[1] == '1' or vus[1] == 2:
+            if vus[1] == '1' or vus[1] == '2':
                 individualsPerVariant[v]['heterozygous individuals'].add(individual)
             elif vus[1] == '3':
                 individualsPerVariant[v]['homozygous individuals'].add(individual)
@@ -476,8 +476,7 @@ def calculateLikelihood(pathCoocs, p1, n, k, brcaDF, hgVersion, cohortSize, rare
     return dataPerVus
 
 def readVCFFile(vcfFileName):
-    return allel.read_vcf(vcfFileName, fields=['samples', 'calldata/GT', 'variants/ALT', 'variants/CHROM',
-                'variants/FILTER_PASS', 'variants/ID', 'variants/POS', 'variants/QUAL','variants/REF', 'variants/INFO'])
+    return allel.read_vcf(vcfFileName, fields=['samples', 'calldata/GT', 'variants/ALT', 'variants/CHROM','variants/FILTER_PASS', 'variants/ID', 'variants/POS', 'variants/QUAL','variants/REF', 'variants/INFO'])
 
 def divide(n, d):
    res = list()
