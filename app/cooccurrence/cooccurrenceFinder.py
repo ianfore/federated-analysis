@@ -518,13 +518,15 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
                     individualsPerVariant[str((c, p, r, a))]['homozygous individuals'] = list()
                     individualsPerVariant[str((c, p, r, a))]['heterozygous individuals'] = list()
                 if genotype == '3':
-                    if p == 32397588:
-                        print('found homo')
                     individualsPerVariant[str((c,p,r,a))]['homozygous individuals'].append(individuals[i])
-                elif genotype == '1' or genotype == '2':
                     if p == 32397588:
-                        print('found hetero')
+                        print('added homo' + individuals[i])
+                        print(individualsPerVariant[str((c,p,r,a))]['homozygous individuals'])
+                elif genotype == '1' or genotype == '2':
                     individualsPerVariant[str((c,p,r,a))]['heterozygous individuals'].append(individuals[i])
+                    if p == 32397588:
+                        print('added hetero ' + individuals[i])
+                        print(individualsPerVariant[str((c,p,r,a))]['heterozygous individuals'])
                 else:
                     print('genotype = ' + str(genotype) + ' for individual ' + str(individuals[i]))
 
