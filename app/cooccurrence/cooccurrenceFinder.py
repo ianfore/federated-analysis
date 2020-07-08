@@ -238,8 +238,8 @@ def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, brcaDF, hgV
         a = str(vcf['variants/ALT'][variant][0])
         v = str((c,p,r,a))
         if v in individualsPerVariant:
-            for info in infoList:
-                individualsPerVariant[v][info] = vcf['variants/' + info][variant]
+            '''for info in infoList:
+                individualsPerVariant[v][info] = vcf['variants/' + info][variant]'''
             maxPop, maxFreq = getGnomadData(brcaDF, eval(v), hgVersion)
             individualsPerVariant[v]['maxPop'] = maxPop
             individualsPerVariant[v]['maxFreq'] = maxFreq
@@ -530,8 +530,6 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
                     individualsPerVariant[str((c,p,r,a))]['heterozygous individuals'].add(individuals[i])
                 else:
                     print('genotype = ' + str(genotype) + ' for individual ' + str(individuals[i]))
-
-
 
     q.put(variantsPerIndividual)
     w.put(individualsPerVariant)
