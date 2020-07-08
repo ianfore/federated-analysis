@@ -174,14 +174,14 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
     individualsPerVariant = addVariantInfo(individualsPerVariant, vcf, chromosome, ['FIBC_I', 'FIBC_P'], brcaDF,
                                            hgVersion, cohortSize)
 
-    if saveVarsPerIndivid:
-        logger.info('saving variantsPerIndividual to ' + vpiFileName)
-        with open(vpiFileName, 'w') as f:
-            json.dump(variantsPerIndividual, f, cls=NpEncoder)
-        f.close()
-        with open(ipvFileName, 'w') as f:
-            json.dump(individualsPerVariant, f, cls=NpEncoder)
-        f.close()
+    logger.info('saving vpi to ' + vpiFileName)
+    with open(vpiFileName, 'w') as f:
+        json.dump(variantsPerIndividual, f, cls=NpEncoder)
+    f.close()
+    logger.info('saving ipv to ' + ipvFileName)
+    with open(ipvFileName, 'w') as f:
+        json.dump(individualsPerVariant, f, cls=NpEncoder)
+    f.close()
 
 
     logger.info('finding homozygous individuals per vus')
@@ -480,20 +480,13 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
 
     variantsPerIndividual = dict()
     individualsPerVariant = defaultdict(dict)
-
     individuals = list(vcf['samples'])
-
-    # calculate start and stop samples per threadID
     n = len(individuals)
     partitionSizes = divide(n, numProcesses)
     start,end = getStartAndEnd(partitionSizes, threadID)
-
     logger.info('threadID = ' + str(threadID) + ' processing from ' + str(start) + ' to ' + str(end))
-
     logger.debug('looping through ' + str(len(individuals)) + ' in samples in VCF')
-    #for i in range(len(individuals)):
     for i in range(start, end):
-        #logger.debug('looking at individual ' + str(individuals[i]))
         variantsPerIndividual[individuals[i]] = dict()
         variantsPerIndividual[individuals[i]]['benign'] = list()
         variantsPerIndividual[individuals[i]]['pathogenic'] = list()
@@ -522,12 +515,14 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
 
                 # add variant info
                 if not str((c, p, r, a)) in individualsPerVariant:
-                    individualsPerVariant[str((c, p, r, a))]['homozygous individuals'] = set()
-                    individualsPerVariant[str((c, p, r, a))]['heterozygous individuals'] = set()
+                    individualsPerVariant[str((c, p, r, a))]['homozygous individuals'] = list()
+                    individualsPerVariant[str((c, p, r, a))]['heterozygous individuals'] = list()
+                if p == 32397588:
+                    print('genotype = ' + str(genotype))
                 if genotype == '3':
-                    individualsPerVariant[str((c,p,r,a))]['homozygous individuals'].add(individuals[i])
+                    individualsPerVariant[str((c,p,r,a))]['homozygous individuals'].append(individuals[i])
                 elif genotype == '1' or genotype == '2':
-                    individualsPerVariant[str((c,p,r,a))]['heterozygous individuals'].add(individuals[i])
+                    individualsPerVariant[str((c,p,r,a))]['heterozygous individuals'].append(individuals[i])
                 else:
                     print('genotype = ' + str(genotype) + ' for individual ' + str(individuals[i]))
 
