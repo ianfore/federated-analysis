@@ -70,7 +70,7 @@ def main():
 
 	variantsDF = pd.DataFrame.from_dict(variantsDict)
 	print(variantsDF.shape)
-	variantsDF.transpose()
+	variantsDF = variantsDF.transpose()
 	print(variantsDF.shape)
 	print(variantsDF.columns)
 
