@@ -19,14 +19,14 @@ def main():
 		ipvDict = json.load(f)
 	f.close()
 
-	inFileName = sys.argv[4]
+	inFileName = sys.argv[2]
 	logger.info('reading data from ' + inFileName)
 	f = open(inFileName, 'r')
 	inList = f.readlines() 
 	f.close()
 	inList = [x.strip() for x in inList]
 
-	outFileName = sys.argv[5]
+	outFileName = sys.argv[3]
 	logger.info('reading data from ' + outFileName)
 	f = open(outFileName, 'r')
 	outList = f.readlines() 
