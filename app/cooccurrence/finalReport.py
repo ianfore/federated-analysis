@@ -72,8 +72,9 @@ def main():
 	print(variantsDF.shape)
 	variantsDF = variantsDF.transpose()
 	print(variantsDF.shape)
-	print(variantsDF.iloc[0])
 	print(variantsDF.columns)
+	variantsDF.to_csv('/tmp/brcaDF.tsv', sep='\t', index=True)
+
 
 
 
