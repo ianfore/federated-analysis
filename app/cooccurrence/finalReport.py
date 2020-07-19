@@ -69,6 +69,7 @@ def main():
 		variantsDict[v]['inGnomad'] = vIn
 
 	variantsDF = pd.DataFrame.from_dict(variantsDict)
+	variantsDF.transpose()
 	print(variantsDF.columns)
 
 
