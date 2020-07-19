@@ -68,10 +68,11 @@ def main():
 		variantsDict[v]['homozygousSample'] = homoSample
 		variantsDict[v]['inGnomad'] = vIn
 
-	print(variantsDict)
+	variantsDF = pd.DataFrame.from_dict(variantsDict)
+	print(variantsDF.columns)
 
 
-def addInfo():
+def addInfo(variantsDF):
 	brca1DF = pd.read_csv('/Users/jcasaletto/Desktop/TOPMED/f5_copd_brca1_hmb_phased_report.tsv', header=0, sep='\t')
 	brca2DF = pd.read_csv('/Users/jcasaletto/Desktop/TOPMED/f5_copd_brca2_hmb_phased_report.tsv', header=0, sep='\t')
 
