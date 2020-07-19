@@ -8,8 +8,8 @@ logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 def main():
-	if len(sys.argv) != 5:
-		print('ipv.json in.txt not.txt sites.tsv')
+	if len(sys.argv) != 6:
+		print('ipv.json in.txt not.txt sites.tsv output.tsv')
 		sys.exit(1)
 
 
@@ -38,6 +38,8 @@ def main():
 	f = open(sitesFileName, 'r')
 	sitesDF = pd.read_csv(sitesFileName, header=0, sep='\t')
 	f.close()
+
+	outputFileName = sys.argv[5]
 
 
 	allVariants = ipvDict.keys()
@@ -85,7 +87,8 @@ def main():
 
 	variantsWithInfoDF = addInfo(variantsDF, sitesDF)
 
-	variantsWithInfoDF.to_csv('/tmp/brcaDF.tsv', sep='\t', index=False)
+	logger.info('writing output to ' + outputFileName)
+	variantsWithInfoDF.to_csv(outputFileName, sep='\t', index=False)
 
 
 def addInfo(variantsDF, sitesDF):
