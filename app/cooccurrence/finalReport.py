@@ -73,6 +73,8 @@ def main():
 	variantsDF = variantsDF.transpose()
 	print(variantsDF.shape)
 	print(variantsDF.columns)
+	columnNames = ['variant', 'class', 'popFreq', 'cohortFreq', 'homo_alt', 'het', 'homo_ref', 'homozygousSample', 'inGnomad']
+	variantsDF.columns = columnNames
 	variantsDF.to_csv('/tmp/brcaDF.tsv', sep='\t', index=True)
 
 
