@@ -68,6 +68,8 @@ def main():
 		variantsDict[v]['homozygousSample'] = homoSample
 		variantsDict[v]['inGnomad'] = vIn
 
+	print(variantsDict)
+
 
 def addInfo():
 	brca1DF = pd.read_csv('/Users/jcasaletto/Desktop/TOPMED/f5_copd_brca1_hmb_phased_report.tsv', header=0, sep='\t')
