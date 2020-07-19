@@ -78,11 +78,8 @@ def main():
 		variantsDict[v]['inGnomad'] = vIn
 
 	variantsDF = pd.DataFrame.from_dict(variantsDict)
-	print(variantsDF.shape)
 	variantsDF = variantsDF.transpose()
-	print(variantsDF.shape)
 	variantsDF['variant'] = variantsDF.index
-	print(variantsDF.columns)
 	variantsDF.to_csv('/tmp/brcaDF.tsv', sep='\t', index=True)
 
 	variantsWithInfoDF = addInfo(variantsDF, sitesDF)
