@@ -54,7 +54,7 @@ def main():
         #    f.write('chr' + str(c) + '\t' + str(p) + '\t' + str(r) + '\t' + str(a) + '\n')
         exomeDelta, genomeDelta, hg37 = checkMelissaTable((c,p,r,a), mcDF, brcaDF)
         if exomeDelta in effectivelyZeroValues and genomeDelta in effectivelyZeroValues:
-            notInSubset.write('chr' + str(c) + '\t' + str(p) + '\t' + '.' + '\t' + str(r) + '\t' + str(a) + '\t' + str(hg37) + '\n')
+            notInSubset.write('(' + str(c) + ',' + str(p) + ',' + str(r) + ',' + str(a)  + ')' + '\n')
         else:
             ed = 0.0
             gd = 0.0
@@ -67,7 +67,7 @@ def main():
             except:
                 pass
             deltaSum = ed + gd
-            inSubset.write('chr' + str(c) + '\t' + str(p) + '\t' + '.' + '\t' + str(r) + '\t' + str(a)  + '\t' + str(hg37) + '\t' + str(deltaSum) + '\n')
+            inSubset.write('(' + str(c) + ',' + str(p) + ',' + str(r) + ',' + str(a)  + ')' + '\n')
 
     inSubset.close()
     notInSubset.close()

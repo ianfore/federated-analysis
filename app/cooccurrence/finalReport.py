@@ -9,7 +9,7 @@ logger.setLevel(logging.DEBUG)
 
 def main():
 	if len(sys.argv) != 6:
-		print('ipv.json in.txt not.txt sites.tsv output.tsv')
+		print('ipv-f.json in.txt not.txt sites.tsv output.tsv')
 		sys.exit(1)
 
 
