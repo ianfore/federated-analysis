@@ -524,7 +524,7 @@ def getFisherExact(results, key, allValues):
 def getHardyWeinbergStats(vpiDict, variantsDict, individualsPerVariant):
     bVars, pVars, vVars = calculateZygosityFrequenciesPerVariant(vpiDict)
     bVars, pVars, vVars = hardyWeinbergChiSquareTest(bVars, pVars, vVars, len(vpiDict))
-    #bVars, pVars, vVars = hardyWeinbergFisherExactTest(bVars, pVars, vVars, len(vpiDict), 0.05)
+    bVars, pVars, vVars = hardyWeinbergFisherExactTest(bVars, pVars, vVars, len(vpiDict), 0.05)
     bVars, pVars, vVars = hardyWeinbergStatistics(bVars, pVars, vVars, significance=0.01)
     rejectHW = {'benign': 0, 'pathogenic': 0, 'vus': 0}
     acceptHW = {'benign': 0, 'pathogenic': 0, 'vus': 0}
@@ -548,7 +548,6 @@ def getHardyWeinbergStats(vpiDict, variantsDict, individualsPerVariant):
         individualsPerVariant[str(b)]['aa'] = bVars[b]['aa']
         individualsPerVariant[str(b)]['Aa'] = bVars[b]['Aa']
         individualsPerVariant[str(b)]['AA'] = bVars[b]['AA']
-
 
     for p in pVars:
         if pVars[p]['accept hw'] is False:
@@ -773,6 +772,18 @@ def hardyWeinbergStatistics(bVars, pVars, vVars, significance):
 
     return bVars, pVars, vVars
 
+def range_prod(lo,hi):
+    if lo+1 < hi:
+        mid = (hi+lo)//2
+        return range_prod(lo,mid) * range_prod(mid+1,hi)
+    if lo == hi:
+        return lo
+    return lo*hi
+
+def tree_factorial(n):
+    if n < 2:
+        return 1
+    return range_prod(1,n)
 
 def hardyWeinbergFisherExactTest(bVars, pVars, vVars, N, pValue):
     # http://europepmc.org/backend/ptpmcrender.fcgi?accid=PMC1199378&blobtype=pdf
@@ -790,16 +801,20 @@ def hardyWeinbergFisherExactTest(bVars, pVars, vVars, N, pValue):
         nBB = bVars[b]['AA']
         nAB = bVars[b]['Aa']
         # calculate W
-        W = (2**nAB) * math.factorial(N)
+        #W = (2**nAB) * math.factorial(N)
+        W = (2**nAB) * tree_factorial(N)
 
         # calculate X
-        X = math.factorial(nAA) * math.factorial(nAB) * math.factorial(nBB)
+        #X = math.factorial(nAA) * math.factorial(nAB) * math.factorial(nBB)
+        X = tree_factorial(nAA) * tree_factorial(nAB) * tree_factorial(nBB)
 
         # calculate Y
-        Y = math.factorial(nA) * math.factorial(nB)
+        #Y = math.factorial(nA) * math.factorial(nB)
+        Y = tree_factorial(nA) * tree_factorial(nB)
 
         # calculate Z
-        Z = math.factorial(2 * N)
+        #Z = math.factorial(2 * N)
+        Z = tree_factorial(2 * N)
 
         # calculate p
         bVars[b]['fisher'] = (W / X) * (Y / Z)
