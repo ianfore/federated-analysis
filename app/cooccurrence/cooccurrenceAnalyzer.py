@@ -817,7 +817,7 @@ def hardyWeinbergFisherExactTest(bVars, pVars, vVars, N, pValue):
         Z = tree_factorial(2 * N)
 
         # calculate p
-        bVars[b]['fisher'] = (W / X) * (Y / Z)
+        bVars[b]['fisher'] = (W // X) * (Y // Z)
 
         # 8. compare against p-value for 1 degree of freedom at 0.05 significance (3.84)
         if bVars[b]['fisher'] >= pValue:
@@ -835,16 +835,19 @@ def hardyWeinbergFisherExactTest(bVars, pVars, vVars, N, pValue):
         W = (2 ** nAB) * math.factorial(N)
 
         # calculate X
-        X = math.factorial(nAA) * math.factorial(nAB) * math.factorial(nBB)
+        #X = math.factorial(nAA) * math.factorial(nAB) * math.factorial(nBB)
+        X = tree_factorial(nAA) * tree_factorial(nAB) * tree_factorial(nBB)
 
         # calculate Y
-        Y = math.factorial(nA) * math.factorial(nB)
+        #Y = math.factorial(nA) * math.factorial(nB)
+        Y = tree_factorial(nA) * tree_factorial(nB)
 
         # calculate Z
-        Z = math.factorial(2 * N)
+        #Z = math.factorial(2 * N)
+        Z = tree_factorial(2 * N)
 
         # calculate p
-        pVars[p]['fisher'] = (W / X) * (Y / Z)
+        pVars[p]['fisher'] = (W // X) * (Y // Z)
 
         # 8. compare against p-value for 1 degree of freedom at 0.05 significance (3.84)
         if pVars[p]['fisher'] >= pValue:
@@ -860,19 +863,23 @@ def hardyWeinbergFisherExactTest(bVars, pVars, vVars, N, pValue):
         nBB = vVars[v]['AA']
         nAB = vVars[v]['Aa']
         # calculate W
-        W = (2 ** nAB) * math.factorial(N)
+        #W = (2 ** nAB) * math.factorial(N)
+        W = (2 ** nAB) * tree_factorial(N)
 
         # calculate X
-        X = math.factorial(nAA) * math.factorial(nAB) * math.factorial(nBB)
+        #X = math.factorial(nAA) * math.factorial(nAB) * math.factorial(nBB)
+        X = tree_factorial(nAA) * tree_factorial(nAB) * tree_factorial(nBB)
 
         # calculate Y
-        Y = math.factorial(nA) * math.factorial(nB)
+        #Y = math.factorial(nA) * math.factorial(nB)
+        Y = tree_factorial(nA) * tree_factorial(nB)
 
         # calculate Z
-        Z = math.factorial(2 * N)
+        #Z = math.factorial(2 * N)
+        Z = tree_factorial(2 * N)
 
         # calculate p
-        vVars[v]['fisher'] = (W / X) * (Y / Z)
+        vVars[v]['fisher'] = (W // X) * (Y // Z)
 
         # 8. compare against p-value for 1 degree of freedom at 0.05 significance (3.84)
         if vVars[v]['fisher'] >= pValue:
