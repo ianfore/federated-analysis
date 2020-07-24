@@ -543,6 +543,7 @@ def getHardyWeinbergStats(vpiDict, variantsDict, individualsPerVariant):
         individualsPerVariant[str(b)]['accept F'] = bVars[b]['accept F']
         individualsPerVariant[str(b)]['F'] = bVars[b]['F']
         individualsPerVariant[str(b)]['Z'] = bVars[b]['Z']
+        individualsPerVariant[str(b)]['chisquare'] = bVars[b]['chisquare']
         individualsPerVariant[str(b)]['class'] = 'benign'
         individualsPerVariant[str(b)]['aa'] = bVars[b]['aa']
         individualsPerVariant[str(b)]['Aa'] = bVars[b]['Aa']
@@ -565,8 +566,7 @@ def getHardyWeinbergStats(vpiDict, variantsDict, individualsPerVariant):
         individualsPerVariant[str(p)]['aa'] = pVars[p]['aa']
         individualsPerVariant[str(p)]['Aa'] = pVars[p]['Aa']
         individualsPerVariant[str(p)]['AA'] = pVars[p]['AA']
-
-
+        individualsPerVariant[str(p)]['chisquare'] = pVars[p]['chisquare']
 
 
     rejectVUS = {'cooccurring vus': 0, 'homozygous vus': 0}
@@ -607,6 +607,7 @@ def getHardyWeinbergStats(vpiDict, variantsDict, individualsPerVariant):
         individualsPerVariant[str(v)]['aa'] = vVars[v]['aa']
         individualsPerVariant[str(v)]['Aa'] = vVars[v]['Aa']
         individualsPerVariant[str(v)]['AA'] = vVars[v]['AA']
+        individualsPerVariant[str(v)]['chisquare'] = vVars[v]['chisquare']
 
     # check to see if 654 vus that reject HW are same vus that reject F
     vusRejectingBothHWandF = list()
