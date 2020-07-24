@@ -49,9 +49,7 @@ def main():
 		vClass = ipvDict[v]['class']
 		vPopFreq = '%.4f'%(ipvDict[v]['maxFreq'])
 		vCohortFreq = '%.4f'%(ipvDict[v]['cohortFreq'])
-		aa = str(ipvDict[v]['aa'])
-		Aa = str(ipvDict[v]['Aa'])
-		AA = str(ipvDict[v]['AA'])
+
 		if len(ipvDict[v]['homozygous individuals']) == 0:
 			homoSample = "None"
 		else:
@@ -68,12 +66,15 @@ def main():
 		#print(v + '\t' + vClass + '\t' + vPopFreq + '\t' + vCohortFreq + \
 		# '\t' + aa + '\t' + Aa + '\t' + AA + '\t' + homoSample + '\t' + vIn)
 		variantsDict[v] = dict()
+		variantsDict[v]['homo_alt'] = str(ipvDict[v]['aa'])
+		variantsDict[v]['hetero'] = str(ipvDict[v]['Aa'])
+		variantsDict[v]['homo_ref'] = str(ipvDict[v]['AA'])
+		variantsDict[v]['Z'] = str(ipvDict[v]['Z'])
+		variantsDict[v]['F'] = str(ipvDict[v]['F'])
+		variantsDict['chisquare'] = str(ipvDict[v]['chisquare'])
 		variantsDict[v]['class'] = vClass
 		variantsDict[v]['popFreq'] = vPopFreq
 		variantsDict[v]['cohortFreq'] = vCohortFreq
-		variantsDict[v]['homo_alt'] = aa
-		variantsDict[v]['hetero'] = Aa
-		variantsDict[v]['homo_ref'] = AA
 		variantsDict[v]['homozygousSample'] = homoSample
 		variantsDict[v]['inGnomad'] = vIn
 

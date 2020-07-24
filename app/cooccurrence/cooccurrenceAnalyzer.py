@@ -120,6 +120,7 @@ def main():
 
     ipvDict = getHardyWeinbergStats(vpiDict, variantsDict, ipvDict)
 
+
     if frequencyFilter != 0:
         ipvDict = filterOnFrequency(ipvDict, frequencyFilter)
 
@@ -1230,11 +1231,6 @@ def countTotalGenotypesForVariants(q1, q2, vpiDF, rareThreshold, brcaDF, ancestr
             if b:
                 if rare and getGnomadData(brcaDF, tuple(b[0]), hgVersion, ethnicity)['max']['frequency'] > rareThreshold:
                     continue
-                    '''gnomadData = getGnomadData(brcaDF, tuple(b[0]), hgVersion, ethnicity)
-                    if gnomadData[ethnicity] > rareThreshold:
-                        continue
-                    elif gnomadData[ethnicity] == 0.0:
-                        notInGnomad['benign'].append(b)'''
                 if b[1] == '3':
                     genotypeCounts['benign']['homo'] += 1
                     frequenciesPerIndividual[individual]['benign']['homo'] += 1
@@ -1244,11 +1240,6 @@ def countTotalGenotypesForVariants(q1, q2, vpiDF, rareThreshold, brcaDF, ancestr
         for p in vpiDF[individual]['pathogenic']:
             if p:
                 if rare and getGnomadData(brcaDF, tuple(p[0]), hgVersion, ethnicity)['max']['frequency'] > rareThreshold:
-                    '''gnomadData = getGnomadData(brcaDF, tuple(p[0]), hgVersion, ethnicity)
-                    if gnomadData[ethnicity] > rareThreshold:
-                        continue
-                    elif gnomadData[ethnicity] == 0.0:
-                        notInGnomad['pathogenic'].append(p)'''
                     continue
                 if p[1] == '3':
                     genotypeCounts['pathogenic']['homo'] += 1
@@ -1259,11 +1250,6 @@ def countTotalGenotypesForVariants(q1, q2, vpiDF, rareThreshold, brcaDF, ancestr
         for v in vpiDF[individual]['vus']:
             if v:
                 if rare and getGnomadData(brcaDF, tuple(v[0]), hgVersion, ethnicity)['max']['frequency'] > rareThreshold:
-                    '''gnomadData = getGnomadData(brcaDF, tuple(v[0]), hgVersion, ethnicity)
-                    if gnomadData[ethnicity] > rareThreshold:
-                        continue
-                    elif gnomadData[ethnicity] == 0.0:
-                        notInGnomad['vus'].append(v)'''
                     continue
                 if v[1] == '3':
                     genotypeCounts['vus']['homo'] += 1
