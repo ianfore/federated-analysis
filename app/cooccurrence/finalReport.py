@@ -54,7 +54,7 @@ def main():
 		AA = str(ipvDict[v]['AA'])
 		F = str(ipvDict[v]['F'])
 		Z = str(ipvDict[v]['Z'])
-		fisher = str(ipvDict[v]['fisher'])
+		#fisher = str(ipvDict[v]['fisher'])
 		chisquare = str(ipvDict[v]['chisquare'])
 		if len(ipvDict[v]['homozygous individuals']) == 0:
 			homoSample = "None"
@@ -83,7 +83,7 @@ def main():
 		variantsDict[v]['F'] = F
 		variantsDict[v]['Z'] = Z
 		variantsDict[v]['chisquare'] = chisquare
-		variantsDict[v]['fisher'] = fisher
+		#variantsDict[v]['fisher'] = fisher
 
 
 	variantsDF = pd.DataFrame.from_dict(variantsDict)
