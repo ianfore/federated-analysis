@@ -785,9 +785,6 @@ def tree_factorial(n):
         return 1
     return range_prod(1,n)
 
-def myFac(num, den):
-    # num and den are lists of factorials
-
 def hardyWeinbergFisherExactTest(bVars, pVars, vVars, N, pValue):
     # http://europepmc.org/backend/ptpmcrender.fcgi?accid=PMC1199378&blobtype=pdf
     # p(NAB = nAB|N,nA) = [ (2**nAB x N!) / (nAA!nAB!nBB!) ] x (nA! x nB!)/(2N)!
