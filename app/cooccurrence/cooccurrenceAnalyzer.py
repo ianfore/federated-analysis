@@ -1023,9 +1023,12 @@ def binPlot(theList, binSize, xlabel, ylabel, dtype, sigDigs, binList, outputDir
 
     df_bins = pd.DataFrame({xlabel: bins})
     if (len(df_bins) != 0):
+        fontsize=15
         df_bins.groupby(xlabel, as_index=False).size().plot(kind='bar')
-        plt.xlabel(xlabel, fontsize=10)
-        plt.ylabel(ylabel, fontsize=10)
+        plt.xlabel(xlabel, fontsize=fontsize)
+        plt.ylabel(ylabel, fontsize=fontsize)
+        plt.rc('xtick', labelsize=fontsize)
+        plt.rc('ytick', labelsize=fontsize)
         #plt.xlim(start, end)
         #plt.ylim(ymin, ymax)
         #plt.show()
