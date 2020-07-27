@@ -1030,6 +1030,7 @@ def binPlot(theList, binSize, xlabel, ylabel, dtype, sigDigs, binList, outputDir
         plt.ylabel(ylabel, fontsize=fontsize)
         plt.rc('xtick', labelsize=labelsize)
         plt.rc('ytick', labelsize=labelsize)
+        plt.tight_layout()
         #plt.xlim(start, end)
         #plt.ylim(ymin, ymax)
         #plt.show()
