@@ -1023,8 +1023,8 @@ def binPlot(theList, binSize, xlabel, ylabel, dtype, sigDigs, binList, outputDir
 
     df_bins = pd.DataFrame({xlabel: bins})
     if (len(df_bins) != 0):
-        fontsize=15
-        labelsize=5
+        fontsize=12
+        labelsize=7
         df_bins.groupby(xlabel, as_index=False).size().plot(kind='bar')
         plt.xlabel(xlabel, fontsize=fontsize)
         plt.ylabel(ylabel, fontsize=fontsize)
