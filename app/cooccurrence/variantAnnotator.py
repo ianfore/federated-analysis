@@ -30,21 +30,21 @@ def main():
 
     logger.debug('calculating expected heterozygosity')
     expectedHeterozygosity = allel.heterozygosity_expected(alleleFrequency, ploidy=2)
-    #print('expected: ' + str(expectedHeterozygosity))
+    print('expected: ' + str(expectedHeterozygosity))
 
     logger.debug('calculating observed heterozygosity')
     observedHeterozygosity = allel.heterozygosity_observed(genoArray)
-    #print('observed: ' + str(observedHeterozygosity))
+    print('observed: ' + str(observedHeterozygosity))
 
     logger.debug('calculating inbreeding coefficient')
     inbreedingCoefficient = allel.inbreeding_coefficient(genoArray)
-    #print('ibc: ' + str(inbreedingCoefficient))
+    print('ibc: ' + str(inbreedingCoefficient))
 
     logger.debug('calculating delta heterozygosity')
     diff = list()
     for i in range(len(expectedHeterozygosity)):
         diff.append(expectedHeterozygosity[i] - observedHeterozygosity[i])
-    #print('diff: ' + str(diff))
+    print('diff: ' + str(diff))
 
     logger.debug('finding runs of homozygosity')
     numVariants = len(genoArray)
