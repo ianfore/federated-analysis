@@ -68,8 +68,8 @@ def main():
             f.write("%s\n" % item)
     f.close()
 
-    logger.debug('roh.json')
-    with open(outputDir + '/roh.json', 'w') as f:
+    logger.debug('roh.csv')
+    with open(outputDir + '/roh.csv', 'w') as f:
         pd.DataFrame(runsOfHomozygosity).to_csv(f)
     f.close()
 
