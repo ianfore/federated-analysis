@@ -55,8 +55,7 @@ def main():
         genoVector = genoArray[:,i]
         roh = allel.roh_mhmm(genoVector, posArray, is_accessible=isAccessible)
         if not roh[0].empty:
-            runsOfHomozygosity[i] = {'individual': i, 'roh': allel.roh_mhmm(genoVector, posArray, is_accessible=isAccessible).to_dict()}
-
+            runsOfHomozygosity[i] = {'individual': i, 'roh': roh}
 
     '''logger.debug('saving ibc.txt')
     np.savetxt(outputDir + '/ibc.txt', inbreedingCoefficient)
