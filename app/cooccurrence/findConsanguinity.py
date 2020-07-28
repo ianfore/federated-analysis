@@ -15,21 +15,19 @@ def main():
     homozygousCount = 0
     heterozygousCount = 0
     for individual in vpiDict:
-        print('type = ' + str(type(individual)))
-        print(individual)
-        for b in individual['benign']:
+        for b in vpiDict[individual]['benign']:
             if b[1] == '3':
                 homozygousCount += 1
             else:
                 heterozygousCount += 1
 
-        for v in individual['vus']:
+        for v in vpiDict[individual]['vus']:
             if v[1] == '3':
                 homozygousCount += 1
             else:
                 heterozygousCount += 1
 
-        for p in individual['pathogenic']:
+        for p in vpiDict[individual]['pathogenic']:
             if p[1] == '3':
                 homozygousCount += 1
             else:
