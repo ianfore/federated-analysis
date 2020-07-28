@@ -58,14 +58,14 @@ def main():
             runsOfHomozygosity[i] = {'individual': i, 'roh': allel.roh_mhmm(genoVector, posArray, is_accessible=isAccessible)}
 
 
-    logger.debug('saving ibc.txt')
+    '''logger.debug('saving ibc.txt')
     np.savetxt(outputDir + '/ibc.txt', inbreedingCoefficient)
 
     logger.debug('saving zygosityDelta.txt')
     with open(outputDir + '/zygosityDelta.txt', 'w') as f:
         for item in diff:
             f.write("%s\n" % item)
-    f.close()
+    f.close()'''
 
     logger.debug('roh.csv')
     with open(outputDir + '/roh.json', 'w') as f:
