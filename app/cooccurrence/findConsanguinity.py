@@ -2,11 +2,10 @@ import sys
 import json
 
 def main():
-    if len(sys.argv) != 3:
-        print('vpi.json output-dir')
+    if len(sys.argv) != 2:
+        print('vpi.json')
         sys.exit(1)
     vpiFileName = sys.argv[1]
-    outputDir = sys.argv[2]
 
     with open(vpiFileName, 'r') as f:
         vpiDict = json.load(f)
