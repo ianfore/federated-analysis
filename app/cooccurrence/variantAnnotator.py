@@ -55,7 +55,7 @@ def main():
         genoVector = genoArray[:,i]
         roh = allel.roh_mhmm(genoVector, posArray, is_accessible=isAccessible)
         if not roh[0].empty:
-            runsOfHomozygosity[i] = {'individual': i, 'roh': allel.roh_mhmm(genoVector, posArray, is_accessible=isAccessible)}
+            runsOfHomozygosity[i] = {'individual': i, 'roh': allel.roh_mhmm(genoVector, posArray, is_accessible=isAccessible).to_dict()}
 
 
     '''logger.debug('saving ibc.txt')
@@ -68,8 +68,7 @@ def main():
     f.close()'''
 
     logger.debug('writing roh.csv')
-    roh = runsOfHomozygosity.to_dict()
-    json_dump = json.dumps(roh)
+    json_dump = json.dumps(runsOfHomozygosity)
     with open(outputDir + '/roh.csv', 'w') as f:
         f.write(json_dump)
     f.close()
