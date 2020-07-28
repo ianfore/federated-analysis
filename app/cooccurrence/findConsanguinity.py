@@ -16,6 +16,7 @@ def main():
     heterozygousCount = 0
     for individual in vpiDict:
         for b in vpiDict[individual]['benign']:
+            print('b = ' + str(b))
             if b[1] == '3':
                 homozygousCount += 1
             else:
