@@ -34,6 +34,7 @@ def main():
             else:
                 heterozygousCount += 1
 
-        print('individual: ' + str(individual) + ',homo: ' + str(homozygousCount) + ',hetero:' + str(heterozygousCount))
+        print('individual: ' + str(individual) + ',homo: ' + str(homozygousCount) + ',hetero:' + str(heterozygousCount),
+              'homo-fraction:' + str(float(homozygousCount)/float(homozygousCount + heterozygousCount)))
 if __name__ == "__main__":
     main()
