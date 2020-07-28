@@ -12,13 +12,11 @@ def main():
         vpiDict = json.load(f)
     f.close()
 
-    homozygousCount = 0
-    heterozygousCount = 0
     for individual in vpiDict:
+        homozygousCount = 0
+        heterozygousCount = 0
         for b in vpiDict[individual]['benign']:
             # b = [[13, 32325741, 'C', 'T'], '3']
-            print('list(b) = ' + str(list(b)))
-            print('list(b)[0] = ' + str(list(b)[0]))
             if list(b)[1] == '3':
                 homozygousCount += 1
             else:
