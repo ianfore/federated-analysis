@@ -67,11 +67,12 @@ def main():
             f.write("%s\n" % item)
     f.close()'''
 
-    logger.debug('roh.csv')
+    logger.debug('writing roh.csv')
+    json_dump = json.dumps(runsOfHomozygosity)
     with open(outputDir + '/roh.csv', 'w') as f:
-        df = pd.DataFrame(runsOfHomozygosity)
-        df.to_csv(outputDir + '/roh.csv', index=True)
+        f.write(json_dump)
     f.close()
+
 
 if __name__ == "__main__":
     main()
