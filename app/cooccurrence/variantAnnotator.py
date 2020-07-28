@@ -68,7 +68,8 @@ def main():
     f.close()'''
 
     logger.debug('writing roh.csv')
-    json_dump = json.dumps(runsOfHomozygosity)
+    roh = runsOfHomozygosity.to_dict()
+    json_dump = json.dumps(roh)
     with open(outputDir + '/roh.csv', 'w') as f:
         f.write(json_dump)
     f.close()
