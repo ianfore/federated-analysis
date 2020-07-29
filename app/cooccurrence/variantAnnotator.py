@@ -57,7 +57,7 @@ def main():
         print('type of roh = ' + str(type(roh)))
         if not roh[0].empty:
             runsOfHomozygosity[i] = {'individual': i, 'roh': roh}
-            print('type of runsofhomo = ' + str(type(runsOfHomozygosity[i])))
+            print('type of runsofhomo[i] = ' + str(type(runsOfHomozygosity[i])))
 
     '''logger.debug('saving ibc.txt')
     np.savetxt(outputDir + '/ibc.txt', inbreedingCoefficient)
@@ -69,6 +69,7 @@ def main():
     f.close()'''
 
     logger.debug('writing roh.csv')
+    print('type of runsOfhomo = ' + str(type(runsOfHomozygosity)))
     json_dump = json.dumps(runsOfHomozygosity)
     with open(outputDir + '/roh.csv', 'w') as f:
         f.write(json_dump)
