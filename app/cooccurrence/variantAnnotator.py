@@ -62,7 +62,7 @@ def main():
                 runsOfHomozygosity[i][j] = dict()
                 runsOfHomozygosity[i][j]['start'] = int(roh[0].iloc[j]['start'])
                 runsOfHomozygosity[i][j]['stop'] = int(roh[0].iloc[j]['stop'])
-                runsOfHomozygosity[i][j]['is_marginal'] = bool(roh[j].iloc[0]['is_marginal'])
+                runsOfHomozygosity[i][j]['is_marginal'] = bool(roh[0].iloc[j]['is_marginal'])
 
     '''logger.debug('saving ibc.txt')
     np.savetxt(outputDir + '/ibc.txt', inbreedingCoefficient)
