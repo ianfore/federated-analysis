@@ -53,7 +53,7 @@ def main():
     runsOfHomozygosity = dict()
     for i in range(numSamples):
         genoVector = genoArray[:,i]
-        roh = allel.roh_mhmm(genoVector, posArray, is_accessible=isAccessible)
+        roh = allel.roh_mhmm(genoVector, posArray)
         print('type of roh = ' + str(type(roh)))
         if not roh[0].empty:
             runsOfHomozygosity[i] = roh
