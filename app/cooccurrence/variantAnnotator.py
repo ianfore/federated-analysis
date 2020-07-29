@@ -68,11 +68,12 @@ def main():
             f.write("%s\n" % item)
     f.close()'''
 
-    logger.debug('writing roh.csv')
+    print(runsOfHomozygosity)
+    '''logger.debug('writing roh.csv')
     print('type of runsOfhomo = ' + str(type(runsOfHomozygosity)))
     with open(outputDir + '/roh.csv', 'w') as f:
         json.dump(runsOfHomozygosity, f)
-    f.close()
+    f.close()'''
 
 
 if __name__ == "__main__":
