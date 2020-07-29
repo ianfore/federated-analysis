@@ -55,9 +55,11 @@ def main():
         genoVector = genoArray[:,i]
         roh = allel.roh_mhmm(genoVector, posArray, is_accessible=isAccessible)
         if not roh[0].empty:
-            runsOfHomozygosity[i] = roh
-            for r in range(len(roh)):
-                print('roh[' + str(r) + ']=' + str(roh[r]))
+            runsOfHomozygosity[i] = dict()
+            runsOfHomozygosity[i]['start'] = roh[5]
+            runsOfHomozygosity[i]['stop'] = roh[6]
+            runsOfHomozygosity[i]['is_marginal'] = roh[7]
+            runsOfHomozygosity[i]['confidence'] = roh[8]
     '''logger.debug('saving ibc.txt')
     np.savetxt(outputDir + '/ibc.txt', inbreedingCoefficient)
 
@@ -67,12 +69,11 @@ def main():
             f.write("%s\n" % item)
     f.close()'''
 
-    print(runsOfHomozygosity)
-    '''logger.debug('writing roh.csv')
+    logger.debug('writing roh.csv')
     print('type of runsOfhomo = ' + str(type(runsOfHomozygosity)))
     with open(outputDir + '/roh.csv', 'w') as f:
         json.dump(runsOfHomozygosity, f)
-    f.close()'''
+    f.close()
 
 
 if __name__ == "__main__":
