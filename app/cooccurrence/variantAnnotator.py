@@ -54,8 +54,10 @@ def main():
     for i in range(numSamples):
         genoVector = genoArray[:,i]
         roh = allel.roh_mhmm(genoVector, posArray, is_accessible=isAccessible)
+        print('type of roh = ' + str(type(roh)))
         if not roh[0].empty:
             runsOfHomozygosity[i] = {'individual': i, 'roh': roh}
+            print('type of runsofhomo = ' + str(type(runsOfHomozygosity[i])))
 
     '''logger.debug('saving ibc.txt')
     np.savetxt(outputDir + '/ibc.txt', inbreedingCoefficient)
