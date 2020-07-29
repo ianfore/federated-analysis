@@ -55,15 +55,11 @@ def main():
         genoVector = genoArray[:,i]
         roh = allel.roh_mhmm(genoVector, posArray, is_accessible=isAccessible)
         if not roh[0].empty:
-            '''runsOfHomozygosity[i] = dict()
-            runsOfHomozygosity[i]['start'] = roh[0].split(' ')[5]
-            runsOfHomozygosity[i]['stop'] = roh[0].split(' ')[6]
-            runsOfHomozygosity[i]['is_marginal'] = roh[0].split(' ')[7]
+            runsOfHomozygosity[i] = dict()
             runsOfHomozygosity[i]['confidence'] = roh[1]
-            runsOfHomozygosity[i]['start'] = roh.iloc[0]['start']
-            runsOfHomozygosity[i]['stop'] = roh.iloc[0]['stop']
-            runsOfHomozygosity[i]['is_marginal'] = roh.iloc[0]['is_marginal']
-            runsOfHomozygosity[i]['confidence']  = roh[1]'''
+            runsOfHomozygosity[i]['start'] = roh[0].iloc[0]['start']
+            runsOfHomozygosity[i]['stop'] = roh[0].iloc[0]['stop']
+            runsOfHomozygosity[i]['is_marginal'] = roh[0].iloc[0]['is_marginal']
             print('cols of roh[0]' + str(roh[0].columns))
             print('roh[1]' + str(roh[1]))
 
