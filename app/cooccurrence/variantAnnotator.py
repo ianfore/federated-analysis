@@ -56,7 +56,8 @@ def main():
         roh = allel.roh_mhmm(genoVector, posArray, is_accessible=isAccessible)
         if not roh[0].empty:
             runsOfHomozygosity[i] = roh
-            print(roh)
+            for r in range(len(roh)):
+                print('roh[' + str(r) + ']=' + str(roh[r]))
     '''logger.debug('saving ibc.txt')
     np.savetxt(outputDir + '/ibc.txt', inbreedingCoefficient)
 
