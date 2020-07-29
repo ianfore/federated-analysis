@@ -58,9 +58,11 @@ def main():
         if not roh[0].empty:
             runsOfHomozygosity[i] = dict()
             runsOfHomozygosity[i]['confidence'] = float(roh[1])
-            runsOfHomozygosity[i]['start'] = int(roh[0].iloc[0]['start'])
-            runsOfHomozygosity[i]['stop'] = int(roh[0].iloc[0]['stop'])
-            runsOfHomozygosity[i]['is_marginal'] = bool(roh[0].iloc[0]['is_marginal'])
+            for j in range(len(roh[0])):
+                runsOfHomozygosity[i][j] = dict()
+                runsOfHomozygosity[i][j]['start'] = int(roh[0].iloc[j]['start'])
+                runsOfHomozygosity[i][j]['stop'] = int(roh[0].iloc[j]['stop'])
+                runsOfHomozygosity[i][j]['is_marginal'] = bool(roh[j].iloc[0]['is_marginal'])
 
     '''logger.debug('saving ibc.txt')
     np.savetxt(outputDir + '/ibc.txt', inbreedingCoefficient)
