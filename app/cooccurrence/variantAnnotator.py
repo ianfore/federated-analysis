@@ -57,8 +57,7 @@ def main():
         print('type of roh = ' + str(type(roh)))
         if not roh[0].empty:
             runsOfHomozygosity[i] = roh
-            print('type of runsofhomo[i] = ' + str(type(runsOfHomozygosity[i])))
-
+            print(roh)
     '''logger.debug('saving ibc.txt')
     np.savetxt(outputDir + '/ibc.txt', inbreedingCoefficient)
 
