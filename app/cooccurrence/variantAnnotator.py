@@ -64,7 +64,7 @@ def main():
             runsOfHomozygosity[i]['stop'] = roh.iloc[0]['stop']
             runsOfHomozygosity[i]['is_marginal'] = roh.iloc[0]['is_marginal']
             runsOfHomozygosity[i]['confidence']  = roh[1]'''
-            print('type of roh[0]' + str(type(roh[0])))
+            print('cols of roh[0]' + str(roh[0].columns))
             print('roh[1]' + str(roh[1]))
 
     '''logger.debug('saving ibc.txt')
