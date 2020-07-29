@@ -16,7 +16,7 @@ def main():
         print('vcf-file-name output-dir')
         sys.exit(1)
     vcfFileName = sys.argv[1]
-    outputDir = sys.argv[2]
+    outputFile = sys.argv[2]
 
     logger.debug('reading ' + vcfFileName)
     vcf = allel.read_vcf(vcfFileName, fields=['samples', 'calldata/GT', 'variants/ALT', 'variants/CHROM',
@@ -70,9 +70,9 @@ def main():
             f.write("%s\n" % item)
     f.close()'''
 
-    logger.debug('writing roh.csv')
+    logger.debug('writing to ' + outputFile)
     #roh = json.dumps(runsOfHomozygosity)
-    with open(outputDir + '/roh.json', 'w') as f:
+    with open(outputFile, 'w') as f:
         json.dump(runsOfHomozygosity, f)
     f.close()
 
