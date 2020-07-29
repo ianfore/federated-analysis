@@ -60,8 +60,6 @@ def main():
             runsOfHomozygosity[i]['start'] = roh[0].iloc[0]['start']
             runsOfHomozygosity[i]['stop'] = roh[0].iloc[0]['stop']
             runsOfHomozygosity[i]['is_marginal'] = roh[0].iloc[0]['is_marginal']
-            print('cols of roh[0]' + str(roh[0].columns))
-            print('roh[1]' + str(roh[1]))
 
     '''logger.debug('saving ibc.txt')
     np.savetxt(outputDir + '/ibc.txt', inbreedingCoefficient)
@@ -73,9 +71,9 @@ def main():
     f.close()'''
 
     logger.debug('writing roh.csv')
-    print('type of runsOfhomo = ' + str(type(runsOfHomozygosity)))
+    roh = json.dumps(runsOfHomozygosity)
     with open(outputDir + '/roh.csv', 'w') as f:
-        json.dump(runsOfHomozygosity, f)
+        json.dump(roh, f)
     f.close()
 
 
