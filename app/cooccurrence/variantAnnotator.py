@@ -56,10 +56,10 @@ def main():
         roh = allel.roh_mhmm(genoVector, posArray, is_accessible=isAccessible)
         if not roh[0].empty:
             runsOfHomozygosity[i] = dict()
-            runsOfHomozygosity[i]['confidence'] = roh[1]
-            runsOfHomozygosity[i]['start'] = roh[0].iloc[0]['start']
-            runsOfHomozygosity[i]['stop'] = roh[0].iloc[0]['stop']
-            runsOfHomozygosity[i]['is_marginal'] = roh[0].iloc[0]['is_marginal']
+            runsOfHomozygosity[i]['confidence'] = float(roh[1])
+            runsOfHomozygosity[i]['start'] = int(roh[0].iloc[0]['start'])
+            runsOfHomozygosity[i]['stop'] = int(roh[0].iloc[0]['stop'])
+            runsOfHomozygosity[i]['is_marginal'] = bool(roh[0].iloc[0]['is_marginal'])
 
     '''logger.debug('saving ibc.txt')
     np.savetxt(outputDir + '/ibc.txt', inbreedingCoefficient)
