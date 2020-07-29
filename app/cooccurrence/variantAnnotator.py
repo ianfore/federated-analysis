@@ -70,9 +70,8 @@ def main():
 
     logger.debug('writing roh.csv')
     print('type of runsOfhomo = ' + str(type(runsOfHomozygosity)))
-    json_dump = json.dumps(runsOfHomozygosity)
     with open(outputDir + '/roh.csv', 'w') as f:
-        f.write(json_dump)
+        json.dump(runsOfHomozygosity, f)
     f.close()
 
 
