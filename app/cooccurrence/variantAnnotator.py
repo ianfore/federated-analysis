@@ -60,10 +60,10 @@ def main():
             runsOfHomozygosity[i]['stop'] = roh[0].split(' ')[6]
             runsOfHomozygosity[i]['is_marginal'] = roh[0].split(' ')[7]
             runsOfHomozygosity[i]['confidence'] = roh[1]'''
-            print('type of roh[0] = ' + str(type(roh[0])))
-            print('roh[0] = ' + str(roh[0]))
-            print('type of roh[1] = ' + str(type(roh[1])))
-            print('roh[1] = ' + str(roh[1]))
+            runsOfHomozygosity[i]['start'] = roh[0]['start']
+            runsOfHomozygosity[i]['stop'] = roh[0]['stop']
+            runsOfHomozygosity[i]['is_marginal'] = roh[0]['is_marginal']
+            runsOfHomozygosity[i]['confidence']  = roh[1]
     '''logger.debug('saving ibc.txt')
     np.savetxt(outputDir + '/ibc.txt', inbreedingCoefficient)
 
