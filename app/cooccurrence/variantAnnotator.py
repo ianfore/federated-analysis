@@ -54,6 +54,7 @@ def main():
     for i in range(numSamples):
         genoVector = genoArray[:,i]
         roh = allel.roh_mhmm(genoVector, posArray, is_accessible=isAccessible)
+        print('roh = ' + str(roh))
         if not roh[0].empty:
             runsOfHomozygosity[i] = dict()
             runsOfHomozygosity[i]['confidence'] = float(roh[1])
