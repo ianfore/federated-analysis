@@ -12,7 +12,7 @@ logger.setLevel(logging.DEBUG)
 
 
 def main():
-    if len(sys.argv) != 3:
+    if len(sys.argv) != 2:
         print('vcf-file-name output-file')
         sys.exit(1)
     vcfFileName = sys.argv[1]
