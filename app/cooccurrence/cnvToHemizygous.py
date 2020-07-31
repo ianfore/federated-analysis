@@ -43,8 +43,11 @@ def main():
     for i in range(len(vcf)):
         # ref = CNV_chr13_32313762_32316562
         ref = vcf.iloc[i]['ID']
-        start = int(ref.split('_')[2])
-        stop = int(ref.split('_')[3])
+        refArray = ref.split('_')
+        if len(refArray) != 4:
+            continue
+        start = int(refArray[2])
+        stop = int(refArray[3])
         for sample in vpi:
             cn = int(vcf.iloc[i][sample].split(':')[1])
             for b in vpi[sample]['vus']:
