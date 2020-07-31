@@ -918,9 +918,9 @@ def hardyWeinbergChiSquareTest(bVars, pVars, vVars, n):
         if expAA == 0 or expAa == 0 or expaa == 0:
             bVars[b]['chisquare'] = 0
         else:
-            bVars[b]['chisquare'] = 1.0/expAA * (bVars[b]['AA'] - expAA)**2 + \
-                                    1.0/expAa * (bVars[b]['Aa'] - expAa)**2 + \
-                                    1.0/expaa * (bVars[b]['aa'] - expaa)**2
+            bVars[b]['chisquare'] = (1.0/expAA) * (bVars[b]['AA'] - expAA)**2 + \
+                                    (1.0/expAa) * (bVars[b]['Aa'] - expAa)**2 + \
+                                    (1.0/expaa) * (bVars[b]['aa'] - expaa)**2
 
         # 8. compare against p-value for 1 degree of freedom at 0.05 significance (3.84)
         if bVars[b]['chisquare'] >= criticalValue:
