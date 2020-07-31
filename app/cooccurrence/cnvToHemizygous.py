@@ -18,15 +18,17 @@ def main():
     vpiFileName = sys.argv[3]
 
     # read cnv.vcf from file into df
+    logger.info('reading vcf data from ' + vcfFileName)
     vcf = pd.read_csv(vcfFileName, sep='\t', header = 0)
 
     # read sample from file into list
+    logger.info('reading samples from ' + sampleFileName)
     with open(sampleFileName) as f:
         samples = [line.rstrip() for line in f]
 
 
     # read vpi.json into dict
-    logger.info('reading data from ' + vpiFileName)
+    logger.info('reading vpi data from ' + vpiFileName)
     with open(vpiFileName, 'r') as f:
         vpiDict = json.load(f)
     f.close()
