@@ -414,6 +414,9 @@ def getGnomadData(brcaDF, vus, hgVersion, ethnicity):
         alleleFrequencies = [v for v in gnomad if ethnicity in v]
         x =  getPopulationGnomadData(brcaDF, hgString, hgVersion, alleleFrequencies)
         allDict[ethnicity] = x
+    else:
+        allDict['max']['frequency'] = 0.5 * (allDict['max'] + allDict['min'])
+        allDict['max']['population'] = None
     return allDict
 
 def getPopulationGnomadData(brcaDF, hgString, hgVersion, alleleFrequencies):
@@ -1251,7 +1254,10 @@ def countTotalGenotypesForVariants(q1, q2, vpiDF, rareThreshold, brcaDF, ancestr
     logger.info('threadID = ' + str(threadID) + ' processing from ' + str(start) + ' to ' + str(end))
     for i in range(start, end):
         individual = individuals[i]
-        ethnicity = ancestriesDF[individual]['gnomadPop']
+        try:
+            ethnicity = ancestriesDF[individual]['gnomadPop']
+        except Exception as e:
+            ethnicity = None
         '''ancestry = getMaxAncestry(ancestriesDF[ancestriesDF['individual'] == individual])
         ethnicity = hgdp_to_gnomad[ancestry]'''
         logger.debug(individual)
