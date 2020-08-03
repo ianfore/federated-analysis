@@ -59,11 +59,8 @@ def main():
                 if gt == 3 and start <= pos and pos <= stop:
                     potentiallyHemi.append((sample,chr, pos, cn, ref))
 
-        # if cnv is a deletion, then see if sample has that homozygous VUS in that deletion range
     print(potentiallyHemi)
-        # add hemizygous vus to list
 
-    # save list of hemizygous to file
 
 
 if __name__ == "__main__":
