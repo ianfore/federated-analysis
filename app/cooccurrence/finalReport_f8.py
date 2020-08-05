@@ -100,7 +100,6 @@ def addInfo(variantsDF, sitesDF):
 	infoDict = dict()
 	for i in range(len(finalDF.index)):
 		infoDict[i] = dict()
-		print(finalDF.iloc[i])
 
 		infoPairs = finalDF.iloc[i]['INFO'].split('|')[0].split(';')
 		for pair in infoPairs:
