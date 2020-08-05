@@ -68,6 +68,8 @@ def main():
 
     parser.add_argument("--all", dest="all", help="all vars file name, default=all.json", default='all.json')
 
+    parser.add_argument("--anno", dest="anno", help="annotation file name, default=None", default=None)
+
     parser.add_argument("--h", dest="h", help="Human genome version (37 or 38). Default=None", default=None)
 
     parser.add_argument("--e", dest="e", help="Ensembl version - 75 (for 37) or 99 (for 38). Default=None", default=None)
@@ -89,7 +91,6 @@ def main():
     parser.add_argument("--d", dest="d", help="directory containing pyensembl-cache. Default=/var/tmp/pyensembl-cache", default='/var/tmp/pyensembl-cache')
 
     parser.add_argument("--r", dest="r", help="Rare frequency cutoff. Default=0.01", default=0.01)
-
 
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" % defaultLogLevel, default=defaultLogLevel)
 
@@ -115,6 +116,7 @@ def main():
     ipv_options = options.ipv
     vpi_options = options.vpi
     all_options = options.all
+    anno_options = options.anno
     out_options = options.out
     c_options = options.c
     d_options = options.d
@@ -129,15 +131,20 @@ def main():
 
 
     run(h_options, e_options, c_options, g_options, p_options, v_options, s_options,
-        n_options, b_options, d_options, r_options, ipv_options, vpi_options, all_options, out_options)
+        n_options, b_options, d_options, r_options, ipv_options, vpi_options, all_options, anno_options, out_options)
 
 def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVarsPerIndivid, numProcs,
-        brcaFileName, pyensemblDir, rareCutoff, ipvFileName, vpiFileName, allVariantsFileName, outputFileName):
+        brcaFileName, pyensemblDir, rareCutoff, ipvFileName, vpiFileName, allVariantsFileName, annoFileName,
+        outputFileName):
 
 
     logger.info('setting pyensembl dir to ' + pyensemblDir)
     os.environ['PYENSEMBL_CACHE_DIR'] = '/var/tmp/pyensembl-cache'
 
+    logger.info('reading annotation data from ' + annoFileName)
+    with open(annoFileName, 'r') as f:
+        annoDF = pandas.read_csv(annoFileName, header=0, sep='\t')
+    f.close()
 
     logger.info('reading BRCA data from ' + brcaFileName)
     t = time.time()
@@ -155,7 +162,8 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
     w = Queue()
     processList = list()
     for i in range(numProcs):
-        p = Process(target=findVarsPerIndividual, args=(q, w, vcf, benignVariants, pathogenicVariants, chromosome, gene, ensemblRelease, i, numProcs,))
+        p = Process(target=findVarsPerIndividual, args=(q, w, vcf, benignVariants, pathogenicVariants, chromosome, gene,
+                                                        ensemblRelease, annoDF, i, numProcs,))
         p.start()
         processList.append(p)
     logger.info('joining results from forked threads')
@@ -508,7 +516,8 @@ def getStartAndEnd(partitionSizes, threadID):
 
     return start, end
 
-def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromosome, gene, ensemblRelease, threadID, numProcesses):
+def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromosome, gene, ensemblRelease, annoDF,
+                          threadID, numProcesses):
     '''infoFields = ['variants/ABE', 'variants/ABZ', 'variants/AC', 'variants/AF',
      'variants/AN', 'variants/ANN', 'variants/AVGDP', 'variants/BETA_IF', 'variants/BQZ',
      'variants/CYZ', 'variants/FIBC_I', 'variants/FIBC_P', 'variants/FILTER_PASS', 'variants/FLT20', 'variants/GC',
@@ -542,32 +551,14 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
                     continue
 
                 genotype = str(int(str(vcf['calldata/GT'][variant][i][0]) + str(vcf['calldata/GT'][variant][i][1]), 2))
+                seqCenter = annoDF.iloc[variant]['seq_center']
                 if (c, p, r, a) in benignVariants:
-                    variantsPerIndividual[individuals[i]]['benign'].append(((c, p, r, a), genotype))
+                    variantsPerIndividual[individuals[i]]['benign'].append(((c, p, r, a), genotype, seqCenter))
                 elif (c, p, r, a) in pathogenicVariants:
-                    variantsPerIndividual[individuals[i]]['pathogenic'].append(((c, p, r, a), genotype))
-
+                    variantsPerIndividual[individuals[i]]['pathogenic'].append(((c, p, r, a), genotype, seqCenter))
                 # if not a known VUS, it is a VUS now
                 else:
-                    variantsPerIndividual[individuals[i]]['vus'].append(((c, p, r, a),  genotype))
-
-                # add variant info
-                '''if not str((c, p, r, a)) in individualsPerVariant:
-                    individualsPerVariant[str((c, p, r, a))] = dict()
-                    individualsPerVariant[str((c, p, r, a))]['homozygous individuals'] = list()
-                    individualsPerVariant[str((c, p, r, a))]['heterozygous individuals'] = list()
-                if genotype == '3':
-                    individualsPerVariant[str((c,p,r,a))]['homozygous individuals'].append(individuals[i])
-                    if p == 32397588:
-                        print('added homo' + individuals[i])
-                        print(individualsPerVariant[str((c,p,r,a))]['homozygous individuals'])
-                elif genotype == '1' or genotype == '2':
-                    individualsPerVariant[str((c,p,r,a))]['heterozygous individuals'].append(individuals[i])
-                    if p == 32397588:
-                        print('added hetero ' + individuals[i])
-                        print(individualsPerVariant[str((c,p,r,a))]['heterozygous individuals'])
-                else:
-                    print('genotype = ' + str(genotype) + ' for individual ' + str(individuals[i]))'''
+                    variantsPerIndividual[individuals[i]]['vus'].append(((c, p, r, a),  genotype, seqCenter))
 
     q.put(variantsPerIndividual)
     w.put(individualsPerVariant)
