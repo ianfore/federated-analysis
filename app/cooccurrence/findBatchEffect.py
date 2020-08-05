@@ -25,7 +25,7 @@ def main():
             genotype = vus[1]
             seqCenter = vus[2]
             if genotype == '3':
-                centersPerHomoVus[str(variant)].add(seqCenter)
+                centersPerHomoVus[str(tuple(variant))].add(seqCenter)
     print(centersPerHomoVus)
 
 
