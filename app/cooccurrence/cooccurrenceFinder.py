@@ -201,7 +201,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
                 individualsPerVariant[v]['homozygous individuals'].add(individual)
     cohortSize = len(variantsPerIndividual)
     individualsPerVariant = addVariantInfo(individualsPerVariant, vcf, chromosome, ['FIBC_I', 'FIBC_P'], brcaDF,
-                                           hgVersion, cohortSize)
+                                           hgVersion, cohortSize, ensemblRelease)
 
     logger.info('saving vpi to ' + vpiFileName)
     with open(vpiFileName, 'w') as f:
@@ -256,7 +256,16 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
         f.write(json_dump)
     f.close()
 
-def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, brcaDF, hgVersion, cohortSize):
+def isExonic(ensemblRelease, chrom, pos):
+    ensembl = pyensembl.EnsemblRelease(release=ensemblRelease)
+    try:
+        exons = ensembl.exons_at_locus(contig=int(chrom), position=int(pos))
+    except Exception as e:
+        logger.error('exception: ' + str(e))
+        return None
+    return len(exons) > 0
+
+def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, brcaDF, hgVersion, cohortSize, ensemblRelease):
     # add infoList stuff from INFO field
     for variant in range(len(vcf['calldata/GT'])):
         if int(vcf['variants/CHROM'][variant].replace('chr', '')) != int(chromosome):
@@ -274,6 +283,7 @@ def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, brcaDF, hgV
             individualsPerVariant[v]['maxFreq'] = maxFreq
             individualsPerVariant[v]['cohortFreq'] = float(len(individualsPerVariant[v]['homozygous individuals']) + \
                 len(individualsPerVariant[v]['heterozygous individuals']) ) / float(cohortSize)
+            individualsPerVariant[v]['exonic'] = isExonic(ensemblRelease, c, p)
 
     return individualsPerVariant
 
@@ -569,6 +579,7 @@ def getGenesForVariant(variant, ensemblRelease, geneOfInterest):
         chrom = chrom.split('chr')[1]
     pos = variant[1]
     try:
+        exons = ensembl.exons_at_locus(contig=int(chrom), position=int(pos))
         genes = ensembl.gene_names_at_locus(contig=int(chrom), position=int(pos))
         # TODO could get BRCA and other gene like ZAR1L?
         g_of_i = set()
