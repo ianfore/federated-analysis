@@ -18,14 +18,14 @@ def main():
         vpiDict = json.load(f)
     f.close()
 
-    centersPerHomoVus = defaultdict(list)
+    centersPerHomoVus = defaultdict(set)
     for individual in vpiDict:
         for vus in vpiDict[individual]['vus']:
             variant = vus[0]
             genotype = vus[1]
             seqCenter = vus[2]
             if genotype == '3':
-                centersPerHomoVus[str(variant)].append(seqCenter)
+                centersPerHomoVus[str(variant)].add(seqCenter)
     print(centersPerHomoVus)
 
 
