@@ -44,6 +44,7 @@ def main():
 			if genotype == '3':
 				centersPerHomoVus[str(tuple(variant)).replace("'", "").replace(" ", "")].add(seqCenter)
 
+	print(centersPerHomoVus)
 
 	allVariants = ipvDict.keys()
 	variantsDict = dict()
