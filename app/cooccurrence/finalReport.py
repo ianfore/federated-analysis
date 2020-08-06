@@ -8,8 +8,8 @@ logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 def main():
-	if len(sys.argv) != 6:
-		print('ipv-f.json in.txt not.txt sites.tsv output.tsv')
+	if len(sys.argv) != 7:
+		print('ipv-f.json in.txt not.txt sites.tsv vpi.json output.tsv')
 		sys.exit(1)
 
 
@@ -39,8 +39,38 @@ def main():
 	sitesDF = pd.read_csv(sitesFileName, header=0, sep='\t')
 	f.close()
 
-	outputFileName = sys.argv[5]
+	vpiFileName = sys.argv[5]
+	logger.info('reading data from ' + vpiFileName)
+	with open(vpiFileName, 'r') as f:
+		vpiDict = json.load(f)
+	f.close()
 
+	outputFileName = sys.argv[6]
+
+	# get batch effect info
+	centersPerHomoVus = dict()
+	for individual in vpiDict:
+		for vus in vpiDict[individual]['benign']:
+			variant = vus[0]
+			seqCenter = vus[2]
+			v = str(tuple(variant)).replace("'", "").replace(" ", "")
+			if not v in centersPerHomoVus:
+				centersPerHomoVus[v] = set()
+			centersPerHomoVus[v].add(seqCenter)
+		for vus in vpiDict[individual]['pathogenic']:
+			variant = vus[0]
+			seqCenter = vus[2]
+			v = str(tuple(variant)).replace("'", "").replace(" ", "")
+			if not v in centersPerHomoVus:
+				centersPerHomoVus[v] = set()
+			centersPerHomoVus[v].add(seqCenter)
+		for vus in vpiDict[individual]['vus']:
+			variant = vus[0]
+			seqCenter = vus[2]
+			v = str(tuple(variant)).replace("'", "").replace(" ", "")
+			if not v in centersPerHomoVus:
+				centersPerHomoVus[v] = set()
+			centersPerHomoVus[v].add(seqCenter)
 
 	allVariants = ipvDict.keys()
 	variantsDict = dict()
@@ -83,7 +113,8 @@ def main():
 		variantsDict[v]['F'] = F
 		variantsDict[v]['Z'] = Z
 		variantsDict[v]['chisquare'] = chisquare
-		#variantsDict[v]['fisher'] = fisher
+		variantsDict[v]['sequenceCenter'] = centersPerHomoVus[v]
+	#variantsDict[v]['fisher'] = fisher
 
 
 	variantsDF = pd.DataFrame.from_dict(variantsDict)
