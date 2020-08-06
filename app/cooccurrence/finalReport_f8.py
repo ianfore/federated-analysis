@@ -35,14 +35,29 @@ def main():
 	outputFileName = sys.argv[4]
 
 	# get batch effect info
-	centersPerHomoVus = defaultdict(set)
+	centersPerHomoVus = dict()
 	for individual in vpiDict:
+		for vus in vpiDict[individual]['benign']:
+			variant = vus[0]
+			seqCenter = vus[2]
+			v = str(tuple(variant)).replace("'", "").replace(" ", "")
+			if not v in centersPerHomoVus:
+				centersPerHomoVus[v] = set()
+			centersPerHomoVus[v].add(seqCenter)
+		for vus in vpiDict[individual]['pathogenic']:
+			variant = vus[0]
+			seqCenter = vus[2]
+			v = str(tuple(variant)).replace("'", "").replace(" ", "")
+			if not v in centersPerHomoVus:
+				centersPerHomoVus[v] = set()
+			centersPerHomoVus[v].add(seqCenter)
 		for vus in vpiDict[individual]['vus']:
 			variant = vus[0]
-			genotype = vus[1]
 			seqCenter = vus[2]
-			if genotype == '3':
-				centersPerHomoVus[str(tuple(variant)).replace("'", "").replace(" ", "")].add(seqCenter)
+			v = str(tuple(variant)).replace("'", "").replace(" ", "")
+			if not v in centersPerHomoVus:
+				centersPerHomoVus[v] = set()
+			centersPerHomoVus[v].add(seqCenter)
 
 	print(centersPerHomoVus)
 
