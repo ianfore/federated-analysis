@@ -59,8 +59,6 @@ def main():
 				centersPerHomoVus[v] = set()
 			centersPerHomoVus[v].add(seqCenter)
 
-	print(centersPerHomoVus)
-
 	allVariants = ipvDict.keys()
 	variantsDict = dict()
 	#print('variant\tclass\tpopFreq\tcohortFreq\taa\tAa\tAA\thomozygousSample\tinGnomad')
