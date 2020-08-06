@@ -2,14 +2,15 @@ import json
 import sys
 import pandas as pd
 import logging
+from collections import defaultdict
 
 logging.basicConfig()
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 def main():
-	if len(sys.argv) != 4:
-		print('ipv-f.json sites.tsv output.tsv')
+	if len(sys.argv) != 5:
+		print('ipv-f.json sites.tsv vpi.json output.tsv')
 		sys.exit(1)
 
 
@@ -25,7 +26,23 @@ def main():
 	sitesDF = pd.read_csv(sitesFileName, header=0, sep='\t')
 	f.close()
 
-	outputFileName = sys.argv[3]
+	vpiFileName = sys.argv[3]
+	logger.info('reading data from ' + vpiFileName)
+	with open(vpiFileName, 'r') as f:
+		vpiDict = json.load(f)
+	f.close()
+
+	outputFileName = sys.argv[4]
+
+	# get batch effect info
+	centersPerHomoVus = defaultdict(set)
+	for individual in vpiDict:
+		for vus in vpiDict[individual]['vus']:
+			variant = vus[0]
+			genotype = vus[1]
+			seqCenter = vus[2]
+			if genotype == '3':
+				centersPerHomoVus[str(tuple(variant)).replace("'", "").replace(" ", "")].add(seqCenter)
 
 
 	allVariants = ipvDict.keys()
@@ -62,6 +79,7 @@ def main():
 		variantsDict[v]['F'] = F
 		variantsDict[v]['Z'] = Z
 		variantsDict[v]['chisquare'] = chisquare
+		variantsDict[v]['sequenceCenter'] = centersPerHomoVus[v]
 		#variantsDict[v]['fisher'] = fisher
 
 
