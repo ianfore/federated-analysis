@@ -513,7 +513,6 @@ def getStartAndEnd(partitionSizes, threadID):
     start = 0
     for i in range(threadID):
         start += partitionSizes[i]
-
     end = start + partitionSizes[threadID]
 
     return start, end
