@@ -60,33 +60,6 @@ def main():
     with open(countsPerCenterOutputFileName, 'w') as f:
         json.dump(countsPerCenter, f, cls=NpEncoder)
     f.close()
-    
+
 if __name__ == "__main__":
     main()
-
-'''
-{
-    "NWD977487": {
-        "benign": [
-            [
-                [
-                    13,
-                    32315655,
-                    "A",
-                    "G"
-                ],
-                "2",
-                "BAYLOR"
-            ],
-            [
-                [
-                    13,
-                    32315831,
-                    "G",
-                    "A"
-                ],
-                "1",
-                "BAYLOR"
-            ],
-
-'''

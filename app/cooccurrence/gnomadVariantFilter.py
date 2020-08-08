@@ -42,8 +42,8 @@ def main():
 
     effectivelyZeroValues = ['0', '0.0', '-', None]
 
-    notInSubset = open(notInSubsetFileName, 'a')
-    inSubset = open(inSubsetFileName, 'a')
+    notInSubset = open(notInSubsetFileName, 'w')
+    inSubset = open(inSubsetFileName, 'w')
     for variant in range(len(vcf['calldata/GT'])):
         c = int(vcf['variants/CHROM'][variant].replace('chr', ''))
         p = int(vcf['variants/POS'][variant])
