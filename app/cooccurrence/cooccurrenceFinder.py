@@ -494,7 +494,9 @@ def calculateLikelihood(pathCoocs, p1, n, k, brcaDF, hgVersion, cohortSize, rare
     return dataPerVus
 
 def readVCFFile(vcfFileName):
-    return allel.read_vcf(vcfFileName, fields=['samples', 'calldata/GT', 'variants/ALT', 'variants/CHROM','variants/FILTER_PASS', 'variants/ID', 'variants/POS', 'variants/QUAL','variants/REF', 'variants/INFO'])
+    return allel.read_vcf(vcfFileName, fields=['samples', 'calldata/GT', 'variants/ALT', 'variants/CHROM',
+                                               'variants/FILTER_PASS', 'variants/ID', 'variants/POS', 'variants/QUAL',
+                                               'variants/REF', 'variants/INFO'])
 
 def divide(n, d):
    res = list()
@@ -570,7 +572,7 @@ def getGenesForVariant(variant, ensemblRelease, geneOfInterest):
         chrom = chrom.split('chr')[1]
     pos = variant[1]
     try:
-        exons = ensembl.exons_at_locus(contig=int(chrom), position=int(pos))
+        #exons = ensembl.exons_at_locus(contig=int(chrom), position=int(pos))
         genes = ensembl.gene_names_at_locus(contig=int(chrom), position=int(pos))
         # TODO could get BRCA and other gene like ZAR1L?
         g_of_i = set()
