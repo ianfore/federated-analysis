@@ -27,10 +27,11 @@ class NpEncoder(json.JSONEncoder):
 def main():
     # read in vpi
     if len(sys.argv) != 3:
-        print('usage: findBatchEffect vpi.json output.json')
+        print('usage: findBatchEffect vpi.json output-dir')
         sys.exit(1)
     vpiFileName = sys.argv[1]
-    outputFileName = sys.argv[2]
+    centersPerHomoVUSOutputFileName = sys.argv[2] + '/centersPerHomoVUS.json'
+    countsPerCenterOutputFileName = sys.argv[2] + '/countsPerCenter.json'
 
     logger.info('reading data from ' + vpiFileName)
     with open(vpiFileName, 'r') as f:
@@ -38,18 +39,28 @@ def main():
     f.close()
 
     centersPerHomoVus = defaultdict(set)
+    countsPerCenter = dict()
     for individual in vpiDict:
         for vus in vpiDict[individual]['vus']:
             variant = vus[0]
             genotype = vus[1]
             seqCenter = vus[2]
+            if not seqCenter in countsPerCenter:
+                countsPerCenter[seqCenter] = {'homoVUS': 0, 'heteroVUS': 0}
             if genotype == '3':
                 centersPerHomoVus[str(tuple(variant))].add(seqCenter)
+                countsPerCenter[seqCenter]['homoVUS'] += 1
+            else:
+                countsPerCenter[seqCenter]['heteroVUS'] += 1
 
-    with open(outputFileName, 'w') as f:
+    with open(centersPerHomoVUSOutputFileName, 'w') as f:
         json.dump(centersPerHomoVus, f, cls=NpEncoder)
     f.close()
 
+    with open(countsPerCenterOutputFileName, 'w') as f:
+        json.dump(countsPerCenter, f, cls=NpEncoder)
+    f.close()
+    
 if __name__ == "__main__":
     main()
 
