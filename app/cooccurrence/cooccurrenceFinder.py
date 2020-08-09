@@ -292,7 +292,7 @@ def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, brcaDF, hgV
             individualsPerVariant[v]['maxFreq'] = maxFreq
             individualsPerVariant[v]['cohortFreq'] = float(len(individualsPerVariant[v]['homozygous individuals']) + \
                 len(individualsPerVariant[v]['heterozygous individuals']) ) / float(cohortSize)
-            #individualsPerVariant[v]['exonic'] = isExonic(ensemblRelease, c, p)
+            individualsPerVariant[v]['exonic'] = isExonic(ensemblRelease, c, p)
 
     return individualsPerVariant
 
