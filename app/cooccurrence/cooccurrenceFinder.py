@@ -256,7 +256,8 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
     logger.info('putting all the data together per vus')
     dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, p1, n, k, brcaDF, hgVersion, cohortSize, rareCutoff)
 
-    data_set = {"cooccurring vus": dataPerVus, "homozygous vus": homozygousPerVus, "homozygous benign": homozygousPerBenign}
+    #data_set = {"cooccurring vus": dataPerVus, "homozygous vus": homozygousPerVus, "homozygous benign": homozygousPerBenign}
+    data_set = {"cooccurring vus": dataPerVus, "homozygous vus": homozygousPerVus}
     json_dump = json.dumps(data_set, cls=NpEncoder)
 
     logger.info('saving final VUS data  to ' + outputFileName)
