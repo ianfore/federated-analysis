@@ -71,6 +71,7 @@ def main():
 		AA = str(ipvDict[v]['AA'])
 		F = str(ipvDict[v]['F'])
 		Z = str(ipvDict[v]['Z'])
+		exonic = str(ipvDict[v]['exonic'])
 		#fisher = str(ipvDict[v]['fisher'])
 		chisquare = str(ipvDict[v]['chisquare'])
 		if len(ipvDict[v]['homozygous individuals']) == 0:
@@ -94,6 +95,7 @@ def main():
 		variantsDict[v]['Z'] = Z
 		variantsDict[v]['chisquare'] = chisquare
 		variantsDict[v]['sequenceCenter'] = centersPerHomoVus[v]
+		variantsDict[v]['exonic'] = exonic
 		#variantsDict[v]['fisher'] = fisher
 
 
