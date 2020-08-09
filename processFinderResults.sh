@@ -20,8 +20,8 @@ cat ${CHR}.txt | sort | uniq > $CHR-uniq.txt
 
 numVUS=$(wc -l $CHR-uniq.txt|awk '{print $1}')
 
-# find total num coocs
-sed -n '/cooccurring/,/homozygous/p' $CHR-pretty.json > $CHR-coocs.json
+# find total num cooc vus
+sed -n '/cooccurring vus/,/homozygous vus/p' $CHR-pretty.json > $CHR-coocs.json
 
 grep '(' $CHR-coocs.json > $CHR-coocs.txt
 
@@ -33,8 +33,8 @@ cat $CHR-coocs.txt | sort > $CHR-coocs-sorted.txt
 
 numCoocs=$(wc -l $CHR-coocs-sorted.txt|awk '{print $1}')
 
-# find total num homo
-sed -n '/homozygous/,$ p' $CHR-pretty.json > $CHR-homo.json
+# find total num homo vus
+sed -n '/homozygous vus/,$ p' $CHR-pretty.json > $CHR-homo.json
 
 grep '(' $CHR-homo.json > $CHR-homo.txt
 
