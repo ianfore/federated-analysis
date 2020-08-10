@@ -114,7 +114,7 @@ def main():
 		variantsDict[v]['F'] = F
 		variantsDict[v]['Z'] = Z
 		variantsDict[v]['chisquare'] = chisquare
-		variantsDict[v]['sequenceCenter'] = centersPerHomoVus[v]
+		variantsDict[v]['sequenceCenter'] = str(centersPerHomoVus[v]).replace(" ", "")
 		variantsDict[v]['exonic'] = exonic
 	#variantsDict[v]['fisher'] = fisher
 
