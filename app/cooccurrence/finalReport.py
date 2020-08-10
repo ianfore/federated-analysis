@@ -163,7 +163,7 @@ def addInfo(variantsDF, sitesDF):
 	infoDF = pd.DataFrame.from_dict(infoDict).transpose()
 
 	finalDF['FIBC_I'] = infoDF['FIBC_I']
-	finalDF['HWEAF_p'] = infoDF['HWEAF_P']
+	finalDF['HWEAF_P'] = infoDF['HWEAF_P']
 	finalDF['HWE_SLP_I'] = infoDF['HWE_SLP_I']
 	finalDF['HWE_SLP_P'] = infoDF['HWE_SLP_P']
 	finalDF['AC'] = infoDF['AC']
