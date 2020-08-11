@@ -70,7 +70,7 @@ def main():
 		Aa = str(ipvDict[v]['Aa'])
 		AA = str(ipvDict[v]['AA'])
 		# calculate p = (2 x Obs(AA) + Obs(Aa)) / (2 x (Obs(AA) + Obs(Aa) + Obs(aa))
-		p = (2 * AA + Aa) / (2 * (AA + Aa + aa))
+		p = (2 * int(AA) + int(Aa)) / (2 * (int(AA) + int(Aa) + int(aa)))
 		q = 1 - p
 		F = str(ipvDict[v]['F'])
 		Z = str(ipvDict[v]['Z'])
