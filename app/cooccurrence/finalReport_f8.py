@@ -69,6 +69,9 @@ def main():
 		aa = str(ipvDict[v]['aa'])
 		Aa = str(ipvDict[v]['Aa'])
 		AA = str(ipvDict[v]['AA'])
+		# calculate p = (2 x Obs(AA) + Obs(Aa)) / (2 x (Obs(AA) + Obs(Aa) + Obs(aa))
+		p = (2 * AA + Aa) / (2 * (AA + Aa + aa))
+		q = 1 - p
 		F = str(ipvDict[v]['F'])
 		Z = str(ipvDict[v]['Z'])
 		exonic = str(ipvDict[v]['exonic'])
@@ -91,6 +94,8 @@ def main():
 		variantsDict[v]['homo_alt'] = aa
 		variantsDict[v]['hetero'] = Aa
 		variantsDict[v]['homo_ref'] = AA
+		variantsDict[v]['p'] = p
+		variantsDict[v]['q'] = q
 		variantsDict[v]['F'] = F
 		variantsDict[v]['Z'] = Z
 		variantsDict[v]['chisquare'] = chisquare
