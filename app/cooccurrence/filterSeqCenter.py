@@ -3,8 +3,9 @@ import logging
 import sys
 import numpy as np
 
+logging.basicConfig()
 logger = logging.getLogger()
-defaultLogLevel = "DEBUG"
+logger.setLevel(logging.DEBUG)
 
 class NpEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -49,7 +50,7 @@ def main():
             excludeList.append(vus)
 
     for key in excludeList:
-        del out[key]
+        del out['homozygous vus'][key]
 
     with open(filteredOutFileName, 'w') as f:
         json.dump(out, f, cls=NpEncoder)
