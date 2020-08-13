@@ -4,8 +4,9 @@ import sys
 from collections import defaultdict
 import numpy as np
 
+logging.basicConfig()
 logger = logging.getLogger()
-defaultLogLevel = "DEBUG"
+logger.setLevel(logging.DEBUG)
 
 class NpEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -52,24 +53,30 @@ def main():
             genotype = vus[1]
             seqCenter = vus[2]
             if not seqCenter in countsPerCenter:
-                countsPerCenter[seqCenter] = {'homoVUS': 0, 'heteroVUS': 0, 'homoBen': 0, 'heteroBen': 0}
+                countsPerCenter[seqCenter] = {'homoVUS': 0, 'heteroVUS': 0, 'homoBen': 0, 'heteroBen': 0,
+                                              'totalHomo': 0, 'totalHetero': 0}
             if genotype == '3':
                 centersPerHomo[str(tuple(variant))].add(seqCenter)
                 countsPerCenter[seqCenter]['homoVUS'] += 1
+                countsPerCenter[seqCenter]['totalHomo'] += 1
             else:
                 countsPerCenter[seqCenter]['heteroVUS'] += 1
+                countsPerCenter[seqCenter]['totalHetero'] += 1
 
         for ben in vpi13Dict[individual]['benign']:
             variant = ben[0]
             genotype = ben[1]
             seqCenter = ben[2]
             if not seqCenter in countsPerCenter:
-                countsPerCenter[seqCenter] = {'homoVUS': 0, 'heteroVUS': 0, 'homoBen': 0, 'heteroBen': 0}
+                countsPerCenter[seqCenter] = {'homoVUS': 0, 'heteroVUS': 0, 'homoBen': 0, 'heteroBen': 0,
+                                              'totalHomo': 0, 'totalHetero': 0}
             if genotype == '3':
                 centersPerHomo[str(tuple(variant))].add(seqCenter)
                 countsPerCenter[seqCenter]['homoBen'] += 1
+                countsPerCenter[seqCenter]['totalHomo'] += 1
             else:
                 countsPerCenter[seqCenter]['heteroBen'] += 1
+                countsPerCenter[seqCenter]['totalHetero'] += 1
 
 
     for individual in vpi17Dict:
@@ -78,24 +85,30 @@ def main():
             genotype = vus[1]
             seqCenter = vus[2]
             if not seqCenter in countsPerCenter:
-                countsPerCenter[seqCenter] = {'homoVUS': 0, 'heteroVUS': 0, 'homoBen': 0, 'heteroBen': 0}
+                countsPerCenter[seqCenter] = {'homoVUS': 0, 'heteroVUS': 0, 'homoBen': 0, 'heteroBen': 0,
+                                              'totalHomo': 0, 'totalHetero': 0}
             if genotype == '3':
                 centersPerHomo[str(tuple(variant))].add(seqCenter)
                 countsPerCenter[seqCenter]['homoVUS'] += 1
+                countsPerCenter[seqCenter]['totalHomo'] += 1
             else:
                 countsPerCenter[seqCenter]['heteroVUS'] += 1
+                countsPerCenter[seqCenter]['totalHetero'] += 1
 
         for ben in vpi17Dict[individual]['benign']:
             variant = ben[0]
             genotype = ben[1]
             seqCenter = ben[2]
             if not seqCenter in countsPerCenter:
-                countsPerCenter[seqCenter] = {'homoVUS': 0, 'heteroVUS': 0, 'homoBen': 0, 'heteroBen': 0}
+                countsPerCenter[seqCenter] = {'homoVUS': 0, 'heteroVUS': 0, 'homoBen': 0, 'heteroBen': 0,
+                                              'totalHomo': 0, 'totalHetero': 0}
             if genotype == '3':
                 centersPerHomo[str(tuple(variant))].add(seqCenter)
                 countsPerCenter[seqCenter]['homoBen'] += 1
+                countsPerCenter[seqCenter]['totalHomo'] += 1
             else:
                 countsPerCenter[seqCenter]['heteroBen'] += 1
+                countsPerCenter[seqCenter]['totalHetero'] += 1
 
     with open(centersPerHomoOutputFileName, 'w') as f:
         json.dump(centersPerHomo, f, cls=NpEncoder)
