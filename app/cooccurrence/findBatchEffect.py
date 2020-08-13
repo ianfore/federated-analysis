@@ -1,4 +1,3 @@
-import pandas as pd
 import json
 import logging
 import sys
@@ -46,7 +45,7 @@ def main():
 
     centersPerHomoVus = defaultdict(set)
     countsPerCenter = dict()
-    
+
     for individual in vpi13Dict:
         for vus in vpi13Dict[individual]['vus']:
             variant = vus[0]
