@@ -30,7 +30,7 @@ def main():
         sys.exit(1)
     vpi13FileName = sys.argv[1]
     vpi17FileName = sys.argv[2]
-    centersPerHomoVUSOutputFileName = sys.argv[3] + '/centersPerHomoVUS.json'
+    centersPerHomoOutputFileName = sys.argv[3] + '/centersPerHomo.json'
     countsPerCenterOutputFileName = sys.argv[3] + '/countsPerCenter.json'
 
     logger.info('reading data from ' + vpi13FileName)
@@ -43,7 +43,7 @@ def main():
         vpi17Dict = json.load(f)
     f.close()
 
-    centersPerHomoVus = defaultdict(set)
+    centersPerHomo = defaultdict(set)
     countsPerCenter = dict()
 
     for individual in vpi13Dict:
@@ -54,10 +54,23 @@ def main():
             if not seqCenter in countsPerCenter:
                 countsPerCenter[seqCenter] = {'homoVUS': 0, 'heteroVUS': 0}
             if genotype == '3':
-                centersPerHomoVus[str(tuple(variant))].add(seqCenter)
+                centersPerHomo[str(tuple(variant))].add(seqCenter)
                 countsPerCenter[seqCenter]['homoVUS'] += 1
             else:
                 countsPerCenter[seqCenter]['heteroVUS'] += 1
+
+        for ben in vpi13Dict[individual]['benign']:
+            variant = ben[0]
+            genotype = ben[1]
+            seqCenter = ben[2]
+            if not seqCenter in countsPerCenter:
+                countsPerCenter[seqCenter] = {'homoBen': 0, 'heteroBen': 0}
+            if genotype == '3':
+                centersPerHomo[str(tuple(variant))].add(seqCenter)
+                countsPerCenter[seqCenter]['homoBen'] += 1
+            else:
+                countsPerCenter[seqCenter]['heteroBen'] += 1
+
 
     for individual in vpi17Dict:
         for vus in vpi17Dict[individual]['vus']:
@@ -67,13 +80,25 @@ def main():
             if not seqCenter in countsPerCenter:
                 countsPerCenter[seqCenter] = {'homoVUS': 0, 'heteroVUS': 0}
             if genotype == '3':
-                centersPerHomoVus[str(tuple(variant))].add(seqCenter)
+                centersPerHomo[str(tuple(variant))].add(seqCenter)
                 countsPerCenter[seqCenter]['homoVUS'] += 1
             else:
                 countsPerCenter[seqCenter]['heteroVUS'] += 1
 
-    with open(centersPerHomoVUSOutputFileName, 'w') as f:
-        json.dump(centersPerHomoVus, f, cls=NpEncoder)
+        for ben in vpi17Dict[individual]['benign']:
+            variant = ben[0]
+            genotype = ben[1]
+            seqCenter = ben[2]
+            if not seqCenter in countsPerCenter:
+                countsPerCenter[seqCenter] = {'homoBen': 0, 'heteroBen': 0}
+            if genotype == '3':
+                centersPerHomo[str(tuple(variant))].add(seqCenter)
+                countsPerCenter[seqCenter]['homoBen'] += 1
+            else:
+                countsPerCenter[seqCenter]['heteroBen'] += 1
+
+    with open(centersPerHomoOutputFileName, 'w') as f:
+        json.dump(centersPerHomo, f, cls=NpEncoder)
     f.close()
 
     with open(countsPerCenterOutputFileName, 'w') as f:
