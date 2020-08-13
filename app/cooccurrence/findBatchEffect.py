@@ -52,7 +52,7 @@ def main():
             genotype = vus[1]
             seqCenter = vus[2]
             if not seqCenter in countsPerCenter:
-                countsPerCenter[seqCenter] = {'homoVUS': 0, 'heteroVUS': 0}
+                countsPerCenter[seqCenter] = {'homoVUS': 0, 'heteroVUS': 0, 'homoBen': 0, 'heteroBen': 0}
             if genotype == '3':
                 centersPerHomo[str(tuple(variant))].add(seqCenter)
                 countsPerCenter[seqCenter]['homoVUS'] += 1
@@ -64,7 +64,7 @@ def main():
             genotype = ben[1]
             seqCenter = ben[2]
             if not seqCenter in countsPerCenter:
-                countsPerCenter[seqCenter] = {'homoBen': 0, 'heteroBen': 0}
+                countsPerCenter[seqCenter] = {'homoVUS': 0, 'heteroVUS': 0, 'homoBen': 0, 'heteroBen': 0}
             if genotype == '3':
                 centersPerHomo[str(tuple(variant))].add(seqCenter)
                 countsPerCenter[seqCenter]['homoBen'] += 1
@@ -78,7 +78,7 @@ def main():
             genotype = vus[1]
             seqCenter = vus[2]
             if not seqCenter in countsPerCenter:
-                countsPerCenter[seqCenter] = {'homoVUS': 0, 'heteroVUS': 0}
+                countsPerCenter[seqCenter] = {'homoVUS': 0, 'heteroVUS': 0, 'homoBen': 0, 'heteroBen': 0}
             if genotype == '3':
                 centersPerHomo[str(tuple(variant))].add(seqCenter)
                 countsPerCenter[seqCenter]['homoVUS'] += 1
@@ -90,7 +90,7 @@ def main():
             genotype = ben[1]
             seqCenter = ben[2]
             if not seqCenter in countsPerCenter:
-                countsPerCenter[seqCenter] = {'homoBen': 0, 'heteroBen': 0}
+                countsPerCenter[seqCenter] = {'homoVUS': 0, 'heteroVUS': 0, 'homoBen': 0, 'heteroBen': 0}
             if genotype == '3':
                 centersPerHomo[str(tuple(variant))].add(seqCenter)
                 countsPerCenter[seqCenter]['homoBen'] += 1
