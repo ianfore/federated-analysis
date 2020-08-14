@@ -92,12 +92,12 @@ def main():
                 studiesPerHomo[str(tuple(variant))].add(study)
                 countsPerCenter[seqCenter]['homoBen'] += 1
                 countsPerCenter[seqCenter]['totalHomo'] += 1
-                countsPerStudy[study]['homoVUS'] += 1
+                countsPerStudy[study]['homoBen'] += 1
                 countsPerStudy[study]['totalHomo'] += 1
             else:
                 countsPerCenter[seqCenter]['heteroBen'] += 1
                 countsPerCenter[seqCenter]['totalHetero'] += 1
-                countsPerStudy[study]['heteroVUS'] += 1
+                countsPerStudy[study]['heteroBen'] += 1
                 countsPerStudy[study]['totalHetero'] += 1
 
 
@@ -142,12 +142,12 @@ def main():
                 studiesPerHomo[str(tuple(variant))].add(study)
                 countsPerCenter[seqCenter]['homoBen'] += 1
                 countsPerCenter[seqCenter]['totalHomo'] += 1
-                countsPerStudy[study]['homoVUS'] += 1
+                countsPerStudy[study]['homoBen'] += 1
                 countsPerStudy[study]['totalHomo'] += 1
             else:
                 countsPerCenter[seqCenter]['heteroBen'] += 1
                 countsPerCenter[seqCenter]['totalHetero'] += 1
-                countsPerStudy[study]['heteroVUS'] += 1
+                countsPerStudy[study]['heteroBen'] += 1
                 countsPerStudy[study]['totalHetero'] += 1
 
     with open(centersPerHomoOutputFileName, 'w') as f:
