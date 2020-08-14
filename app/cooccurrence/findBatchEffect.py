@@ -69,7 +69,7 @@ def main():
                 countsPerCenter[seqCenter]['homoVUS'] += 1
                 countsPerCenter[seqCenter]['totalHomo'] += 1
                 countsPerStudy[study]['homoVUS'] += 1
-                countsPerCenter[study]['totalHomo'] += 1
+                countsPerStudy[study]['totalHomo'] += 1
             else:
                 countsPerCenter[seqCenter]['heteroVUS'] += 1
                 countsPerCenter[seqCenter]['totalHetero'] += 1
@@ -93,7 +93,7 @@ def main():
                 countsPerCenter[seqCenter]['homoBen'] += 1
                 countsPerCenter[seqCenter]['totalHomo'] += 1
                 countsPerStudy[study]['homoVUS'] += 1
-                countsPerCenter[study]['totalHomo'] += 1
+                countsPerStudy[study]['totalHomo'] += 1
             else:
                 countsPerCenter[seqCenter]['heteroBen'] += 1
                 countsPerCenter[seqCenter]['totalHetero'] += 1
@@ -119,7 +119,7 @@ def main():
                 countsPerCenter[seqCenter]['homoVUS'] += 1
                 countsPerCenter[seqCenter]['totalHomo'] += 1
                 countsPerStudy[study]['homoVUS'] += 1
-                countsPerCenter[study]['totalHomo'] += 1
+                countsPerStudy[study]['totalHomo'] += 1
             else:
                 countsPerCenter[seqCenter]['heteroVUS'] += 1
                 countsPerCenter[seqCenter]['totalHetero'] += 1
@@ -143,7 +143,7 @@ def main():
                 countsPerCenter[seqCenter]['homoBen'] += 1
                 countsPerCenter[seqCenter]['totalHomo'] += 1
                 countsPerStudy[study]['homoVUS'] += 1
-                countsPerCenter[study]['totalHomo'] += 1
+                countsPerStudy[study]['totalHomo'] += 1
             else:
                 countsPerCenter[seqCenter]['heteroBen'] += 1
                 countsPerCenter[seqCenter]['totalHetero'] += 1
