@@ -26,12 +26,12 @@ class NpEncoder(json.JSONEncoder):
 
 def main():
     if len(sys.argv) != 5:
-        print('out.json centersPerHomoVUS.json centerName filtered-out.json')
+        print('out.json perCenter.json batchName filtered-out.json')
         sys.exit(1)
 
     outFileName = sys.argv[1]
-    cphvFileName = sys.argv[2]
-    centerName = sys.argv[3]
+    perCenterFileName = sys.argv[2]
+    batchName = sys.argv[3]
     filteredOutFileName = sys.argv[4]
 
     logger.info('reading data from ' + outFileName)
@@ -39,14 +39,14 @@ def main():
         out = json.load(f)
     f.close()
 
-    logger.info('reading data from ' + cphvFileName)
-    with open(cphvFileName, 'r') as f:
+    logger.info('reading data from ' + perCenterFileName)
+    with open(perCenterFileName, 'r') as f:
         cphv = json.load(f)
     f.close()
 
     excludeList = list()
     for vus in cphv:
-        if cphv[vus] == [centerName]:
+        if cphv[vus] == [batchName]:
             excludeList.append(vus)
 
     for key in excludeList:
