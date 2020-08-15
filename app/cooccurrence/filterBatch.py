@@ -23,14 +23,13 @@ class NpEncoder(json.JSONEncoder):
             return super(NpEncoder, self).default(obj)
 
 
-
 def main():
     if len(sys.argv) != 5:
-        print('out.json perCenter.json batchName filtered-out.json')
+        print('out.json perBatch.json batchName filtered-out.json')
         sys.exit(1)
 
     outFileName = sys.argv[1]
-    perCenterFileName = sys.argv[2]
+    perBatchFileName = sys.argv[2]
     batchName = sys.argv[3]
     filteredOutFileName = sys.argv[4]
 
@@ -39,8 +38,8 @@ def main():
         out = json.load(f)
     f.close()
 
-    logger.info('reading data from ' + perCenterFileName)
-    with open(perCenterFileName, 'r') as f:
+    logger.info('reading data from ' + perBatchFileName)
+    with open(perBatchFileName, 'r') as f:
         cphv = json.load(f)
     f.close()
 

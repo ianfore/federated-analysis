@@ -84,6 +84,8 @@ def main():
 		AA = str(ipvDict[v]['AA'])
 		F = str(ipvDict[v]['F'])
 		Z = str(ipvDict[v]['Z'])
+		p = str(ipvDict[v]['p'])
+		q = str(ipvDict[v]['q'])
 		exonic = str(ipvDict[v]['exonic'])
 		#fisher = str(ipvDict[v]['fisher'])
 		chisquare = str(ipvDict[v]['chisquare'])
@@ -113,6 +115,8 @@ def main():
 		variantsDict[v]['homo_ref'] = AA
 		variantsDict[v]['F'] = F
 		variantsDict[v]['Z'] = Z
+		variantsDict[v]['p'] = p
+		variantsDict[v]['q'] = q
 		variantsDict[v]['chisquare'] = chisquare
 		variantsDict[v]['sequenceCenter'] = str(centersPerHomoVus[v]).replace(" ", "")
 		variantsDict[v]['exonic'] = exonic

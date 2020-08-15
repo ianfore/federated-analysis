@@ -3,6 +3,8 @@ import logging
 import numpy as np
 import pandas as pd
 import sys
+from itertools import groupby
+
 
 logging.basicConfig()
 logger = logging.getLogger()
@@ -21,75 +23,68 @@ def main():
     df_2 = pd.read_csv(brca2_report, header=0, sep='\t')
 
     pList = list(df_1['p']) + list(df_2['p'])
+    thePList = list()
     for i in range(len(pList)):
-        pList[i] = pList[i] **2
+        thePList.append(pList[i] **2)
 
     qList = list(df_1['q']) + list(df_2['q'])
+    theQList = list()
     for i in range(len(qList)):
-        qList[i] = (qList[i]) **2
+        theQList.append((qList[i] - 1) **2)
 
     twoPQList = list()
     for i in range(len(qList)):
-        twoPQList.append(2 * pList[i] * qList[i])
+        twoPQList.append(2 * pList[i]  * qList[i])
 
-    hwDF = pd.DataFrame()
+    '''x, y = np.unique(pList,return_counts=True)
+    plt.scatter(x, y)
+    x, y = np.unique(qList, return_counts=True)
+    plt.scatter(x, y)
+    x, y = np.unique(twoPQList, return_counts=True)
+    plt.scatter(x, y)'''
+    '''pList.sort()
+    qList.sort()
+    twoPQList.sort()'''
+
+    '''hwDF = pd.DataFrame()
     hwDF['q**2'] = qList
     hwDF['p**2'] = pList
     hwDF['2pq'] = twoPQList
+    hwDF['q**2'].value_counts(normalize=True).plot()
     ax = hwDF.plot.kde()
-
     plt.xlim(0, 1)
     plt.ylim(0, 1)
-    #plt.show()
-    plt.savefig(outputDir + '/' + 'hw-obs-dists.png')
+    plt.show()'''
+    #plt.savefig(outputDir + '/' + 'hw-obs-dists.png')
 
+    pDF = countBins(thePList, 100)
+    pDF['AF'] = pDF.index
+    print(pDF)
+    #plt.scatter(x=pDF['AF'], y=pDF[0])
 
-def binPlot(theList, binSize, xlabel, ylabel, dtype, sigDigs, binList, outputDir, imageName):
-    customBinList = False
-    if binList is None:
-        sizeOfRange = 0.5 * (min(theList) + max(theList))
-        try:
-            binList = np.arange(min(theList), max(theList), round((1/binSize) * sizeOfRange, sigDigs) , dtype=dtype)
-        except Exception as e:
-            logger.error('error in binPlot np.arange(): ' + str(e))
-            return
-    else:
-        customBinList = True
-    bins = list()
+    qDF = countBins(theQList, 100)
+    qDF['AF'] = qDF.index
+    qDF["AF"] = qDF["AF"].values[::-1]
+    print(qDF)
+    #plt.scatter(x=qDF['AF'], y=qDF[0])
 
-    for element in theList:
-        for i in range(len(binList) - 1):
-            lhs = binList[i]
-            rhs = binList[i + 1]
-            if element >= lhs and element <= rhs:
-                if customBinList:
-                    bins.append(rhs)
-                else:
-                    bins.append(dtype(round(0.5 * (lhs + rhs), sigDigs)))
-                break
+    twoPQDF = countBins(twoPQList, 100)
+    twoPQDF['AF'] = twoPQDF.index
+    print(twoPQDF)
+    plt.scatter(x=twoPQDF['AF'], y=twoPQDF[0])
 
-    binMax = binList[len(binList)-1]
-    listMax = max(theList)
-    for element in theList:
-        if element > binMax:
-            bins.append(dtype(round(listMax, sigDigs)))
+    plt.show()
 
-
-
-    df_bins = pd.DataFrame({xlabel: bins})
-    if (len(df_bins) != 0):
-        fontsize=12
-        labelsize=7
-        df_bins.groupby(xlabel, as_index=False).size().plot(kind='bar')
-        plt.xlabel(xlabel, fontsize=fontsize)
-        plt.ylabel(ylabel, fontsize=fontsize)
-        plt.rc('xtick', labelsize=labelsize)
-        plt.rc('ytick', labelsize=labelsize)
-        plt.tight_layout()
-        #plt.xlim(start, end)
-        #plt.ylim(ymin, ymax)
-        plt.show()
-        #plt.savefig(outputDir + '/' + imageName)
+def countBins(theList, numBins):
+    n = len(theList)
+    start = theList[0]
+    binCounts = dict()
+    binSize = (max(theList) - min(theList)) / numBins
+    for i in range(numBins):
+        end = start + binSize
+        binCounts['%.1f'%(start)] = (float(len([j for j in theList if (j >= start and j < end)])) / float(n)) * numBins/100
+        start = end
+    return pd.DataFrame.from_dict(binCounts, orient='index')
 
 if __name__ == "__main__":
     main()
