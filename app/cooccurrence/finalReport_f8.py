@@ -2,8 +2,7 @@ import json
 import sys
 import pandas as pd
 import logging
-from collections import defaultdict
-
+import hail as hl
 logging.basicConfig()
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -77,6 +76,7 @@ def main():
 		exonic = str(ipvDict[v]['exonic'])
 		#fisher = str(ipvDict[v]['fisher'])
 		chisquare = str(ipvDict[v]['chisquare'])
+
 		if len(ipvDict[v]['homozygous individuals']) == 0:
 			homoSample = "None"
 		else:
@@ -94,6 +94,7 @@ def main():
 		variantsDict[v]['homo_alt'] = aa
 		variantsDict[v]['hetero'] = Aa
 		variantsDict[v]['homo_ref'] = AA
+		variantsDict[v]['hail_hweafp'] = hl.hardy_weinberg_test(int(AA),int(Aa),int(aa)).p_value
 		variantsDict[v]['p'] = p
 		variantsDict[v]['q'] = q
 		variantsDict[v]['F'] = F
@@ -113,7 +114,6 @@ def main():
 
 	logger.info('writing output to ' + outputFileName)
 	variantsWithInfoDF.to_csv(outputFileName, sep='\t', index=False)
-
 
 def addInfo(variantsDF, sitesDF):
 

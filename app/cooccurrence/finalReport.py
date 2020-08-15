@@ -2,6 +2,7 @@ import json
 import sys
 import pandas as pd
 import logging
+import hail as hl
 
 logging.basicConfig()
 logger = logging.getLogger()
@@ -113,6 +114,7 @@ def main():
 		variantsDict[v]['homo_alt'] = aa
 		variantsDict[v]['hetero'] = Aa
 		variantsDict[v]['homo_ref'] = AA
+		variantsDict[v]['hail_hweafp'] = hl.hardy_weinberg_test(int(AA),int(Aa),int(aa)).p_value
 		variantsDict[v]['F'] = F
 		variantsDict[v]['Z'] = Z
 		variantsDict[v]['p'] = p
