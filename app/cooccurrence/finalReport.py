@@ -84,8 +84,8 @@ def main():
 		AA = str(ipvDict[v]['AA'])
 		F = str(ipvDict[v]['F'])
 		Z = str(ipvDict[v]['Z'])
-		p = str(ipvDict[v]['p'])
-		q = str(ipvDict[v]['q'])
+		p = (2 * int(AA) + int(Aa)) / (2 * (int(AA) + int(Aa) + int(aa)))
+		q = 1 - p
 		exonic = str(ipvDict[v]['exonic'])
 		#fisher = str(ipvDict[v]['fisher'])
 		chisquare = str(ipvDict[v]['chisquare'])
