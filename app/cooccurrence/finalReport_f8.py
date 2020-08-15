@@ -5,7 +5,7 @@ import logging
 import hail as hl
 logging.basicConfig()
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 def main():
 	if len(sys.argv) != 5:
