@@ -10,7 +10,7 @@ logger.setLevel(logging.INFO)
 
 def main():
 	if len(sys.argv) != 7:
-		print('ipv-f.json in.txt not.txtls sites.tsv vpi.json output.tsv')
+		print('ipv-f.json in.txt not.txt sites.tsv vpi.json output.tsv')
 		sys.exit(1)
 
 

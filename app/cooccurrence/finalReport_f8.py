@@ -11,8 +11,6 @@ def main():
 	if len(sys.argv) != 5:
 		print('ipv-f.json sites.tsv vpi.json output.tsv')
 		sys.exit(1)
-
-
 	ipvFileName = sys.argv[1]
 	logger.info('reading data from ' + ipvFileName)
 	with open(ipvFileName, 'r') as f:

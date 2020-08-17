@@ -138,7 +138,7 @@ def getInGnomad(brcaDF, hgString, hgVersion, alleleFrequencies):
             try:
                 if len(alleleFreqList) > 1:
                     print('more than one')
-                # yes, it always returns a list of length 0
+                # yes, it always returns the first elt of list
                 freq = float(alleleFreqList[0])
                 return freq
             except ValueError:
