@@ -566,16 +566,18 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
                 genotype = str(int(str(vcf['calldata/GT'][variant][i][0]) + str(vcf['calldata/GT'][variant][i][1]), 2))
                 try:
                     seqCenter = annoDF[annoDF['sample.id'] == individuals[i]]['seq_center'].iloc[0]
+                    keep = annoDF[annoDF['sample.id'] == individuals[i]]['keep'].iloc[0]
                 except Exception as e:
                     seqCenter = "N/A"
+                    keep = False
                 study = annoDF[annoDF['sample.id'] == individuals[i]]['study'].iloc[0]
                 if (c, p, r, a) in benignVariants:
-                    variantsPerIndividual[individuals[i]]['benign'].append(((c, p, r, a), genotype, seqCenter, study))
+                    variantsPerIndividual[individuals[i]]['benign'].append(((c, p, r, a), genotype, seqCenter, study, keep))
                 elif (c, p, r, a) in pathogenicVariants:
-                    variantsPerIndividual[individuals[i]]['pathogenic'].append(((c, p, r, a), genotype, seqCenter, study))
+                    variantsPerIndividual[individuals[i]]['pathogenic'].append(((c, p, r, a), genotype, seqCenter, study, keep))
                 # if not a known VUS, it is a VUS now
                 else:
-                    variantsPerIndividual[individuals[i]]['vus'].append(((c, p, r, a),  genotype, seqCenter, study))
+                    variantsPerIndividual[individuals[i]]['vus'].append(((c, p, r, a),  genotype, seqCenter, study, keep))
 
     q.put(variantsPerIndividual)
     w.put(individualsPerVariant)
