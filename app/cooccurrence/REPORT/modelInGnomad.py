@@ -20,18 +20,21 @@ def main():
     test_pct = float(sys.argv[3])
     normalize = bool(sys.argv[4])
 
+    le = preprocessing.LabelEncoder()
 
     # build model based on f5 copd
     df1 = pd.read_csv(inputDir + '/F5/f5_chr17_brca1_copdhmb_report.tsv', sep='\t')
     df2 = pd.read_csv(inputDir + '/F5/f5_chr13_brca2_copdhmb_report.tsv', sep='\t')
 
+    features = ['popFreq', 'AF', 'hail_hweafp', 'chisquare', 'class']
     features = ['popFreq', 'AF', 'hail_hweafp', 'chisquare']
+
 
     #model_1_dt = buildModel(df1, features, tree.DecisionTreeClassifier(max_depth=2), test_pct)
     #model_2_dt = buildModel(df2, features, tree.DecisionTreeClassifier(max_depth=2), test_pct)
 
-    model_1_rf = buildModel(df1, features, RandomForestClassifier(n_estimators=100), test_pct, normalize)
-    model_2_rf = buildModel(df2, features, RandomForestClassifier(n_estimators=100), test_pct, normalize)
+    model_1_rf = buildModel(df1, features, RandomForestClassifier(n_estimators=100), test_pct, normalize, le)
+    model_2_rf = buildModel(df2, features, RandomForestClassifier(n_estimators=100), test_pct, normalize, le)
 
     # save RF models
     f = open(outputDir + '/brca1_rf_model', 'wb')
@@ -45,8 +48,8 @@ def main():
     brca1_f8_report_DF = pd.read_csv(inputDir + '/F8/f8_chr17_brca1_gruhmb_report.tsv', header=0, sep='\t')
     brca2_f8_report_DF = pd.read_csv(inputDir + '/F8/f8_chr13_brca2_gruhmb_report.tsv', header=0, sep='\t')
 
-    brca1_f8_predictions = getPredictions(brca1_f8_report_DF, model_1_rf, features, normalize)
-    brca2_f8_predictions = getPredictions(brca2_f8_report_DF, model_2_rf, features, normalize)
+    brca1_f8_predictions = getPredictions(brca1_f8_report_DF, model_1_rf, features, normalize, le)
+    brca2_f8_predictions = getPredictions(brca2_f8_report_DF, model_2_rf, features, normalize, le)
 
     # save to disk
     brca1_f8_predictions.to_csv(outputDir + '/F8/f8_chr17_brca1_predictions_report.tsv', sep='\t')
@@ -64,9 +67,16 @@ def main():
 
 
 
-def getPredictions(df, model, features, normalize):
+def getPredictions(df, model, features, normalize, le):
     predictions = list()
-    X = preprocessing.normalize(df[features])
+
+    for f in features:
+        if isinstance(df[f].iloc[0], str):
+            df[f] = le.fit_transform(df[f])
+
+    if normalize:
+        X = preprocessing.normalize(df[features])
+
     for i in range(len(X)):
         variant = df.iloc[i]
         predicted = model.predict([list(variant[features])])
@@ -74,16 +84,18 @@ def getPredictions(df, model, features, normalize):
     df['gnomadPrediction'] = predictions
     return df
 
-def buildModel(df, features, model, testPctg, normalize):
+def buildModel(df, features, model, testPctg, normalize, le):
     print('building model type ' + str(type(model)))
 
     # transform boolean to numerica
-    le = preprocessing.LabelEncoder()
-    df['class'] = le.fit_transform(df['class'])
+    for f in features:
+        if isinstance(df[f].iloc[0], str):
+            df[f] = le.fit_transform(df[f])
 
     # define features and labels
-    X = preprocessing.normalize(df[features])
-    Y = df[['inGnomad']]
+    if normalize:
+        X = preprocessing.normalize(df[features])
+        Y = df[['inGnomad']]
 
     # find fraction of true false in data set
     Y_true = len(Y[Y['inGnomad'] == True])

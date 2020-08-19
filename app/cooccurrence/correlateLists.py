@@ -1,22 +1,28 @@
 import math
 import pandas as pd
+from scipy.stats import pointbiserialr
+import sys
 
 
 def main():
-    brca1DF = pd.read_csv('/Users/jcasaletto/Desktop/RESEARCH/TOPMED/REPORT/F8/f8_chr17_brca1_gruhmb_report.tsv', header=0,
-                          sep='\t')
-    brca2DF = pd.read_csv('/Users/jcasaletto/Desktop/RESEARCH/TOPMED/REPORT/F8/f8_chr13_brca2_gruhmb_report.tsv', header=0,
-                          sep='\t')
+    brca1DF = pd.read_csv('/Users/jcasaletto/Desktop/RESEARCH/TOPMED/REPORT/F5/f5_chr17_brca1_copdhmb_report.tsv', header=0,
+                          sep='\t', dtype={'exonic': 'bool', 'inGnomad': 'bool'})
+    brca2DF = pd.read_csv('/Users/jcasaletto/Desktop/RESEARCH/TOPMED/REPORT/F5/f5_chr13_brca2_copdhmb_report.tsv', header=0,
+                          sep='\t', dtype={'exonic': 'bool', 'inGnomad': 'bool'})
 
-    b1_zeroList = list(brca1DF['hail_hweafp'])
-    b1_oneList = list(brca1DF['q'])
-    b1_psb = pearsonCorrelation(b1_zeroList, b1_oneList)
-    print(b1_psb)
+    list1 = list(brca1DF['hail_hweafp'])
+    list2 = list(brca1DF['F'])
 
-    b2_zeroList = list(brca2DF['hail_hweafp'])
-    b2_oneList = list(brca2DF['q'])
-    b2_psb = pearsonCorrelation(b2_zeroList, b2_oneList)
-    print(b2_psb)
+    if isinstance(list1[0], bool) and not isinstance(list2[0], bool):
+        corr = pointbiserialr(x=list1, y=list2)
+    elif isinstance(list2[0], bool) and not isinstance(list1[0], bool):
+        corr = pointbiserialr(x=list2, y=list1)
+    elif isinstance(list1[0], bool) and isinstance(list2[0], bool):
+        print('both lists cannot be boolean')
+        sys.exit(1)
+    else:
+        corr = pearsonCorrelation(list1, list2)
+    print(corr)
 
 def mean(someList):
     total = 0
