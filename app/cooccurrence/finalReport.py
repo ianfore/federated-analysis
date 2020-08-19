@@ -177,7 +177,7 @@ def addInfo(variantsDF, sitesDF):
 	finalDF['AF'] = infoDF['AF']
 	finalDF['AN'] = infoDF['AN']'''
 	for k in infoDF.keys():
-		finalDF[key] = infoDF[key]
+		finalDF[k] = infoDF[k]
 
 	finalDF = finalDF.drop(columns=['INFO'])
 
