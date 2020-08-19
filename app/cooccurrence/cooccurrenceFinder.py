@@ -287,9 +287,11 @@ def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, brcaDF, hgV
         if v in individualsPerVariant:
             '''for info in infoList:
                 individualsPerVariant[v][info] = vcf['variants/' + info][variant]'''
-            maxPop, maxFreq = getGnomadData(brcaDF, eval(v), hgVersion)
+            maxPop, maxFreq, minPop, minFreq = getGnomadData(brcaDF, eval(v), hgVersion)
             individualsPerVariant[v]['maxPop'] = maxPop
             individualsPerVariant[v]['maxFreq'] = maxFreq
+            individualsPerVariant[v]['minPop'] = minPop
+            individualsPerVariant[v]['minFreq'] = minFreq
             individualsPerVariant[v]['cohortFreq'] = float(len(individualsPerVariant[v]['homozygous individuals']) + \
                 len(individualsPerVariant[v]['heterozygous individuals']) ) / float(cohortSize)
             individualsPerVariant[v]['exonic'] = isExonic(ensemblRelease, c, p)
@@ -355,6 +357,8 @@ def getGnomadData(brcaDF, vus, hgVersion):
 
     maxFrequency = 0.0
     maxPopulation = None
+    minFrequency = 1.0
+    minPopulation = None
     for af in alleleFrequencies:
         freq=0.0
         alleleFreqList = brcaDF[brcaDF[coordinateColumnBase + str(hgVersion)] == hgString][af].tolist()
@@ -366,8 +370,11 @@ def getGnomadData(brcaDF, vus, hgVersion):
             if freq > maxFrequency:
                 maxFrequency = freq
                 maxPopulation = af
+            if freq < minFrequency:
+                minFrequency = freq
+                minPopulation = af
 
-    return (maxPopulation, maxFrequency)
+    return (maxPopulation, maxFrequency, minPopulation, minFrequency)
 
 def countHomozygousPerBenign(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, geneOfInterest, rareCutoff):
     homozygousPerBenign = dict()
@@ -378,9 +385,11 @@ def countHomozygousPerBenign(variantsPerIndividual, brcaDF, hgVersion, ensemblRe
                 if str(ben[0]) not in homozygousPerBenign:
                     homozygousPerBenign[str(ben[0])] = dict()
                     homozygousPerBenign[str(ben[0])]['count'] = 0
-                    maxPop, maxPopFreq = getGnomadData(brcaDF, ben[0], hgVersion)
+                    maxPop, maxPopFreq, minPop, minPopFreq = getGnomadData(brcaDF, ben[0], hgVersion)
                     homozygousPerBenign[str(ben[0])]['maxPop'] = maxPop
                     homozygousPerBenign[str(ben[0])]['maxPopFreq'] = maxPopFreq
+                    homozygousPerBenign[str(ben[0])]['minPop'] = minPop
+                    homozygousPerBenign[str(ben[0])]['minPopFreq'] = minPopFreq
                 homozygousPerBenign[str(ben[0])]['count'] += 1
 
     cohortSize = len(variantsPerIndividual)
@@ -406,9 +415,11 @@ def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelea
                 if str(vus[0]) not in homozygousPerVus:
                     homozygousPerVus[str(vus[0])] = dict()
                     homozygousPerVus[str(vus[0])]['count'] = 0
-                    maxPop, maxPopFreq = getGnomadData(brcaDF, vus[0], hgVersion)
+                    maxPop, maxPopFreq, minPop, minPopFreq = getGnomadData(brcaDF, vus[0], hgVersion)
                     homozygousPerVus[str(vus[0])]['maxPop'] = maxPop
                     homozygousPerVus[str(vus[0])]['maxPopFreq'] = maxPopFreq
+                    homozygousPerVus[str(vus[0])]['minPop'] = minPop
+                    homozygousPerVus[str(vus[0])]['minPopFreq'] = minPopFreq
                 homozygousPerVus[str(vus[0])]['count'] += 1
 
     cohortSize = len(variantsPerIndividual)
@@ -480,11 +491,11 @@ def calculateLikelihood(pathCoocs, p1, n, k, brcaDF, hgVersion, cohortSize, rare
         else:
             logger.error("unknown chromosome: " + str(vus[0]))
             continue
-        maxPop, maxPopFreq = getGnomadData(brcaDF, vus, hgVersion)
+        maxPop, maxPopFreq, minPop, minPopFreq = getGnomadData(brcaDF, vus, hgVersion)
         cohortFreq = float(n[vus]) / float(cohortSize)
         data = {'likelihood data': {'p1':p1, 'p2':p2, 'n':n[vus], 'k':k[vus], 'likelihood':likelihoodRatios[vus]},
-                    'allele frequencies':{'maxPop':maxPop, 'maxPopFreq':maxPopFreq, 'cohortFreq':cohortFreq},
-                    'pathogenic variants': pathVarsPerVus[vus]}
+                    'allele frequencies':{'maxPop':maxPop, 'maxPopFreq':maxPopFreq, 'minPop': minPop, 'minPopFreq': minPopFreq,
+                                          'cohortFreq':cohortFreq}, 'pathogenic variants': pathVarsPerVus[vus]}
 
         if (maxPopFreq < rareCutoff and maxPopFreq != 0) or (cohortFreq < rareCutoff and cohortFreq != 0):
             data['RARE'] = True
@@ -553,7 +564,10 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
                     continue
 
                 genotype = str(int(str(vcf['calldata/GT'][variant][i][0]) + str(vcf['calldata/GT'][variant][i][1]), 2))
-                seqCenter = annoDF[annoDF['sample.id'] == individuals[i]]['seq_center'].iloc[0]
+                try:
+                    seqCenter = annoDF[annoDF['sample.id'] == individuals[i]]['seq_center'].iloc[0]
+                except Exception as e:
+                    seqCenter = "N/A"
                 study = annoDF[annoDF['sample.id'] == individuals[i]]['study'].iloc[0]
                 if (c, p, r, a) in benignVariants:
                     variantsPerIndividual[individuals[i]]['benign'].append(((c, p, r, a), genotype, seqCenter, study))
