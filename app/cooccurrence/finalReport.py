@@ -141,17 +141,21 @@ def addInfo(variantsDF, sitesDF):
 
 	variants = list(variantsDF['variant'])
 	brca_dict = dict()
+	pass_dict = dict()
 	for index, row in sitesDF.iterrows():
 		var = str((str(row['#CHROM']).split('chr')[1], row['POS'], row['REF'], row['ALT']))
 		var = var.replace("'", "").replace(" ", "")
 		if var in variants:
 			brca_dict[var] = row['INFO']
+			pass_dict[var] = row['FILTER']
 
 	info_df = pd.DataFrame(brca_dict.items())
 	info_df.columns = ['variant', 'INFO']
+	interDF = pd.merge(variantsDF, info_df, on='variant', how='left')
 
-
-	finalDF = pd.merge(variantsDF, info_df, on='variant', how='left')
+	pass_df = pd.DataFrame(pass_dict.items())
+	pass_df.columns = ['variant', 'FILTER']
+	finalDF = pd.merge(interDF, pass_df, on='variant', how='left')
 
 
 	# now iterate through the INFO column and pull out each var=val pair
@@ -168,14 +172,6 @@ def addInfo(variantsDF, sitesDF):
 
 	infoDF = pd.DataFrame.from_dict(infoDict).transpose()
 
-
-	'''finalDF['FIBC_I'] = infoDF['FIBC_I']
-	finalDF['HWEAF_P'] = infoDF['HWEAF_P']
-	finalDF['HWE_SLP_I'] = infoDF['HWE_SLP_I']
-	finalDF['HWE_SLP_P'] = infoDF['HWE_SLP_P']
-	finalDF['AC'] = infoDF['AC']
-	finalDF['AF'] = infoDF['AF']
-	finalDF['AN'] = infoDF['AN']'''
 	for k in infoDF.keys():
 		finalDF[k] = infoDF[k]
 
