@@ -50,6 +50,7 @@ def main():
 
 	# get batch effect info
 	centersPerHomoVus = dict()
+	keepPerVariant = dict()
 	for individual in vpiDict:
 		for vus in vpiDict[individual]['benign']:
 			variant = vus[0]
@@ -58,6 +59,7 @@ def main():
 			if not v in centersPerHomoVus:
 				centersPerHomoVus[v] = set()
 			centersPerHomoVus[v].add(seqCenter)
+			keepPerVariant[v] = vus[3]
 		for vus in vpiDict[individual]['pathogenic']:
 			variant = vus[0]
 			seqCenter = vus[2]
@@ -65,6 +67,7 @@ def main():
 			if not v in centersPerHomoVus:
 				centersPerHomoVus[v] = set()
 			centersPerHomoVus[v].add(seqCenter)
+			keepPerVariant[v] = vus[3]
 		for vus in vpiDict[individual]['vus']:
 			variant = vus[0]
 			seqCenter = vus[2]
@@ -72,6 +75,7 @@ def main():
 			if not v in centersPerHomoVus:
 				centersPerHomoVus[v] = set()
 			centersPerHomoVus[v].add(seqCenter)
+			keepPerVariant[v] = vus[3]
 
 	allVariants = ipvDict.keys()
 	variantsDict = dict()
@@ -90,19 +94,20 @@ def main():
 		exonic = str(ipvDict[v]['exonic'])
 		#fisher = str(ipvDict[v]['fisher'])
 		chisquare = str(ipvDict[v]['chisquare'])
+		keep = bool(keepPerVariant[v])
 		if len(ipvDict[v]['homozygous individuals']) == 0:
 			homoSample = "None"
 		else:
 			homoSample = ipvDict[v]['homozygous individuals'][0]
 		v = v.replace(' ', '')	
 		v = v.replace("'", "")
-		if v in inList:
+		'''if v in inList:
 			vIn = 'True'
 		elif v in outList:
 			vIn = 'False'
 		else:
 			print('neither in in nor out?')
-			vIn = 'False'
+			vIn = "False"'''
 		#print(v + '\t' + vClass + '\t' + vPopFreq + '\t' + vCohortFreq + \
 		# '\t' + aa + '\t' + Aa + '\t' + AA + '\t' + homoSample + '\t' + vIn)
 		variantsDict[v] = dict()
@@ -110,7 +115,7 @@ def main():
 		variantsDict[v]['popFreq'] = vPopFreq
 		variantsDict[v]['cohortFreq'] = vCohortFreq
 		variantsDict[v]['homozygousSample'] = homoSample
-		variantsDict[v]['inGnomad'] = vIn
+		#variantsDict[v]['inGnomad'] = vIn
 		variantsDict[v]['homo_alt'] = aa
 		variantsDict[v]['hetero'] = Aa
 		variantsDict[v]['homo_ref'] = AA
