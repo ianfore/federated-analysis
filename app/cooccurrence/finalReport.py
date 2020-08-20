@@ -50,7 +50,6 @@ def main():
 
 	# get batch effect info
 	centersPerHomoVus = dict()
-	keepPerVariant = dict()
 	studyPerVariant = dict()
 	for individual in vpiDict:
 		for vus in vpiDict[individual]['benign']:
@@ -61,7 +60,6 @@ def main():
 				centersPerHomoVus[v] = set()
 			centersPerHomoVus[v].add(seqCenter)
 			studyPerVariant[v] = vus[3]
-			keepPerVariant[v] = vus[4]
 		for vus in vpiDict[individual]['pathogenic']:
 			variant = vus[0]
 			seqCenter = vus[2]
@@ -70,7 +68,6 @@ def main():
 				centersPerHomoVus[v] = set()
 			centersPerHomoVus[v].add(seqCenter)
 			studyPerVariant[v] = vus[3]
-			keepPerVariant[v] = vus[4]
 		for vus in vpiDict[individual]['vus']:
 			variant = vus[0]
 			seqCenter = vus[2]
@@ -79,7 +76,6 @@ def main():
 				centersPerHomoVus[v] = set()
 			centersPerHomoVus[v].add(seqCenter)
 			studyPerVariant[v] = vus[3]
-			keepPerVariant[v] = vus[4]
 
 	allVariants = ipvDict.keys()
 	variantsDict = dict()
@@ -104,7 +100,6 @@ def main():
 			homoSample = ipvDict[v]['homozygous individuals'][0]
 		v = v.replace(' ', '')	
 		v = v.replace("'", "")
-		keep = keepPerVariant[v]
 		study = studyPerVariant[v]
 		'''if v in inList:
 			vIn = 'True'
@@ -132,7 +127,6 @@ def main():
 		variantsDict[v]['chisquare'] = chisquare
 		variantsDict[v]['sequenceCenter'] = str(centersPerHomoVus[v]).replace(" ", "")
 		variantsDict[v]['exonic'] = exonic
-		variantsDict[v]['keep'] = keep
 		variantsDict[v]['study'] = study
 	#variantsDict[v]['fisher'] = fisher
 
