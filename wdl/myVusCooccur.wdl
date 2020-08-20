@@ -12,6 +12,7 @@ workflow cooccurrence {
 	String HG_VERSION
 	String ENSEMBL_RELEASE
 	String PHASED
+	String FREEZE
 	String CHROM
 	String GENE
 	String NUM_CORES
@@ -25,6 +26,7 @@ workflow cooccurrence {
 		hg_version=HG_VERSION,
 		ensembl_release=ENSEMBL_RELEASE,
 		phased=PHASED,
+		freeze=FREEZE,
 		chrom=CHROM,
 		gene=GENE,
 		num_cores=NUM_CORES,
@@ -51,6 +53,7 @@ task run_cooccurrence {
 		String hg_version
 		String ensembl_release
 		String phased
+		String freeze
 		String chrom
 		String gene
 		String num_cores
@@ -63,7 +66,7 @@ task run_cooccurrence {
 	command <<<
 		export PYTHONPATH=/ 
 		export PYTHONIOENCODING=UTF-8 
-		/usr/bin/python3  ~{python_script} --vcf ~{vcf_file} --out ~{output_filename} --h ~{hg_version} --e ~{ensembl_release} --c ~{chrom} --g ~{gene} --p ~{phased} --n ~{num_cores} --b ~{brca_file} --vpi ~{individuals_filename} --ipv ~{variants_filename} --all ~{all_filename}
+		/usr/bin/python3  ~{python_script} --vcf ~{vcf_file} --out ~{output_filename} --h ~{hg_version} --e ~{ensembl_release} --c ~{chrom} --g ~{gene} --p ~{phased} --f ~{freeze} --n ~{num_cores} --b ~{brca_file} --vpi ~{individuals_filename} --ipv ~{variants_filename} --all ~{all_filename}
 	>>>
 	
 	output {

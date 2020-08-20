@@ -92,6 +92,8 @@ def main():
 
     parser.add_argument("--r", dest="r", help="Rare frequency cutoff. Default=0.01", default=0.01)
 
+    parser.add_argument("--f", dest="f", help="Topmed freeze. Default=0", default=0)
+
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" % defaultLogLevel, default=defaultLogLevel)
 
     options = parser.parse_args()
@@ -126,16 +128,17 @@ def main():
     e_options = int(options.e)
     n_options = int(options.n)
     r_options = float(options.r)
+    f_options = int(options.f)
 
     print(options)
 
 
     run(h_options, e_options, c_options, g_options, p_options, v_options, s_options,
-        n_options, b_options, d_options, r_options, ipv_options, vpi_options, all_options, anno_options, out_options)
+        n_options, b_options, d_options, r_options, ipv_options, vpi_options, all_options, anno_options, out_options, f_options)
 
 def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVarsPerIndivid, numProcs,
         brcaFileName, pyensemblDir, rareCutoff, ipvFileName, vpiFileName, allVariantsFileName, annoFileName,
-        outputFileName):
+        outputFileName, freeze):
 
 
     logger.info('setting pyensembl dir to ' + pyensemblDir)
@@ -163,7 +166,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
     processList = list()
     for i in range(numProcs):
         p = Process(target=findVarsPerIndividual, args=(q, w, vcf, benignVariants, pathogenicVariants, chromosome, gene,
-                                                        ensemblRelease, annoDF, i, numProcs,))
+                                                        ensemblRelease, annoDF, i, numProcs, freeze, ))
         p.start()
         processList.append(p)
     logger.info('joining results from forked threads')
@@ -530,7 +533,7 @@ def getStartAndEnd(partitionSizes, threadID):
     return start, end
 
 def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromosome, gene, ensemblRelease, annoDF,
-                          threadID, numProcesses):
+                          threadID, numProcesses, freeze):
     '''infoFields = ['variants/ABE', 'variants/ABZ', 'variants/AC', 'variants/AF',
      'variants/AN', 'variants/ANN', 'variants/AVGDP', 'variants/BETA_IF', 'variants/BQZ',
      'variants/CYZ', 'variants/FIBC_I', 'variants/FIBC_P', 'variants/FILTER_PASS', 'variants/FLT20', 'variants/GC',
@@ -565,10 +568,14 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
 
                 genotype = str(int(str(vcf['calldata/GT'][variant][i][0]) + str(vcf['calldata/GT'][variant][i][1]), 2))
                 try:
-                    seqCenter = annoDF[annoDF['sample.id'] == individuals[i]]['seq_center'].iloc[0]
-                    keep = annoDF[annoDF['sample.id'] == individuals[i]]['keep'].iloc[0]
+                    if freeze == 5:
+                        seqCenter = annoDF[annoDF['sample.id'] == individuals[i]]['CENTER'].iloc[0]
+                        keep = bool(annoDF[annoDF['sample.id'] == individuals[i]]['keep'].iloc[0])
+                    elif freeze == 8:
+                        seqCenter = annoDF[annoDF['sample.id'] == individuals[i]]['seq_center'].iloc[0]
+                        keep = not(bool(annoDF[annoDF['sample.id'] == bool(individuals[i]]['exclude'].iloc[0]))
                 except Exception as e:
-                    seqCenter = "N/A"
+                    seqCenter = "NA"
                     keep = "NA"
                 study = annoDF[annoDF['sample.id'] == individuals[i]]['study'].iloc[0]
                 if (c, p, r, a) in benignVariants:
