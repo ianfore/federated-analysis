@@ -94,13 +94,13 @@ def main():
 		exonic = str(ipvDict[v]['exonic'])
 		#fisher = str(ipvDict[v]['fisher'])
 		chisquare = str(ipvDict[v]['chisquare'])
-		keep = bool(keepPerVariant[v])
 		if len(ipvDict[v]['homozygous individuals']) == 0:
 			homoSample = "None"
 		else:
 			homoSample = ipvDict[v]['homozygous individuals'][0]
 		v = v.replace(' ', '')	
 		v = v.replace("'", "")
+		keep = bool(keepPerVariant[v])
 		'''if v in inList:
 			vIn = 'True'
 		elif v in outList:
