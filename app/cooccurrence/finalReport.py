@@ -127,6 +127,7 @@ def main():
 		variantsDict[v]['chisquare'] = chisquare
 		variantsDict[v]['sequenceCenter'] = str(centersPerHomoVus[v]).replace(" ", "")
 		variantsDict[v]['exonic'] = exonic
+		variantsDict[v]['keep'] = keep
 	#variantsDict[v]['fisher'] = fisher
 
 
@@ -142,8 +143,6 @@ def main():
 
 
 def addInfo(variantsDF, sitesDF):
-
-
 	variants = list(variantsDF['variant'])
 	brca_dict = dict()
 	pass_dict = dict()
@@ -162,7 +161,6 @@ def addInfo(variantsDF, sitesDF):
 	pass_df.columns = ['variant', 'FILTER']
 	finalDF = pd.merge(interDF, pass_df, on='variant', how='left')
 
-
 	# now iterate through the INFO column and pull out each var=val pair
 	# we'll make new cols based on these pairs
 
@@ -173,8 +171,6 @@ def addInfo(variantsDF, sitesDF):
 		for pair in infoPairs:
 			vv = pair.split('=')
 			infoDict[i][vv[0]] = vv[1]
-
-
 	infoDF = pd.DataFrame.from_dict(infoDict).transpose()
 
 	for k in infoDF.keys():
