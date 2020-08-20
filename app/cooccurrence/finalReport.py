@@ -100,7 +100,7 @@ def main():
 			homoSample = ipvDict[v]['homozygous individuals'][0]
 		v = v.replace(' ', '')	
 		v = v.replace("'", "")
-		keep = bool(keepPerVariant[v])
+		keep = keepPerVariant[v]
 		'''if v in inList:
 			vIn = 'True'
 		elif v in outList:
