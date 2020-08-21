@@ -107,7 +107,7 @@ def main():
 			vIn = 'False'
 		else:
 			print('neither in in nor out?')
-			vIn = 'False'
+			vIn = 'NA'
 		#print(v + '\t' + vClass + '\t' + vPopFreq + '\t' + vCohortFreq + \
 		# '\t' + aa + '\t' + Aa + '\t' + AA + '\t' + homoSample + '\t' + vIn)
 		variantsDict[v] = dict()
