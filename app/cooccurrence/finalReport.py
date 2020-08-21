@@ -101,13 +101,13 @@ def main():
 		v = v.replace(' ', '')	
 		v = v.replace("'", "")
 		study = studyPerVariant[v]
-		'''if v in inList:
+		if v in inList:
 			vIn = 'True'
 		elif v in outList:
 			vIn = 'False'
 		else:
 			print('neither in in nor out?')
-			vIn = "False"'''
+			vIn = 'False'
 		#print(v + '\t' + vClass + '\t' + vPopFreq + '\t' + vCohortFreq + \
 		# '\t' + aa + '\t' + Aa + '\t' + AA + '\t' + homoSample + '\t' + vIn)
 		variantsDict[v] = dict()
