@@ -527,7 +527,6 @@ def getFisherExact(results, key, allValues):
 def getHardyWeinbergStats(vpiDict, variantsDict, individualsPerVariant):
     bVars, pVars, vVars = calculateZygosityFrequenciesPerVariant(vpiDict)
     bVars, pVars, vVars = hardyWeinbergChiSquareTest(bVars, pVars, vVars, len(vpiDict))
-    #bVars, pVars, vVars = hardyWeinbergFisherExactTest(bVars, pVars, vVars, len(vpiDict), 0.05)
     bVars, pVars, vVars = hardyWeinbergStatistics(bVars, pVars, vVars, significance=0.01)
     rejectHW = {'benign': 0, 'pathogenic': 0, 'vus': 0}
     acceptHW = {'benign': 0, 'pathogenic': 0, 'vus': 0}
@@ -788,113 +787,6 @@ def tree_factorial(n):
         return 1
     return range_prod(1,n)
 
-def hardyWeinbergFisherExactTest(bVars, pVars, vVars, N, pValue):
-    # http://europepmc.org/backend/ptpmcrender.fcgi?accid=PMC1199378&blobtype=pdf
-    # p(NAB = nAB|N,nA) = [ (2**nAB x N!) / (nAA!nAB!nBB!) ] x (nA! x nB!)/(2N)!
-    # let W = (2**nAB x N!)
-    # let X = (nAA!nAB!nBB!)
-    # let Y = nA! x nB!
-    # let Z = (2N)!
-    # then p(NAB = nAB|N,nA) = (W / X) x (Y / Z)
-
-    for b in bVars:
-        nA = abs(2 * bVars[b]['aa'] - bVars[b]['Aa'])
-        nB = abs(2 * bVars[b]['AA'] - bVars[b]['Aa'])
-        nAA = bVars[b]['aa']
-        nBB = bVars[b]['AA']
-        nAB = bVars[b]['Aa']
-        # calculate W
-        #W = (2**nAB) * math.factorial(N)
-        W = (2**nAB) * tree_factorial(N)
-
-        # calculate X
-        #X = math.factorial(nAA) * math.factorial(nAB) * math.factorial(nBB)
-        X = tree_factorial(nAA) * tree_factorial(nAB) * tree_factorial(nBB)
-
-        # calculate Y
-        #Y = math.factorial(nA) * math.factorial(nB)
-        Y = tree_factorial(nA) * tree_factorial(nB)
-
-        # compute LHS W / X
-
-
-        # calculate Z
-        #Z = math.factorial(2 * N)
-        Z = tree_factorial(2 * N)
-
-        # calculate p
-        bVars[b]['fisher'] = (W // X) * (Y // Z)
-
-
-        # 8. compare against p-value for 1 degree of freedom at 0.05 significance (3.84)
-        if bVars[b]['fisher'] >= pValue:
-            bVars[b]['accept hw'] = False
-        else:
-            bVars[b]['accept hw'] = True
-
-    for p in pVars:
-        nA = abs(2 * pVars[p]['aa'] - pVars[p]['Aa'])
-        nB = abs(2 * pVars[p]['AA'] - pVars[p]['Aa'])
-        nAA = pVars[p]['aa']
-        nBB = pVars[p]['AA']
-        nAB = pVars[p]['Aa']
-        # calculate W
-        W = (2 ** nAB) * math.factorial(N)
-
-        # calculate X
-        #X = math.factorial(nAA) * math.factorial(nAB) * math.factorial(nBB)
-        X = tree_factorial(nAA) * tree_factorial(nAB) * tree_factorial(nBB)
-
-        # calculate Y
-        #Y = math.factorial(nA) * math.factorial(nB)
-        Y = tree_factorial(nA) * tree_factorial(nB)
-
-        # calculate Z
-        #Z = math.factorial(2 * N)
-        Z = tree_factorial(2 * N)
-
-        # calculate p
-        pVars[p]['fisher'] = (W // X) * (Y // Z)
-
-        # 8. compare against p-value for 1 degree of freedom at 0.05 significance (3.84)
-        if pVars[p]['fisher'] >= pValue:
-            pVars[p]['accept hw'] = False
-        else:
-            pVars[p]['accept hw'] = True
-
-    for v in vVars:
-
-        nA = abs(2 * vVars[v]['aa'] - vVars[v]['Aa'])
-        nB = abs(2 * vVars[v]['AA'] - vVars[v]['Aa'])
-        nAA = vVars[v]['aa']
-        nBB = vVars[v]['AA']
-        nAB = vVars[v]['Aa']
-        # calculate W
-        #W = (2 ** nAB) * math.factorial(N)
-        W = (2 ** nAB) * tree_factorial(N)
-
-        # calculate X
-        #X = math.factorial(nAA) * math.factorial(nAB) * math.factorial(nBB)
-        X = tree_factorial(nAA) * tree_factorial(nAB) * tree_factorial(nBB)
-
-        # calculate Y
-        #Y = math.factorial(nA) * math.factorial(nB)
-        Y = tree_factorial(nA) * tree_factorial(nB)
-
-        # calculate Z
-        #Z = math.factorial(2 * N)
-        Z = tree_factorial(2 * N)
-
-        # calculate p
-        vVars[v]['fisher'] = (W // X) * (Y // Z)
-
-        # 8. compare against p-value for 1 degree of freedom at 0.05 significance (3.84)
-        if vVars[v]['fisher'] >= pValue:
-            vVars[v]['accept hw'] = False
-        else:
-            vVars[v]['accept hw'] = True
-
-    return bVars, pVars, vVars
 
 def hardyWeinbergChiSquareTest(bVars, pVars, vVars, n):
     # https://en.wikipedia.org/wiki/Hardy-Weinberg_principle

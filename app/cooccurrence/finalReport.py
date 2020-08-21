@@ -92,7 +92,6 @@ def main():
 		p = (2 * int(AA) + int(Aa)) / (2 * (int(AA) + int(Aa) + int(aa)))
 		q = 1 - p
 		exonic = str(ipvDict[v]['exonic'])
-		#fisher = str(ipvDict[v]['fisher'])
 		chisquare = str(ipvDict[v]['chisquare'])
 		if len(ipvDict[v]['homozygous individuals']) == 0:
 			homoSample = "None"
@@ -115,7 +114,7 @@ def main():
 		variantsDict[v]['popFreq'] = vPopFreq
 		variantsDict[v]['cohortFreq'] = vCohortFreq
 		variantsDict[v]['homozygousSample'] = homoSample
-		#variantsDict[v]['inGnomad'] = vIn
+		variantsDict[v]['inGnomad'] = vIn
 		variantsDict[v]['homo_alt'] = aa
 		variantsDict[v]['hetero'] = Aa
 		variantsDict[v]['homo_ref'] = AA
@@ -128,7 +127,6 @@ def main():
 		variantsDict[v]['sequenceCenter'] = str(centersPerHomoVus[v]).replace(" ", "")
 		variantsDict[v]['exonic'] = exonic
 		variantsDict[v]['study'] = study
-	#variantsDict[v]['fisher'] = fisher
 
 
 	variantsDF = pd.DataFrame.from_dict(variantsDict)
