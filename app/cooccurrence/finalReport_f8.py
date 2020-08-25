@@ -72,7 +72,6 @@ def main():
 		F = str(ipvDict[v]['F'])
 		Z = str(ipvDict[v]['Z'])
 		exonic = str(ipvDict[v]['exonic'])
-		#fisher = str(ipvDict[v]['fisher'])
 		chisquare = str(ipvDict[v]['chisquare'])
 
 		if len(ipvDict[v]['homozygous individuals']) == 0:
@@ -92,7 +91,7 @@ def main():
 		variantsDict[v]['homo_alt'] = aa
 		variantsDict[v]['hetero'] = Aa
 		variantsDict[v]['homo_ref'] = AA
-		variantsDict[v]['hail_hweafp'] = hl.eval(hl.hardy_weinberg_test(int(AA),int(Aa),int(aa))).p_value
+		variantsDict[v]['hail_hwefepv'] = hl.eval(hl.hardy_weinberg_test(int(AA),int(Aa),int(aa))).p_value
 		variantsDict[v]['p'] = p
 		variantsDict[v]['q'] = q
 		variantsDict[v]['F'] = F
@@ -100,7 +99,6 @@ def main():
 		variantsDict[v]['chisquare'] = chisquare
 		variantsDict[v]['sequenceCenter'] = str(centersPerHomoVus[v]).replace(" ", "")
 		variantsDict[v]['exonic'] = exonic
-		#variantsDict[v]['fisher'] = fisher
 
 
 	variantsDF = pd.DataFrame.from_dict(variantsDict)
@@ -127,9 +125,7 @@ def addInfo(variantsDF, sitesDF):
 	info_df = pd.DataFrame(brca_dict.items())
 	info_df.columns = ['variant', 'INFO']
 
-
 	finalDF = pd.merge(variantsDF, info_df, on='variant', how='left')
-
 
 	# now iterate through the INFO column and pull out each var=val pair
 	# we'll make new cols based on these pairs
@@ -143,19 +139,9 @@ def addInfo(variantsDF, sitesDF):
 			vv = pair.split('=')
 			infoDict[i][vv[0]] = vv[1]
 
-
 	infoDF = pd.DataFrame.from_dict(infoDict).transpose()
-
-	'''finalDF['FIBC_I'] = infoDF['FIBC_I']
-	finalDF['HWEAF_P'] = infoDF['HWEAF_P']
-	finalDF['HWE_SLP_I'] = infoDF['HWE_SLP_I']
-	finalDF['HWE_SLP_P'] = infoDF['HWE_SLP_P']
-	finalDF['AC'] = infoDF['AC']
-	finalDF['AF'] = infoDF['AF']
-	finalDF['AN'] = infoDF['AN']'''
 	for k in infoDF.keys():
 		finalDF[k] = infoDF[k]
-
 	finalDF = finalDF.drop(columns=['INFO'])
 
 	return finalDF

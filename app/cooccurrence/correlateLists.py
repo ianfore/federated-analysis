@@ -5,13 +5,14 @@ import sys
 
 
 def main():
-    brca1DF = pd.read_csv('/Users/jcasaletto/Desktop/RESEARCH/TOPMED/REPORT/F5/f5_chr17_brca1_copdhmb_report.tsv', header=0,
+    brca1DF = pd.read_csv('/Users/jcasaletto/Desktop/RESEARCH/TOPMED/F5/REPORT/f5-17-report.tsv', header=0,
                           sep='\t', dtype={'exonic': 'bool', 'inGnomad': 'bool'})
-    brca2DF = pd.read_csv('/Users/jcasaletto/Desktop/RESEARCH/TOPMED/REPORT/F5/f5_chr13_brca2_copdhmb_report.tsv', header=0,
+    brca2DF = pd.read_csv('/Users/jcasaletto/Desktop/RESEARCH/TOPMED/F5/REPORT/f5-13-report.tsv', header=0,
                           sep='\t', dtype={'exonic': 'bool', 'inGnomad': 'bool'})
 
-    list1 = list(brca1DF['hail_hweafp'])
-    list2 = list(brca1DF['F'])
+    list1 = list(brca1DF['homo_ref'])
+    list2 = list(brca1DF['popFreq'])
+
 
     if isinstance(list1[0], bool) and not isinstance(list2[0], bool):
         corr = pointbiserialr(x=list1, y=list2)
@@ -23,6 +24,17 @@ def main():
     else:
         corr = pearsonCorrelation(list1, list2)
     print(corr)
+
+def convertStringToBool(someList):
+    retList = list()
+    if isinstance(someList[0], str):
+        for x in someList:
+            if x.lower() == 'true':
+                retList.append(True)
+            else:
+                retList.append(False)
+    return retList
+
 
 def mean(someList):
     total = 0

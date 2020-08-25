@@ -118,7 +118,7 @@ def main():
 		variantsDict[v]['homo_alt'] = aa
 		variantsDict[v]['hetero'] = Aa
 		variantsDict[v]['homo_ref'] = AA
-		variantsDict[v]['hail_hweafp'] = hl.eval(hl.hardy_weinberg_test(int(AA),int(Aa),int(aa))).p_value
+		variantsDict[v]['hail_hwefepv'] = hl.eval(hl.hardy_weinberg_test(int(AA),int(Aa),int(aa))).p_value
 		variantsDict[v]['F'] = F
 		variantsDict[v]['Z'] = Z
 		variantsDict[v]['p'] = p
