@@ -4,18 +4,13 @@ import json
 
 
 def main():
-    if len(sys.argv) != 4:
-        print('ancestry.tsv cohort.txt outputDir')
+    if len(sys.argv) != 3:
+        print('ancestry.tsv outputDir')
         sys.exit(1)
 
     ancestryFileName = sys.argv[1]
-    cohortFileName = sys.argv[2]
-    outputDir = sys.argv[3]
-
-    ancestry = pd.read_csv(ancestryFileName, sep='\t')
-
-    cohort = pd.read_csv(cohortFileName, header=None)
-
+    outputDir = sys.argv[2]
+    ancestry = pd.read_csv(ancestryFileName, sep='\t', header=0)
     topmed2gnomAD = dict()
     topmed2gnomAD['Sub_Saharan_Africa'] = 'AFR'
     topmed2gnomAD['Central_and_South_Asia'] = 'SAS'
@@ -25,16 +20,15 @@ def main():
     topmed2gnomAD['Oceania'] = 'OTH'
     topmed2gnomAD['Middle_East'] = 'OTH'
 
-
     populationPerIndividual = dict()
-    for individual in cohort[0]:
-        row = ancestry.loc[ancestry['individual'] == individual]
+    for individual in ancestry['individual']:
+        row = ancestry[ancestry['individual'] == individual]
         # row = Index(['individual', 'Sub_Saharan_Africa', 'Central_and_South_Asia',
         #       'East_Asia', 'Europe', 'Native_America', 'Oceania', 'Middle_East'],
         #       dtype='object')
         tempPop = None
         tempMax = 0.0
-        for pop in row.columns[1:]:
+        for pop in row.columns[1:7]:
             # pop = 107046    0.7787
             #       Name: Sub_Saharan_Africa, dtype: float64
             try:
