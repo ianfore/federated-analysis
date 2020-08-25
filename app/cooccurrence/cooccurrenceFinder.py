@@ -572,6 +572,8 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
                         seqCenter = annoDF[annoDF['sample.id'] == individuals[i]]['CENTER'].iloc[0]
                     elif freeze == 8:
                         seqCenter = annoDF[annoDF['sample.id'] == individuals[i]]['seq_center'].iloc[0]
+                    elif freeze == 9:
+                        seqCenter = annoDF[annoDF['sample.id'] == individuals[i]]['seq_center'].iloc[0]
                 except Exception as e:
                     seqCenter = "NA"
                 study = annoDF[annoDF['sample.id'] == individuals[i]]['study'].iloc[0]
