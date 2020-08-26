@@ -143,13 +143,23 @@ def main():
         twoPQ.append(2. * pList[i] * qList[i])
         xExp.append(pList[i])
 
-    plt.scatter(x=xExp, y=pSq, c='K', s=1)
-    plt.scatter(x=xExp, y=qSq, c='K', s=1)
-    plt.scatter(x=xExp, y=twoPQ, c='K', s=1)
 
-    plt.scatter(x=xObs, y=haList, c='R', s=50)
-    plt.scatter(x=xObs, y=hrList, c='B', s=50)
-    plt.scatter(x=xObs, y=hList, c='G', s=50)
+
+
+    psqPlot = plt.scatter(x=xExp, y=pSq, c='K', s=1)
+    qsqPlot = plt.scatter(x=xExp, y=qSq, c='K', s=1)
+    twopqPlot = plt.scatter(x=xExp, y=twoPQ, c='K', s=1)
+
+    haPlot = plt.scatter(x=xObs, y=haList, c='R', s=50)
+    hrPlot = plt.scatter(x=xObs, y=hrList, c='B', s=50)
+    hPlot = plt.scatter(x=xObs, y=hList, c='G', s=50)
+
+    plt.legend((psqPlot, haPlot, hrPlot, hPlot),
+               ('expected', 'observered homozygous alt', 'observed homozygous ref', 'observed hetero'),
+               scatterpoints=1,
+               loc='upper center',
+               ncol=1,
+               fontsize=8)
 
     plt.title('gene: ' + gene + ' subset: ' + subset)
     plt.xlabel('major allele frequency')

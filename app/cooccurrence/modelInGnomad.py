@@ -8,6 +8,7 @@ import pickle
 import sys
 import matplotlib.pyplot as plt
 import sklearn
+from sklearn.svm import SVC
 
 
 def main():
@@ -30,11 +31,15 @@ def main():
     df2 = pd.read_csv(inputDir + '/F5/f5_chr13_brca2_copdhmb_report.tsv', sep='\t')
 
     #features = ['popFreq', 'AF', 'hail_hweafp', 'chisquare', 'class']
-    features = ['popFreq', 'class', 'hail_hweafp', 'HWE_SLP_P', 'chisquare', 'FIBC_P', 'F']
+    features = ['popFreq', 'class', 'hail_hweafp']
 
 
     #model_1_dt = buildModel(df1, features, tree.DecisionTreeClassifier(max_depth=2), test_pct)
     #model_2_dt = buildModel(df2, features, tree.DecisionTreeClassifier(max_depth=2), test_pct)
+
+    #runMe(features, le, df1, normalize, test_pct)
+
+
 
     model_1_rf = buildModel(df1, features, RandomForestClassifier(n_estimators=100), test_pct, normalize, le)
     model_2_rf = buildModel(df2, features, RandomForestClassifier(n_estimators=100), test_pct, normalize, le)
@@ -68,6 +73,40 @@ def main():
     brca1_in.to_csv(outputDir + '/F9/brca1_in.txt', index=False, header=0)
     brca2_in.to_csv(outputDir + '/F9/brca2_in.txt', index=False, header=0)
 
+
+def runMe(features, le, df, normalize, testPctg):
+    for f in features:
+        if isinstance(df[f].iloc[0], str):
+            df[f] = le.fit_transform(df[f])
+
+    # define features and labels
+    if normalize:
+        X = preprocessing.normalize(df[features])
+        Y = df[['inGnomad']]
+
+    x_train, x_test, y_train, y_test = train_test_split(X, Y, test_size=testPctg)
+
+    for c in [0.01, 0.1, 1, 10, 100, 1000]:
+        model = trainMe(cValue=c, gValue=1, x=x_train, y=y_train, kernel='rbf')
+        y_predict_test = model.predict(x_test)
+        print('rbf test accuracy for c = ' + str(c) + ' = ' + str(accuracy_score(y_test, y_predict_test)))
+        print('score = ' + str(model.score(x_test, y_test)))
+
+    for c in [0.01, 0.1, 1, 10, 100, 1000]:
+        model = trainMe(cValue=c, gValue=1, x=x_train, y=y_train, kernel='linear')
+        y_predict_test = model.predict(x_test)
+        print('linear test accuracy for c = ' + str(c) + ' = ' + str(accuracy_score(y_test, y_predict_test)))
+
+    for g in [0.01, 0.1, 1, 10, 100, 1000]:
+        model = trainMe(cValue=1, gValue=g, x=x_train, y=y_train, kernel='rbf')
+        y_predict_test = model.predict(x_test)
+        print('rbf test accuracy for g = ' + str(g) + ' = ' + str(accuracy_score(y_test, y_predict_test)))
+        print('score = ' + str(model.score(x_test, y_test)))
+
+def trainMe(cValue, gValue, x, y, kernel):
+    model = SVC(C = cValue, gamma = gValue, kernel=kernel)
+    model.fit(x, y)
+    return model
 
 
 def getPredictions(df, model, features, normalize, le):
@@ -117,9 +156,9 @@ def buildModel(df, features, model, testPctg, normalize, le):
     # build model
     model.fit(X_train, y_train)
     y_predict_train = model.predict(X_train)
-    print('unnormalized train accuracy = ' + str(accuracy_score(y_train, y_predict_train)))
+    print('normalize = ' + str(normalize) + ' train accuracy = ' + str(accuracy_score(y_train, y_predict_train)))
     y_predict_test = model.predict(X_test)
-    print('unnormalized test accuracy = ' + str(accuracy_score(y_test, y_predict_test)))
+    print('normalize = ' + str(normalize) + ' test accuracy = ' + str(accuracy_score(y_test, y_predict_test)))
 
     if isinstance(model, sklearn.tree.DecisionTreeClassifier):
         plt.figure()

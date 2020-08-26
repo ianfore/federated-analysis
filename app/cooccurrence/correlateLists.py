@@ -2,17 +2,20 @@ import math
 import pandas as pd
 from scipy.stats import pointbiserialr
 import sys
+from sklearn import preprocessing
+
 
 
 def main():
-    brca1DF = pd.read_csv('/Users/jcasaletto/Desktop/RESEARCH/TOPMED/F5/REPORT/f5-17-report.tsv', header=0,
+    brca1DF = pd.read_csv('/Users/jcasaletto/Desktop/FINAL_REPORT/F9/f9_chr17_brca1_gruhmb_report.tsv', header=0,
                           sep='\t', dtype={'exonic': 'bool', 'inGnomad': 'bool'})
-    brca2DF = pd.read_csv('/Users/jcasaletto/Desktop/RESEARCH/TOPMED/F5/REPORT/f5-13-report.tsv', header=0,
+    brca2DF = pd.read_csv('/Users/jcasaletto/Desktop/FINAL_REPORT/F9/f9_chr13_brca2_gruhmb_report.tsv', header=0,
                           sep='\t', dtype={'exonic': 'bool', 'inGnomad': 'bool'})
 
-    list1 = list(brca1DF['homo_ref'])
-    list2 = list(brca1DF['popFreq'])
+    list1 = list(brca1DF['popFreq'])
+    list2 = list(brca1DF['cohortFreq'])
 
+    le = preprocessing.LabelEncoder()
 
     if isinstance(list1[0], bool) and not isinstance(list2[0], bool):
         corr = pointbiserialr(x=list1, y=list2)
@@ -21,6 +24,12 @@ def main():
     elif isinstance(list1[0], bool) and isinstance(list2[0], bool):
         print('both lists cannot be boolean')
         sys.exit(1)
+    elif isinstance(list1[0], str) and not isinstance(list2[0], str):
+        list1 = le.fit_transform(list1)
+        corr = pearsonCorrelation(list1, list2)
+    elif isinstance(list2[0], str) and not isinstance(list1[0], str):
+        list2 = le.fit_transform(list2)
+        corr = pearsonCorrelation(list1, list2)
     else:
         corr = pearsonCorrelation(list1, list2)
     print(corr)

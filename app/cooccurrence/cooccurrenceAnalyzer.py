@@ -35,6 +35,7 @@ def main():
     outputDir = sys.argv[7]
     numProcesses = int(sys.argv[8])
     frequencyFilter = float(sys.argv[9])
+    c = 0.5
 
     logger.info('reading data from ' + vpiFileName)
     with open(vpiFileName, 'r') as f:
@@ -118,7 +119,7 @@ def main():
     plotVUSByFrequency(variantsDict, 'cohortFreq', outputDir)
 
 
-    ipvDict = getHardyWeinbergStats(vpiDict, variantsDict, ipvDict)
+    ipvDict = getHardyWeinbergStats(vpiDict, variantsDict, ipvDict, c)
 
 
     if frequencyFilter != 0:
@@ -524,9 +525,9 @@ def getFisherExact(results, key, allValues):
     results[key]['P value'] =  round(pValue, 3)
     results[key]['95% CI'] = (round(lb, 2), round(ub, 2))
 
-def getHardyWeinbergStats(vpiDict, variantsDict, individualsPerVariant):
+def getHardyWeinbergStats(vpiDict, variantsDict, individualsPerVariant, c):
     bVars, pVars, vVars = calculateZygosityFrequenciesPerVariant(vpiDict)
-    bVars, pVars, vVars = hardyWeinbergChiSquareTest(bVars, pVars, vVars, len(vpiDict))
+    bVars, pVars, vVars = hardyWeinbergChiSquareTest(bVars, pVars, vVars, len(vpiDict), c)
     bVars, pVars, vVars = hardyWeinbergStatistics(bVars, pVars, vVars, significance=0.01)
     rejectHW = {'benign': 0, 'pathogenic': 0, 'vus': 0}
     acceptHW = {'benign': 0, 'pathogenic': 0, 'vus': 0}
@@ -788,7 +789,7 @@ def tree_factorial(n):
     return range_prod(1,n)
 
 
-def hardyWeinbergChiSquareTest(bVars, pVars, vVars, n):
+def hardyWeinbergChiSquareTest(bVars, pVars, vVars, n, c):
     # https://en.wikipedia.org/wiki/Hardy-Weinberg_principle
     # degrees of freedom = 1
     criticalValue = 3.84
@@ -813,9 +814,9 @@ def hardyWeinbergChiSquareTest(bVars, pVars, vVars, n):
         if expAA == 0 or expAa == 0 or expaa == 0:
             bVars[b]['chisquare'] = 0
         else:
-            bVars[b]['chisquare'] = (1.0/expAA) * (bVars[b]['AA'] - expAA)**2 + \
-                                    (1.0/expAa) * (bVars[b]['Aa'] - expAa)**2 + \
-                                    (1.0/expaa) * (bVars[b]['aa'] - expaa)**2
+            bVars[b]['chisquare'] = (1.0/expAA) * (abs(bVars[b]['AA'] - expAA) - c)**2 + \
+                                    (1.0/expAa) * (abs(bVars[b]['Aa'] - expAa) - c)**2 + \
+                                    (1.0/expaa) * (abs(bVars[b]['aa'] - expaa) - c)**2
 
         # 8. compare against p-value for 1 degree of freedom at 0.05 significance (3.84)
         if bVars[b]['chisquare'] >= criticalValue:
@@ -843,9 +844,9 @@ def hardyWeinbergChiSquareTest(bVars, pVars, vVars, n):
         if expAA == 0 or expAa == 0 or expaa == 0:
             pVars[p]['chisquare'] = 0
         else:
-            pVars[p]['chisquare'] = 1.0/expAA * (pVars[p]['AA'] - expAA)**2 + \
-                                    1.0/expAa * (pVars[p]['Aa'] - expAa)**2 + \
-                                    1.0/expaa * (pVars[p]['aa'] - expaa)**2
+            pVars[p]['chisquare'] = 1.0/expAA * (abs(pVars[p]['AA'] - expAA) - c)**2 + \
+                                    1.0/expAa * (abs(pVars[p]['Aa'] - expAa) - c)**2 + \
+                                    1.0/expaa * (abs(pVars[p]['aa'] - expaa) - c)**2
         # 8. compare against p-value for 1 degree of freedom at 0.05 significance (3.84)
         if pVars[p]['chisquare'] >= criticalValue:
             pVars[p]['accept hw'] = False
@@ -872,9 +873,9 @@ def hardyWeinbergChiSquareTest(bVars, pVars, vVars, n):
         if expAA == 0 or expAa == 0 or expaa == 0:
             vVars[v]['chisquare'] = 0
         else:
-            vVars[v]['chisquare'] = 1.0/expAA * (vVars[v]['AA'] - expAA)**2 + \
-                                    1.0/expAa * (vVars[v]['Aa'] - expAa)**2 + \
-                                    1.0/expaa * (vVars[v]['aa'] - expaa)**2
+            vVars[v]['chisquare'] = 1.0/expAA * (abs(vVars[v]['AA'] - expAA) - c)**2 + \
+                                    1.0/expAa * (abs(vVars[v]['Aa'] - expAa) - c)**2 + \
+                                    1.0/expaa * (abs(vVars[v]['aa'] - expaa) - c)**2
 
         # 8. compare against p-value for 1 degree of freedom at 0.05 significance (3.84)
         if vVars[v]['chisquare'] >= criticalValue:
