@@ -22,12 +22,15 @@ def main():
 
     le = preprocessing.LabelEncoder()
 
+    print('inputDir = ' + inputDir)
+    print('outputdir = ' + outputDir)
+
     # build model based on f5 copd
     df1 = pd.read_csv(inputDir + '/F5/f5_chr17_brca1_copdhmb_report.tsv', sep='\t')
     df2 = pd.read_csv(inputDir + '/F5/f5_chr13_brca2_copdhmb_report.tsv', sep='\t')
 
-    features = ['popFreq', 'AF', 'hail_hweafp', 'chisquare', 'class']
-    features = ['popFreq', 'AF', 'hail_hweafp', 'chisquare']
+    #features = ['popFreq', 'AF', 'hail_hweafp', 'chisquare', 'class']
+    features = ['popFreq', 'class', 'hail_hweafp', 'HWE_SLP_P', 'chisquare', 'FIBC_P', 'F']
 
 
     #model_1_dt = buildModel(df1, features, tree.DecisionTreeClassifier(max_depth=2), test_pct)
@@ -45,34 +48,36 @@ def main():
     f.close()
 
     # predict for f8 gru + hmb
-    brca1_f8_report_DF = pd.read_csv(inputDir + '/F8/f8_chr17_brca1_gruhmb_report.tsv', header=0, sep='\t')
-    brca2_f8_report_DF = pd.read_csv(inputDir + '/F8/f8_chr13_brca2_gruhmb_report.tsv', header=0, sep='\t')
+    brca1_f9_report_DF = pd.read_csv(inputDir + '/F9/f9_chr17_brca1_gruhmb_report.tsv', header=0, sep='\t')
+    brca2_f9_report_DF = pd.read_csv(inputDir + '/F9/f9_chr13_brca2_gruhmb_report.tsv', header=0, sep='\t')
 
-    brca1_f8_predictions = getPredictions(brca1_f8_report_DF, model_1_rf, features, normalize, le)
-    brca2_f8_predictions = getPredictions(brca2_f8_report_DF, model_2_rf, features, normalize, le)
+    brca1_f9_predictions = getPredictions(brca1_f9_report_DF, model_1_rf, features, normalize, le)
+    brca2_f9_predictions = getPredictions(brca2_f9_report_DF, model_2_rf, features, normalize, le)
 
     # save to disk
-    brca1_f8_predictions.to_csv(outputDir + '/F8/f8_chr17_brca1_predictions_report.tsv', sep='\t')
-    brca2_f8_predictions.to_csv(outputDir + '/F8/f8_chr13_brca2_predictions_report.tsv', sep='\t')
+    brca1_f9_predictions.to_csv(outputDir + '/F9/f9_chr17_brca1_predictions_report.tsv', sep='\t')
+    brca2_f9_predictions.to_csv(outputDir + '/F9/f9_chr13_brca2_predictions_report.tsv', sep='\t')
 
-    brca1_f8_predictions = pd.read_csv(inputDir + '/F8/f8_chr17_brca1_predictions_report.tsv', header=0, sep='\t')
-    brca2_f8_predictions = pd.read_csv(inputDir + '/F8/f8_chr13_brca2_predictions_report.tsv', header=0, sep='\t')
+    brca1_f9_predictions = pd.read_csv(inputDir + '/F9/f9_chr17_brca1_predictions_report.tsv', header=0, sep='\t')
+    brca2_f9_predictions = pd.read_csv(inputDir + '/F9/f9_chr13_brca2_predictions_report.tsv', header=0, sep='\t')
 
     # shave off variants from df that are predicted to be in gnomad and save to disk
-    brca1_in = brca1_f8_predictions.loc[(brca1_f8_predictions['gnomadPrediction'] == True)]['variant']
-    brca2_in = brca2_f8_predictions.loc[(brca2_f8_predictions['gnomadPrediction'] == True)]['variant']
+    brca1_in = brca1_f9_predictions.loc[(brca1_f9_predictions['gnomadPrediction'] == True)]['variant']
+    brca2_in = brca2_f9_predictions.loc[(brca2_f9_predictions['gnomadPrediction'] == True)]['variant']
 
-    brca1_in.to_csv(outputDir + '/F8/brca1_in.txt', index=False, header=0)
-    brca2_in.to_csv(outputDir + '/F8/brca2_in.txt', index=False, header=0)
+    brca1_in.to_csv(outputDir + '/F9/brca1_in.txt', index=False, header=0)
+    brca2_in.to_csv(outputDir + '/F9/brca2_in.txt', index=False, header=0)
 
 
 
 def getPredictions(df, model, features, normalize, le):
     predictions = list()
 
+    transformedFeatures = list()
     for f in features:
         if isinstance(df[f].iloc[0], str):
             df[f] = le.fit_transform(df[f])
+            transformedFeatures.append(f)
 
     if normalize:
         X = preprocessing.normalize(df[features])
@@ -82,6 +87,10 @@ def getPredictions(df, model, features, normalize, le):
         predicted = model.predict([list(variant[features])])
         predictions.append(predicted[0])
     df['gnomadPrediction'] = predictions
+
+    for f in transformedFeatures:
+        df[f] = le.inverse_transform(df[f])
+
     return df
 
 def buildModel(df, features, model, testPctg, normalize, le):

@@ -1,11 +1,7 @@
 import matplotlib.pyplot as plt
 import logging
-import numpy as np
 import pandas as pd
 import sys
-from scipy.stats import pearsonr
-import math
-
 
 logging.basicConfig()
 logger = logging.getLogger()
@@ -29,7 +25,7 @@ def divideList(a, b):
 
 def main():
     if len(sys.argv) != 6:
-        print('brca1-report.tsv brca2-report.tsv output-dir all|homo brca1|brca2|both')
+        print('brca1-report.tsv brca2-report.tsv output-dir all|vus brca1|brca2|both')
         sys.exit(1)
 
     brca1_report = sys.argv[1]
@@ -43,9 +39,9 @@ def main():
 
     outputFileName = subset + '_' + gene
 
-    if subset == 'homo':
-        samples_1 = df_1[df_1['homozygousSample'] != 'None']
-        samples_2 = df_2[df_2['homozygousSample'] != 'None']
+    if subset == 'vus':
+        samples_1 = df_1[df_1['class'] == 'vus']
+        samples_2 = df_2[df_2['class'] == 'vus']
         homoAltList_1 = list(samples_1['homo_alt'])
         homoAltList_2 = list(samples_2['homo_alt'])
         homoRefList_1 = list(samples_1['homo_ref'])
@@ -54,8 +50,9 @@ def main():
         heteroList_2 = list(samples_2['hetero'])
 
         if gene == 'both':
-            pList = list(samples_1['p']) + list(samples_2['p'])
-            qList = list(samples_1['q']) + list(samples_2['q'])
+            pList = list(df_1['p']) + list(df_2['p'])
+            qList = list(df_1['q']) + list(df_2['q'])
+            xObs = list(samples_1['p']) + list(samples_2['q'])
             homoRefList = homoRefList_1 + homoRefList_2
             homoAltList = homoAltList_1 + homoAltList_2
             heteroList = heteroList_1 + heteroList_2
@@ -64,8 +61,9 @@ def main():
             haList = divideList(homoAltList, totalList)
             hList = divideList(heteroList, totalList)
         elif gene == 'brca1':
-            pList = list(samples_1['p'])
-            qList = list(samples_1['q'])
+            pList = list(df_1['p'])
+            qList = list(df_1['q'])
+            xObs = list(samples_1['p'])
             homoRefList = homoRefList_1
             homoAltList = homoAltList_1
             heteroList = heteroList_1
@@ -74,8 +72,9 @@ def main():
             haList = divideList(homoAltList, totalList)
             hList = divideList(heteroList, totalList)
         elif gene == 'brca2':
-            pList = list(samples_2['p'])
-            qList = list(samples_2['q'])
+            pList = list(df_2['p'])
+            qList = list(df_2['q'])
+            xObs = list(samples_2['p'])
             homoRefList = homoRefList_2
             homoAltList = homoAltList_2
             heteroList = heteroList_2
@@ -97,6 +96,7 @@ def main():
         if gene == 'both':
             pList = list(df_1['p']) + list(df_2['p'])
             qList = list(df_1['q']) + list(df_2['q'])
+            xObs = pList
             homoRefList = homoRefList_1 + homoRefList_2
             homoAltList = homoAltList_1 + homoAltList_2
             heteroList = heteroList_1 + heteroList_2
@@ -107,6 +107,7 @@ def main():
         elif gene == 'brca1':
             pList = list(df_1['p'])
             qList = list(df_1['q'])
+            xObs = pList
             homoRefList = homoRefList_1
             homoAltList = homoAltList_1
             heteroList = heteroList_1
@@ -117,6 +118,7 @@ def main():
         elif gene == 'brca2':
             pList = list(df_2['p'])
             qList = list(df_2['q'])
+            xObs = pList
             homoRefList = homoRefList_2
             homoAltList = homoAltList_2
             heteroList = heteroList_2
@@ -134,21 +136,26 @@ def main():
     pSq = list()
     qSq = list()
     twoPQ = list()
-    x = list()
+    xExp = list()
     for i in range(len(pList)):
         pSq.append(pList[i]**2)
         qSq.append(qList[i]**2)
         twoPQ.append(2. * pList[i] * qList[i])
-        x.append(pList[i])
+        xExp.append(pList[i])
 
-    plt.scatter(x=x, y=pSq, c='K', s=1)
-    plt.scatter(x=x, y=qSq, c='K', s=1)
-    plt.scatter(x=x, y=twoPQ, c='K', s=1)
-    plt.scatter(x=x, y=haList, c='R', s=1)
-    plt.scatter(x=x, y=hrList, c='B', s=1)
-    plt.scatter(x=x, y=hList, c='G', s=1)
+    plt.scatter(x=xExp, y=pSq, c='K', s=1)
+    plt.scatter(x=xExp, y=qSq, c='K', s=1)
+    plt.scatter(x=xExp, y=twoPQ, c='K', s=1)
+
+    plt.scatter(x=xObs, y=haList, c='R', s=50)
+    plt.scatter(x=xObs, y=hrList, c='B', s=50)
+    plt.scatter(x=xObs, y=hList, c='G', s=50)
 
     plt.title('gene: ' + gene + ' subset: ' + subset)
+    plt.xlabel('major allele frequency')
+    plt.ylabel('genotype frequency')
+    plt.xlim(0,1)
+    plt.ylim(0,1)
     plt.savefig(outputDir + '/f8-observed-hw-dists_' + outputFileName + '.png')
     print('gene = ' + gene + ' subset = ' + subset + ' n= ' + str(len(pSq)))
 
