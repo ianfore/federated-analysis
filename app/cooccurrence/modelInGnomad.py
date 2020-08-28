@@ -25,13 +25,15 @@ def main():
 
     print('inputDir = ' + inputDir)
     print('outputdir = ' + outputDir)
+    print('test % = ' + str(test_pct))
 
     # build model based on f5 copd
     df1 = pd.read_csv(inputDir + '/F5/f5_chr17_brca1_copdhmb_report.tsv', sep='\t')
     df2 = pd.read_csv(inputDir + '/F5/f5_chr13_brca2_copdhmb_report.tsv', sep='\t')
+    dfAll = pd.concat([df1, df2], axis=0)
 
     #features = ['popFreq', 'AF', 'hail_hweafp', 'chisquare', 'class']
-    features = ['popFreq', 'class', 'hail_hweafp']
+    features = ['popFreq', 'cohortFreq', 'class', 'hail_hweafp', 'chisquare']
 
 
     #model_1_dt = buildModel(df1, features, tree.DecisionTreeClassifier(max_depth=2), test_pct)
@@ -41,8 +43,9 @@ def main():
 
 
 
-    model_1_rf = buildModel(df1, features, RandomForestClassifier(n_estimators=100), test_pct, normalize, le)
-    model_2_rf = buildModel(df2, features, RandomForestClassifier(n_estimators=100), test_pct, normalize, le)
+    model_1_rf = buildModel(df1, features, RandomForestClassifier(n_estimators=10), test_pct, normalize, le)
+    model_2_rf = buildModel(df2, features, RandomForestClassifier(n_estimators=10), test_pct, normalize, le)
+    model_all_rf = buildModel(dfAll, features, RandomForestClassifier(n_estimators=10), test_pct, normalize, le)
 
     # save RF models
     f = open(outputDir + '/brca1_rf_model', 'wb')
@@ -51,27 +54,38 @@ def main():
     f = open(outputDir + '/brca2_rf_model', 'wb')
     pickle.dump(model_2_rf, f)
     f.close()
+    f = open(outputDir + '/brca_all_model', 'wb')
+    pickle.dump(model_all_rf, f)
+    f.close()
 
     # predict for f8 gru + hmb
     brca1_f9_report_DF = pd.read_csv(inputDir + '/F9/f9_chr17_brca1_gruhmb_report.tsv', header=0, sep='\t')
     brca2_f9_report_DF = pd.read_csv(inputDir + '/F9/f9_chr13_brca2_gruhmb_report.tsv', header=0, sep='\t')
+    brca_all_f9_report_DF = pd.concat([brca1_f9_report_DF, brca2_f9_report_DF], axis=0)
 
     brca1_f9_predictions = getPredictions(brca1_f9_report_DF, model_1_rf, features, normalize, le)
     brca2_f9_predictions = getPredictions(brca2_f9_report_DF, model_2_rf, features, normalize, le)
+    brca_all_f9_predictions = getPredictions(brca_all_f9_report_DF, model_2_rf, features, normalize, le)
+
 
     # save to disk
     brca1_f9_predictions.to_csv(outputDir + '/F9/f9_chr17_brca1_predictions_report.tsv', sep='\t')
     brca2_f9_predictions.to_csv(outputDir + '/F9/f9_chr13_brca2_predictions_report.tsv', sep='\t')
+    brca_all_f9_predictions.to_csv(outputDir + '/F9/f9_all_predictions_report.tsv', sep='\t')
 
     brca1_f9_predictions = pd.read_csv(inputDir + '/F9/f9_chr17_brca1_predictions_report.tsv', header=0, sep='\t')
     brca2_f9_predictions = pd.read_csv(inputDir + '/F9/f9_chr13_brca2_predictions_report.tsv', header=0, sep='\t')
+    brca_all_f9_predictions = pd.read_csv(inputDir + '/F9/f9_all_predictions_report.tsv', header=0, sep='\t')
+
 
     # shave off variants from df that are predicted to be in gnomad and save to disk
     brca1_in = brca1_f9_predictions.loc[(brca1_f9_predictions['gnomadPrediction'] == True)]['variant']
     brca2_in = brca2_f9_predictions.loc[(brca2_f9_predictions['gnomadPrediction'] == True)]['variant']
+    brca_all_in = brca_all_f9_predictions.loc[(brca_all_f9_predictions['gnomadPrediction'] == True)]['variant']
 
     brca1_in.to_csv(outputDir + '/F9/brca1_in.txt', index=False, header=0)
     brca2_in.to_csv(outputDir + '/F9/brca2_in.txt', index=False, header=0)
+    brca_all_in.to_csv(outputDir + '/F9/brca_all_in.txt', index=False, header=0)
 
 
 def runMe(features, le, df, normalize, testPctg):
@@ -155,10 +169,36 @@ def buildModel(df, features, model, testPctg, normalize, le):
 
     # build model
     model.fit(X_train, y_train)
+
+    # get predictions
     y_predict_train = model.predict(X_train)
+
+    # get overall test accuracy
     print('normalize = ' + str(normalize) + ' train accuracy = ' + str(accuracy_score(y_train, y_predict_train)))
     y_predict_test = model.predict(X_test)
     print('normalize = ' + str(normalize) + ' test accuracy = ' + str(accuracy_score(y_test, y_predict_test)))
+
+    # get false positive rate (sensitivity) and false positive rate (specificity)
+    fp = 0
+    fn = 0
+    numCorrect = 0
+    yActualList = y_test['inGnomad'].tolist()
+    for i in range(len(yActualList)):
+        if yActualList[i] == y_predict_test[i]:
+            numCorrect += 1
+        elif yActualList[i] == True and y_predict_test[i] == False:
+            fn += 1
+        else:
+            fp +=1
+
+    accuracy = (1.0 * numCorrect) / (1.0 * len(yActualList))
+    fpr = 1 - (1.0 * fp) / (1.0 * len(yActualList))
+    fnr = 1 - (1.0 * fn) / (1.0 * len(yActualList))
+    print('accuracy = ' + str(accuracy))
+    print('fpr = ' + str(fpr))
+    print('fnr = ' + str(fnr))
+    print('sum acc + fpr + fnr = ' + str(accuracy + fpr + fnr))
+
 
     if isinstance(model, sklearn.tree.DecisionTreeClassifier):
         plt.figure()
@@ -167,7 +207,9 @@ def buildModel(df, features, model, testPctg, normalize, le):
         #plt.savefig('/content/gdrive/My Drive/RESEARCH/TOPMED/brca1-dtree.eps',format='eps',bbox_inches = "tight")
 
     elif isinstance(model, sklearn.ensemble.forest.RandomForestClassifier):
-        print('feature importance: ' + str(model.feature_importances_))
+        for i in range(len(features)):
+            print('feature importance: ')
+            print(features[i] + ' : ' + str(model.feature_importances_[i]))
 
     return model
 

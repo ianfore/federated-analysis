@@ -7,13 +7,13 @@ from sklearn import preprocessing
 
 
 def main():
-    brca1DF = pd.read_csv('/Users/jcasaletto/Desktop/FINAL_REPORT/F9/f9_chr17_brca1_gruhmb_report.tsv', header=0,
+    brca1DF = pd.read_csv('/Users/jcasaletto/Desktop/FINAL_REPORT/F8/f8_chr17_brca1_gruhmb_report.tsv', header=0,
                           sep='\t', dtype={'exonic': 'bool', 'inGnomad': 'bool'})
-    brca2DF = pd.read_csv('/Users/jcasaletto/Desktop/FINAL_REPORT/F9/f9_chr13_brca2_gruhmb_report.tsv', header=0,
+    brca2DF = pd.read_csv('/Users/jcasaletto/Desktop/FINAL_REPORT/F8/f8_chr13_brca2_gruhmb_report.tsv', header=0,
                           sep='\t', dtype={'exonic': 'bool', 'inGnomad': 'bool'})
 
-    list1 = list(brca1DF['popFreq'])
-    list2 = list(brca1DF['cohortFreq'])
+    list1 = list(brca1DF['q'])
+    list2 = list(brca1DF['HWEAF_P'])
 
     le = preprocessing.LabelEncoder()
 

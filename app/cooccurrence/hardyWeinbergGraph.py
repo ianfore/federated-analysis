@@ -15,6 +15,15 @@ def sumList(a, b):
         mySum.append(a[i] + b[i])
     return mySum
 
+def diffList(a, b):
+    if len(a) != len(b):
+        raise Exception('lists must be same length')
+    myDiff = list()
+    for i in range(len(a)):
+        myDiff.append(a[i] - b[i])
+    return myDiff
+
+
 def divideList(a, b):
     if len(a) != len(b):
         raise Exception('lists must be same length')
@@ -50,6 +59,9 @@ def main():
         heteroList_2 = list(samples_2['hetero'])
 
         if gene == 'both':
+            hweafpQList = list(df_1['HWEAF_P']) + list(df_2['HWEAF_P'])
+            onesList = [1 for i in range(len(hweafpQList))]
+            hweafpPlist = diffList(onesList, hweafpQList)
             pList = list(df_1['p']) + list(df_2['p'])
             qList = list(df_1['q']) + list(df_2['q'])
             xObs = list(samples_1['p']) + list(samples_2['q'])
@@ -61,6 +73,9 @@ def main():
             haList = divideList(homoAltList, totalList)
             hList = divideList(heteroList, totalList)
         elif gene == 'brca1':
+            hweafpQList = list(df_1['HWEAF_P'])
+            onesList = [1 for i in range(len(hweafpQList))]
+            hweafpPlist = diffList(onesList, hweafpQList)
             pList = list(df_1['p'])
             qList = list(df_1['q'])
             xObs = list(samples_1['p'])
@@ -72,6 +87,9 @@ def main():
             haList = divideList(homoAltList, totalList)
             hList = divideList(heteroList, totalList)
         elif gene == 'brca2':
+            hweafpQList = list(df_2['HWEAF_P'])
+            onesList = [1 for i in range(len(hweafpQList))]
+            hweafpPlist = diffList(onesList, hweafpQList)
             pList = list(df_2['p'])
             qList = list(df_2['q'])
             xObs = list(samples_2['p'])
@@ -94,6 +112,9 @@ def main():
         heteroList_2 = list(df_2['hetero'])
 
         if gene == 'both':
+            hweafpQList = list(df_1['HWEAF_P']) + list(df_2['HWEAF_P'])
+            onesList = [1 for i in range(len(hweafpQList))]
+            hweafpPlist = diffList(onesList, hweafpQList)
             pList = list(df_1['p']) + list(df_2['p'])
             qList = list(df_1['q']) + list(df_2['q'])
             xObs = pList
@@ -105,6 +126,9 @@ def main():
             haList = divideList(homoAltList, totalList)
             hList = divideList(heteroList, totalList)
         elif gene == 'brca1':
+            hweafpQList = list(df_1['HWEAF_P'])
+            onesList = [1 for i in range(len(hweafpQList))]
+            hweafpPlist = diffList(onesList, hweafpQList)
             pList = list(df_1['p'])
             qList = list(df_1['q'])
             xObs = pList
@@ -116,6 +140,9 @@ def main():
             haList = divideList(homoAltList, totalList)
             hList = divideList(heteroList, totalList)
         elif gene == 'brca2':
+            hweafpQList = list(df_2['HWEAF_P'])
+            onesList = [1 for i in range(len(hweafpQList))]
+            hweafpPlist = diffList(onesList, hweafpQList)
             pList = list(df_2['p'])
             qList = list(df_2['q'])
             xObs = pList
@@ -137,25 +164,34 @@ def main():
     qSq = list()
     twoPQ = list()
     xExp = list()
+    pSqAdj = list()
+    qSqAdj = list()
+    twoPQAdj = list()
+    xExpAdj = list()
     for i in range(len(pList)):
         pSq.append(pList[i]**2)
         qSq.append(qList[i]**2)
         twoPQ.append(2. * pList[i] * qList[i])
         xExp.append(pList[i])
-
-
-
+        pSqAdj.append(hweafpPlist[i] ** 2)
+        qSqAdj.append(hweafpQList[i] ** 2)
+        twoPQAdj.append(2. * hweafpPlist[i] * hweafpQList[i])
+        xExpAdj.append(hweafpPlist[i])
 
     psqPlot = plt.scatter(x=xExp, y=pSq, c='K', s=1)
     qsqPlot = plt.scatter(x=xExp, y=qSq, c='K', s=1)
     twopqPlot = plt.scatter(x=xExp, y=twoPQ, c='K', s=1)
 
-    haPlot = plt.scatter(x=xObs, y=haList, c='R', s=50)
-    hrPlot = plt.scatter(x=xObs, y=hrList, c='B', s=50)
-    hPlot = plt.scatter(x=xObs, y=hList, c='G', s=50)
+    psqAdjPlot = plt.scatter(x=xExpAdj, y=pSqAdj, c='Y', s=1)
+    qsqAdjPlot = plt.scatter(x=xExpAdj, y=qSqAdj, c='Y', s=1)
+    twopqPAdjlot = plt.scatter(x=xExpAdj, y=twoPQAdj, c='Y', s=1)
 
-    plt.legend((psqPlot, haPlot, hrPlot, hPlot),
-               ('expected', 'observered homozygous alt', 'observed homozygous ref', 'observed hetero'),
+    haPlot = plt.scatter(x=xObs, y=haList, c='R', s=30)
+    hrPlot = plt.scatter(x=xObs, y=hrList, c='B', s=30)
+    hPlot = plt.scatter(x=xObs, y=hList, c='G', s=30)
+
+    plt.legend((psqPlot, psqAdjPlot, haPlot, hrPlot, hPlot),
+               ('expected', 'expected pop-adjusted', 'observered homozygous alt', 'observed homozygous ref', 'observed hetero'),
                scatterpoints=1,
                loc='upper center',
                ncol=1,
