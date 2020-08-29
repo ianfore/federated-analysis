@@ -40,16 +40,20 @@ def main():
 
     logger.info('reading data from ' + perBatchFileName)
     with open(perBatchFileName, 'r') as f:
-        cphv = json.load(f)
+        bphv = json.load(f)
     f.close()
 
     excludeList = list()
-    for vus in cphv:
-        if cphv[vus] == [batchName]:
+    for vus in bphv:
+        if bphv[vus] == [batchName]:
             excludeList.append(vus)
 
     for key in excludeList:
-        del out['homozygous vus'][key]
+        try:
+            del out['homozygous vus'][key]
+        except Exception as e:
+            print('key ' + key + ' not in out.json')
+            continue
 
     with open(filteredOutFileName, 'w') as f:
         json.dump(out, f, cls=NpEncoder)
