@@ -59,33 +59,33 @@ def main():
     f.close()
 
     # predict for f8 gru + hmb
-    brca1_f9_report_DF = pd.read_csv(inputDir + '/F9/f9_chr17_brca1_gruhmb_report.tsv', header=0, sep='\t')
-    brca2_f9_report_DF = pd.read_csv(inputDir + '/F9/f9_chr13_brca2_gruhmb_report.tsv', header=0, sep='\t')
-    brca_all_f9_report_DF = pd.concat([brca1_f9_report_DF, brca2_f9_report_DF], axis=0)
+    brca1_f8_report_DF = pd.read_csv(inputDir + '/F8/f8_chr17_brca1_gruhmb_report.tsv', header=0, sep='\t')
+    brca2_f8_report_DF = pd.read_csv(inputDir + '/F8/f8_chr13_brca2_gruhmb_report.tsv', header=0, sep='\t')
+    brca_all_f8_report_DF = pd.concat([brca1_f8_report_DF, brca2_f8_report_DF], axis=0)
 
-    brca1_f9_predictions = getPredictions(brca1_f9_report_DF, model_1_rf, features, normalize, le)
-    brca2_f9_predictions = getPredictions(brca2_f9_report_DF, model_2_rf, features, normalize, le)
-    brca_all_f9_predictions = getPredictions(brca_all_f9_report_DF, model_2_rf, features, normalize, le)
+    brca1_f8_predictions = getPredictions(brca1_f8_report_DF, model_1_rf, features, normalize, le)
+    brca2_f8_predictions = getPredictions(brca2_f8_report_DF, model_2_rf, features, normalize, le)
+    brca_all_f8_predictions = getPredictions(brca_all_f8_report_DF, model_2_rf, features, normalize, le)
 
 
     # save to disk
-    brca1_f9_predictions.to_csv(outputDir + '/F9/f9_chr17_brca1_predictions_report.tsv', sep='\t')
-    brca2_f9_predictions.to_csv(outputDir + '/F9/f9_chr13_brca2_predictions_report.tsv', sep='\t')
-    brca_all_f9_predictions.to_csv(outputDir + '/F9/f9_all_predictions_report.tsv', sep='\t')
+    brca1_f8_predictions.to_csv(outputDir + '/F8/f8_chr17_brca1_predictions_report.tsv', sep='\t')
+    brca2_f8_predictions.to_csv(outputDir + '/F8/f8_chr13_brca2_predictions_report.tsv', sep='\t')
+    brca_all_f8_predictions.to_csv(outputDir + '/F8/f8_all_predictions_report.tsv', sep='\t')
 
-    brca1_f9_predictions = pd.read_csv(inputDir + '/F9/f9_chr17_brca1_predictions_report.tsv', header=0, sep='\t')
-    brca2_f9_predictions = pd.read_csv(inputDir + '/F9/f9_chr13_brca2_predictions_report.tsv', header=0, sep='\t')
-    brca_all_f9_predictions = pd.read_csv(inputDir + '/F9/f9_all_predictions_report.tsv', header=0, sep='\t')
+    brca1_f8_predictions = pd.read_csv(inputDir + '/F8/f8_chr17_brca1_predictions_report.tsv', header=0, sep='\t')
+    brca2_f8_predictions = pd.read_csv(inputDir + '/F8/f8_chr13_brca2_predictions_report.tsv', header=0, sep='\t')
+    brca_all_f8_predictions = pd.read_csv(inputDir + '/F8/f8_all_predictions_report.tsv', header=0, sep='\t')
 
 
     # shave off variants from df that are predicted to be in gnomad and save to disk
-    brca1_in = brca1_f9_predictions.loc[(brca1_f9_predictions['gnomadPrediction'] == True)]['variant']
-    brca2_in = brca2_f9_predictions.loc[(brca2_f9_predictions['gnomadPrediction'] == True)]['variant']
-    brca_all_in = brca_all_f9_predictions.loc[(brca_all_f9_predictions['gnomadPrediction'] == True)]['variant']
+    brca1_in = brca1_f8_predictions.loc[(brca1_f8_predictions['gnomadPrediction'] == True)]['variant']
+    brca2_in = brca2_f8_predictions.loc[(brca2_f8_predictions['gnomadPrediction'] == True)]['variant']
+    brca_all_in = brca_all_f8_predictions.loc[(brca_all_f8_predictions['gnomadPrediction'] == True)]['variant']
 
-    brca1_in.to_csv(outputDir + '/F9/brca1_in.txt', index=False, header=0)
-    brca2_in.to_csv(outputDir + '/F9/brca2_in.txt', index=False, header=0)
-    brca_all_in.to_csv(outputDir + '/F9/brca_all_in.txt', index=False, header=0)
+    brca1_in.to_csv(outputDir + '/F8/brca1_in.txt', index=False, header=0)
+    brca2_in.to_csv(outputDir + '/F8/brca2_in.txt', index=False, header=0)
+    brca_all_in.to_csv(outputDir + '/F8/brca_all_in.txt', index=False, header=0)
 
 
 def runMe(features, le, df, normalize, testPctg):
