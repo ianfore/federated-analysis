@@ -59,7 +59,7 @@ def main():
 			if not v in centersPerHomoVus:
 				centersPerHomoVus[v] = set()
 			centersPerHomoVus[v].add(seqCenter)
-			studyPerVariant[v] = vus[3]
+			#studyPerVariant[v] = vus[3]
 		for vus in vpiDict[individual]['pathogenic']:
 			variant = vus[0]
 			seqCenter = vus[2]
@@ -67,7 +67,7 @@ def main():
 			if not v in centersPerHomoVus:
 				centersPerHomoVus[v] = set()
 			centersPerHomoVus[v].add(seqCenter)
-			studyPerVariant[v] = vus[3]
+			#studyPerVariant[v] = vus[3]
 		for vus in vpiDict[individual]['vus']:
 			variant = vus[0]
 			seqCenter = vus[2]
@@ -75,7 +75,7 @@ def main():
 			if not v in centersPerHomoVus:
 				centersPerHomoVus[v] = set()
 			centersPerHomoVus[v].add(seqCenter)
-			studyPerVariant[v] = vus[3]
+			#studyPerVariant[v] = vus[3]
 
 	allVariants = ipvDict.keys()
 	variantsDict = dict()
