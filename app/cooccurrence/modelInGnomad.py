@@ -206,7 +206,7 @@ def buildModel(df, features, model, testPctg, normalize, le):
         plt.show()
         #plt.savefig('/content/gdrive/My Drive/RESEARCH/TOPMED/brca1-dtree.eps',format='eps',bbox_inches = "tight")
 
-    elif isinstance(model, sklearn.ensemble.forest.RandomForestClassifier):
+    elif isinstance(model, sklearn.ensemble.RandomForestClassifier):
         for i in range(len(features)):
             print('feature importance: ')
             print(features[i] + ' : ' + str(model.feature_importances_[i]))
