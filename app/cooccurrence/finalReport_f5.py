@@ -99,7 +99,7 @@ def main():
 			homoSample = ipvDict[v]['homozygous individuals'][0]
 		v = v.replace(' ', '')	
 		v = v.replace("'", "")
-		study = studyPerVariant[v]
+		#study = studyPerVariant[v]
 		if v in inList:
 			vIn = 'True'
 		elif v in outList:
@@ -126,7 +126,7 @@ def main():
 		variantsDict[v]['chisquare'] = chisquare
 		variantsDict[v]['sequenceCenter'] = str(centersPerHomoVus[v]).replace(" ", "")
 		variantsDict[v]['exonic'] = exonic
-		variantsDict[v]['study'] = study
+		#variantsDict[v]['study'] = study
 
 
 	variantsDF = pd.DataFrame.from_dict(variantsDict)
