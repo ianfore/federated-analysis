@@ -25,17 +25,17 @@ class NpEncoder(json.JSONEncoder):
 
 def main():
     if len(sys.argv) != 5:
-        print('vpi.json batchPerHomoVUS.json batchName filtered-vpi.json')
+        print('out.json batchPerHomoVUS.json batchName filtered-out.json')
         sys.exit(1)
 
-    vpiFileName = sys.argv[1]
+    outFileName = sys.argv[1]
     perBatchFileName = sys.argv[2]
     batchName = sys.argv[3]
-    filteredVPIFileName = sys.argv[4]
+    filteredOutFileName = sys.argv[4]
 
-    logger.info('reading data from ' + vpiFileName)
-    with open(vpiFileName, 'r') as f:
-        vpi = json.load(f)
+    logger.info('reading data from ' + outFileName)
+    with open(outFileName, 'r') as f:
+        out = json.load(f)
     f.close()
 
     logger.info('reading data from ' + perBatchFileName)
@@ -48,16 +48,11 @@ def main():
         if cphv[vus] == [batchName]:
             excludeList.append(vus)
 
-    #for key in excludeList:
-    #    del out['homozygous vus'][key]
     for key in excludeList:
-        for individual in vpi:
-            for v in individual['vus']:
-                if v[2] == key:
-                    del vpi[individual][v]
+        del out['homozygous vus'][key]
 
-    with open(filteredVPIFileName, 'w') as f:
-        json.dump(vpi, f, cls=NpEncoder)
+    with open(filteredOutFileName, 'w') as f:
+        json.dump(out, f, cls=NpEncoder)
     f.close()
 
 
