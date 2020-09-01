@@ -54,7 +54,9 @@ def main():
             marginalIndividuals[individual] = list()
             marginalIndividuals[individual].append(contradictoryPerIndividual[individual]['rare homo vus'])
 
-    print(marginalIndividuals)
+    with open(outputJson, 'w') as f:
+        json.dump(marginalIndividuals, f)
+    f.close()
 
 if __name__ == "__main__":
     main()
