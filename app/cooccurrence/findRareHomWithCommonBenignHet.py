@@ -36,14 +36,14 @@ def main():
             variant = tuple(vus[0])
             gt = int(vus[1])
             freq = ipvDict[str(variant)]['maxFreq']
-            if freq > commonFreq and (gt == 1 or gt == 2):
+            if freq >= commonFreq and (gt == 1 or gt == 2):
                 contradictoryPerIndividual[individual]['common benign het'].append(variant)
 
         for vus in vpiDict[individual]['vus']:
             variant = tuple(vus[0])
             gt = int(vus[1])
             freq = ipvDict[str(variant)]['maxFreq']
-            if freq < rareFreq and (gt == 3):
+            if freq <= rareFreq and (gt == 3):
                 contradictoryPerIndividual[individual]['rare homo vus'].append(variant)
 
     # now find intersection of non-empty lists in these 2 dictionaries
