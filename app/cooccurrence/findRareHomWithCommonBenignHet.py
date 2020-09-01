@@ -50,3 +50,6 @@ def main():
     for individual in contradictoryPerIndividual:
         if len(contradictoryPerIndividual[individual]['common benign het']) !=0 and len(contradictoryPerIndividual[individual]['rare homo vus']) !=0:
             print(individual)
+
+if __name__ == "__main__":
+    main()
