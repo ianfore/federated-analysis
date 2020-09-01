@@ -29,6 +29,7 @@ def main():
 
     contradictoryPerIndividual= dict()
     for individual in vpiDict:
+        contradictoryPerIndividual[individual] = dict()
         contradictoryPerIndividual[individual]['common benign het'] = list()
         contradictoryPerIndividual[individual]['rare homo vus'] = list()
         for vus in vpiDict[individual]['benign']:
