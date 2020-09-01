@@ -132,13 +132,13 @@ def main():
         json.dump(iphv, f)
     f.close()'''
 
-    '''inCIdomain = findRegionPerVariant(variantsDict, regionsDict)
+    inCIdomain = findRegionPerVariant(variantsDict, regionsDict)
     domainFileName = 'domain.json'
     logger.info('saving to ' + outputDir + '/' + domainFileName)
     with open(outputDir + '/' + domainFileName, 'w') as f:
         json.dump(inCIdomain, f)
     f.close()
-    plotRegionsPerVariant(inCIdomain, outputDir)'''
+    plotRegionsPerVariant(inCIdomain, outputDir)
 
     # write ipv dict back out now that it has f-value
     ipvOut = ipvFileName.replace('.json', '') + '-f.json'
