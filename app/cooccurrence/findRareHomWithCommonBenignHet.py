@@ -40,12 +40,11 @@ def main():
                 contradictoryPerIndividual[individual]['common benign het'].append(variant)
 
         for vus in vpiDict[individual]['vus']:
-            for vus in vpiDict[individual]['benign']:
-                variant = tuple(vus[0])
-                gt = int(vus[1])
-                freq = ipvDict[str(variant)]['maxFreq']
-                if freq < rareFreq and (gt == 3):
-                    contradictoryPerIndividual[individual]['rare homo vus'].append(variant)
+            variant = tuple(vus[0])
+            gt = int(vus[1])
+            freq = ipvDict[str(variant)]['maxFreq']
+            if freq < rareFreq and (gt == 3):
+                contradictoryPerIndividual[individual]['rare homo vus'].append(variant)
 
     # now find intersection of non-empty lists in these 2 dictionaries
     marginalIndividuals = dict()
