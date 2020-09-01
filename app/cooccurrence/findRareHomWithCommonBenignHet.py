@@ -48,9 +48,13 @@ def main():
                     contradictoryPerIndividual[individual]['rare homo vus'].append(variant)
 
     # now find intersection of non-empty lists in these 2 dictionaries
+    marginalIndividuals = dict()
     for individual in contradictoryPerIndividual:
         if len(contradictoryPerIndividual[individual]['common benign het']) !=0 and len(contradictoryPerIndividual[individual]['rare homo vus']) !=0:
-            print(individual)
+            marginalIndividuals[individual] = list()
+            marginalIndividuals[individual].append(contradictoryPerIndividual[individual]['rare homo vus'])
+
+    print(marginalIndividuals)
 
 if __name__ == "__main__":
     main()
