@@ -33,7 +33,7 @@ def main():
     dfAll = pd.concat([df1, df2], axis=0)
 
     #features = ['popFreq', 'AF', 'hail_hweafp', 'chisquare', 'class']
-    features = ['popFreq', 'cohortFreq', 'class', 'hail_hweafp', 'chisquare']
+    features = ['popFreq', 'cohortFreq', 'class', 'hail_hweafp', 'chisquare', 'sequenceCenter']
 
 
     #model_1_dt = buildModel(df1, features, tree.DecisionTreeClassifier(max_depth=2), test_pct)
@@ -192,12 +192,11 @@ def buildModel(df, features, model, testPctg, normalize, le):
             fp +=1
 
     accuracy = (1.0 * numCorrect) / (1.0 * len(yActualList))
-    fpr = 1 - (1.0 * fp) / (1.0 * len(yActualList))
-    fnr = 1 - (1.0 * fn) / (1.0 * len(yActualList))
+    sensitivity = 1 - (1.0 * fp) / (1.0 * len(yActualList))
+    specificity = 1 - (1.0 * fn) / (1.0 * len(yActualList))
     print('accuracy = ' + str(accuracy))
-    print('fpr = ' + str(fpr))
-    print('fnr = ' + str(fnr))
-    print('sum acc + fpr + fnr = ' + str(accuracy + fpr + fnr))
+    print('sensitivity = ' + str(sensitivity))
+    print('specificity = ' + str(specificity))
 
 
     if isinstance(model, sklearn.tree.DecisionTreeClassifier):
