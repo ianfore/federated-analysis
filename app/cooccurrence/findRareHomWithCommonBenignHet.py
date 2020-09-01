@@ -35,7 +35,7 @@ def main():
         for vus in vpiDict[individual]['benign']:
             variant = tuple(vus[0])
             gt = int(vus[1])
-            freq = ipvDict[variant]['maxFreq']
+            freq = ipvDict[str(variant)]['maxFreq']
             if freq > commonFreq and (gt == 1 or gt == 2):
                 contradictoryPerIndividual[individual]['common benign het'].append(variant)
 
@@ -43,7 +43,7 @@ def main():
             for vus in vpiDict[individual]['benign']:
                 variant = tuple(vus[0])
                 gt = int(vus[1])
-                freq = ipvDict[variant]['maxFreq']
+                freq = ipvDict[str(variant)]['maxFreq']
                 if freq < rareFreq and (gt == 3):
                     contradictoryPerIndividual[individual]['rare homo vus'].append(variant)
 
