@@ -576,7 +576,10 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
                         seqCenter = annoDF[annoDF['sample.id'] == individuals[i]]['seq_center'].iloc[0]
                 except Exception as e:
                     seqCenter = "NA"
-                study = annoDF[annoDF['sample.id'] == individuals[i]]['study'].iloc[0]
+                try:
+                    study = annoDF[annoDF['sample.id'] == individuals[i]]['study'].iloc[0]
+                except Exception as e:
+                    study = "NA"
                 if (c, p, r, a) in benignVariants:
                     variantsPerIndividual[individuals[i]]['benign'].append(((c, p, r, a), genotype, seqCenter, study))
                 elif (c, p, r, a) in pathogenicVariants:
