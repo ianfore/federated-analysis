@@ -73,9 +73,9 @@ def main():
     brca2_f8_predictions.to_csv(outputDir + '/F8/EGG/f8_chr13_brca2_predictions_report.tsv', sep='\t')
     brca_all_f8_predictions.to_csv(outputDir + '/F8/EGG/f8_all_predictions_report.tsv', sep='\t')
 
-    brca1_f8_predictions = pd.read_csv(inputDir + '/F8/EGG/f8_chr17_brca1_predictions_report.tsv', header=0, sep='\t')
-    brca2_f8_predictions = pd.read_csv(inputDir + '/F8/EGG/f8_chr13_brca2_predictions_report.tsv', header=0, sep='\t')
-    brca_all_f8_predictions = pd.read_csv(inputDir + '/F8/EGG/f8_all_predictions_report.tsv', header=0, sep='\t')
+    #brca1_f8_predictions = pd.read_csv(inputDir + '/F8/EGG/f8_chr17_brca1_predictions_report.tsv', header=0, sep='\t')
+    #brca2_f8_predictions = pd.read_csv(inputDir + '/F8/EGG/f8_chr13_brca2_predictions_report.tsv', header=0, sep='\t')
+    #brca_all_f8_predictions = pd.read_csv(inputDir + '/F8/EGG/f8_all_predictions_report.tsv', header=0, sep='\t')
 
 
     # shave off variants from df that are predicted to be in gnomad and save to disk
