@@ -47,7 +47,7 @@ def main():
             varTypeList.append('both')
 
     eggReport_13['varType'] = varTypeList
-    eggReport_13.to_csv(outputDir + '/f8-brca2-forEGG.tsv', index=False)
+    eggReport_13.to_csv(outputDir + '/f8-brca2-forEGG.tsv', index=False, header=0, sep='\t')
 
     eggReport_17 = pd.DataFrame(columns = cols)
     varTypeList = list()
@@ -65,7 +65,7 @@ def main():
             varTypeList.append('both')
 
     eggReport_17['varType'] = varTypeList
-    eggReport_17.to_csv(outputDir + '/f8-brca1-forEGG.tsv', index=False)
+    eggReport_17.to_csv(outputDir + '/f8-brca1-forEGG.tsv', index=False, sep='\t', header=0)
 
 if __name__ == "__main__":
     main()
