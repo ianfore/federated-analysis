@@ -28,8 +28,8 @@ def main():
     print('test % = ' + str(test_pct))
 
     # build model based on f5 copd
-    df1 = pd.read_csv(inputDir + '/F5/ALL/REPORT/f5_all_brca1_report.tsv', sep='\t')
-    df2 = pd.read_csv(inputDir + '/F5/ALL/REPORT/f5_all_brca2_report.tsv', sep='\t')
+    df1 = pd.read_csv(inputDir + '/F5/ALL/REPORT/f5_brca1_report.tsv', sep='\t')
+    df2 = pd.read_csv(inputDir + '/F5/ALL/REPORT/f5_brca2_report.tsv', sep='\t')
     dfAll = pd.concat([df1, df2], axis=0)
 
     #features = ['popFreq', 'AF', 'hail_hweafp', 'chisquare', 'class']
