@@ -31,6 +31,7 @@ def main():
 
     cols = ['variant', 'popFreq', 'cohortFreq', 'homo_alt', 'hetero', 'homo_ref', 'p', 'q', 'exonic', 'inGnomad']
     eggReport_13 = pd.DataFrame(columns = cols)
+    eggReport_17 = pd.DataFrame(columns = cols)
     varTypeList = list()
 
 
