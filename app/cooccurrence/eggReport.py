@@ -49,6 +49,21 @@ def main():
     eggReport_13['varType'] = varTypeList
     eggReport_13.to_csv(outputDir + '/f8-brca2-forEGG.tsv')
 
+    for i in range(len(df1)):
+        x = df1.iloc[i]['variant']
+        if x in onlyHomo_17:
+            eggReport_17 = eggReport_17.append(df1.iloc[i][cols])
+            varTypeList.append('homozygous')
+        elif x in onlyCoocs_17:
+            eggReport_17 = eggReport_17.append(df1.iloc[i][cols])
+            varTypeList.append('cooccurring')
+        if x in both_17:
+            eggReport_17 = eggReport_17.append(df1.iloc[i][cols])
+            varTypeList.append('both')
+
+    eggReport_17['varType'] = varTypeList
+    eggReport_17.to_csv(outputDir + '/f8-brca1-forEGG.tsv')
+
 if __name__ == "__main__":
     main()
 
