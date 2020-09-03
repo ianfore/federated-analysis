@@ -31,7 +31,6 @@ def main():
 
     cols = ['variant', 'popFreq', 'cohortFreq', 'homo_alt', 'hetero', 'homo_ref', 'p', 'q', 'exonic', 'inGnomad']
     eggReport_13 = pd.DataFrame(columns = cols)
-    eggReport_17 = pd.DataFrame(columns = cols)
     varTypeList = list()
 
 
@@ -49,6 +48,9 @@ def main():
 
     eggReport_13['varType'] = varTypeList
     eggReport_13.to_csv(outputDir + '/f8-brca2-forEGG.tsv')
+
+    eggReport_17 = pd.DataFrame(columns = cols)
+    varTypeList = list()
 
     for i in range(len(df1)):
         x = df1.iloc[i]['variant']
