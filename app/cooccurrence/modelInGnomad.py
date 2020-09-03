@@ -141,8 +141,8 @@ def getPredictions(df, model, features, normalize, le):
         predictions.append(predicted[0])
     df['gnomadPrediction'] = predictions
 
-    for f in transformedFeatures:
-        df[f] = le.inverse_transform(df[f])
+    #for f in transformedFeatures:
+    #    df[f] = le.inverse_transform(df[f])
 
     return df
 
