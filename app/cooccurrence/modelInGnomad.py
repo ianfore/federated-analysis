@@ -59,8 +59,8 @@ def main():
     f.close()
 
     # predict for f8 gru + hmb
-    brca1_f8_report_DF = pd.read_csv(inputDir + '/F8/REPORT/f8_chr17_brca1_gruhmb_report.tsv', header=0, sep='\t')
-    brca2_f8_report_DF = pd.read_csv(inputDir + '/F8/REPORT/f8_chr13_brca2_gruhmb_report.tsv', header=0, sep='\t')
+    brca1_f8_report_DF = pd.read_csv(inputDir + '/F8/EGG/f8_chr17_brca1_gruhmb_report.tsv', header=0, sep='\t')
+    brca2_f8_report_DF = pd.read_csv(inputDir + '/F8/EGG/f8_chr13_brca2_gruhmb_report.tsv', header=0, sep='\t')
     brca_all_f8_report_DF = pd.concat([brca1_f8_report_DF, brca2_f8_report_DF], axis=0)
 
     brca1_f8_predictions = getPredictions(brca1_f8_report_DF, model_1_rf, features, normalize, le)

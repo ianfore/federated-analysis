@@ -15,40 +15,39 @@ def main():
 
     # read .txt files
     onlyHomo_13_file = open(inputDir + "/13-only-homo.txt", "r")
-    onlyHomo_13 = onlyHomo_13_file.readlines()
+    onlyHomo_13 = onlyHomo_13_file.read().splitlines()
     onlyHomo_17_file = open(inputDir + "/17-only-homo.txt", "r")
-    onlyHomo_17 = onlyHomo_17_file.readlines()
+    onlyHomo_17 = onlyHomo_17_file.read().splitlines()
 
     onlyCooc_13_file = open(inputDir + "/13-only-coocs.txt", "r")
-    onlyCoocs_13 = onlyCooc_13_file.readlines()
+    onlyCoocs_13 = onlyCooc_13_file.read().splitlines()
     onlyCooc_17_file = open(inputDir + "/17-only-coocs.txt", "r")
-    onlyCoocs_17 = onlyCooc_17_file.readlines()
+    onlyCoocs_17 = onlyCooc_17_file.read().splitlines()
 
     both_13_file = open(inputDir + "/13-both.txt", "r")
-    both_13 = both_13_file.readlines()
+    both_13 = both_13_file.read().splitlines()
     both_17_file = open(inputDir + "/17-both.txt", "r")
-    both_17 = both_17_file.readlines()
+    both_17 = both_17_file.read().splitlines()
 
-    cols = ['variant', 'popFreq', 'cohortFreq', 'homo_alt', 'hetero', 'homo_ref', 'p', 'q', 'exonic']
+    cols = ['variant', 'popFreq', 'cohortFreq', 'homo_alt', 'hetero', 'homo_ref', 'p', 'q', 'exonic', 'inGnomad']
     eggReport_13 = pd.DataFrame(columns = cols)
     varTypeList = list()
-    for i in range(len(df2)):
-        j = 0
-        if df2.iloc[i]['variant'] in onlyHomo_13:
-            eggReport_13.iloc[j] = df2.iloc[i][cols]
-            varTypeList.append('homozygous')
-            j += 1
-        elif df2.iloc[i]['variant'] in onlyCoocs_13:
-            eggReport_13.iloc[j] = df2.iloc[i][cols]
-            varTypeList.append('cooccurring')
-            j += 1
-        elif df2.iloc[i]['variant'] in both_13:
-            eggReport_13.iloc[j] = df2.iloc[i][cols]
-            varTypeList.append('both')
-            j += 1
 
-    eggReport_13.assign(varType = varTypeList)
-    print(eggReport_13)
+
+    for i in range(len(df2)):
+        x = df2.iloc[i]['variant']
+        if x in onlyHomo_13:
+            eggReport_13 = eggReport_13.append(df2.iloc[i][cols])
+            varTypeList.append('homozygous')
+        elif x in onlyCoocs_13:
+            eggReport_13 = eggReport_13.append(df2.iloc[i][cols])
+            varTypeList.append('cooccurring')
+        if x in both_13:
+            eggReport_13 = eggReport_13.append(df2.iloc[i][cols])
+            varTypeList.append('both')
+
+    eggReport_13['varType'] = varTypeList
+    eggReport_13.to_csv(outputDir + '/f8-brca2-forEGG.tsv')
 
 if __name__ == "__main__":
     main()
