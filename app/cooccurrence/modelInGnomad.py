@@ -69,13 +69,13 @@ def main():
 
 
     # save to disk
-    brca1_f8_predictions.to_csv(outputDir + '/F8/REPORT/f8_chr17_brca1_predictions_report.tsv', sep='\t')
-    brca2_f8_predictions.to_csv(outputDir + '/F8/REPORT/f8_chr13_brca2_predictions_report.tsv', sep='\t')
-    brca_all_f8_predictions.to_csv(outputDir + '/F8/REPORT/f8_all_predictions_report.tsv', sep='\t')
+    brca1_f8_predictions.to_csv(outputDir + '/F8/EGG/f8_chr17_brca1_predictions_report.tsv', sep='\t')
+    brca2_f8_predictions.to_csv(outputDir + '/F8/EGG/f8_chr13_brca2_predictions_report.tsv', sep='\t')
+    brca_all_f8_predictions.to_csv(outputDir + '/F8/EGG/f8_all_predictions_report.tsv', sep='\t')
 
-    brca1_f8_predictions = pd.read_csv(inputDir + '/F8/REPORT/f8_chr17_brca1_predictions_report.tsv', header=0, sep='\t')
-    brca2_f8_predictions = pd.read_csv(inputDir + '/F8/REPORT/f8_chr13_brca2_predictions_report.tsv', header=0, sep='\t')
-    brca_all_f8_predictions = pd.read_csv(inputDir + '/F8/REPORT/f8_all_predictions_report.tsv', header=0, sep='\t')
+    brca1_f8_predictions = pd.read_csv(inputDir + '/F8/EGG/f8_chr17_brca1_predictions_report.tsv', header=0, sep='\t')
+    brca2_f8_predictions = pd.read_csv(inputDir + '/F8/EGG/f8_chr13_brca2_predictions_report.tsv', header=0, sep='\t')
+    brca_all_f8_predictions = pd.read_csv(inputDir + '/F8/EGG/f8_all_predictions_report.tsv', header=0, sep='\t')
 
 
     # shave off variants from df that are predicted to be in gnomad and save to disk
@@ -83,9 +83,9 @@ def main():
     brca2_in = brca2_f8_predictions.loc[(brca2_f8_predictions['gnomadPrediction'] == True)]['variant']
     brca_all_in = brca_all_f8_predictions.loc[(brca_all_f8_predictions['gnomadPrediction'] == True)]['variant']
 
-    brca1_in.to_csv(outputDir + '/F8/brca1_in.txt', index=False, header=0)
-    brca2_in.to_csv(outputDir + '/F8/brca2_in.txt', index=False, header=0)
-    brca_all_in.to_csv(outputDir + '/F8/brca_all_in.txt', index=False, header=0)
+    brca1_in.to_csv(outputDir + '/F8/EGG/brca1_in.txt', index=False, header=0)
+    brca2_in.to_csv(outputDir + '/F8/EGG/brca2_in.txt', index=False, header=0)
+    brca_all_in.to_csv(outputDir + '/F8/EGG/brca_all_in.txt', index=False, header=0)
 
 
 def runMe(features, le, df, normalize, testPctg):
