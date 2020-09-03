@@ -50,5 +50,8 @@ def main():
     eggReport_13.assign(varType = varTypeList)
     print(eggReport_13)
 
+if __name__ == "__main__":
+    main()
+
 
 
