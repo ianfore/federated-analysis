@@ -2,6 +2,15 @@ import pandas as pd
 import sys
 import json
 
+def getInfo(brcaDF, pos):
+    try:
+        clinvarClass = list(brcaDF.loc[brcaDF['Pos'] == pos]['Clinical_Significance_ClinVar'])
+        lovdClass = list(brcaDF.loc[brcaDF['Pos'] == pos]['Classification_LOVD'])
+        findlayScore = float(
+            brcaDF.loc[brcaDF['Pos'] == pos]['Functional_Enrichment_Score_Findlay_BRCA1_Ring_Function_Scores'])
+    except Exception as e:
+        return "NA", "NA", "NA"
+    return clinvarClass, lovdClass, findlayScore
 
 def main():
     if len(sys.argv) != 4:
@@ -33,56 +42,78 @@ def main():
 
     cols = ['variant', 'popFreq', 'cohortFreq', 'homo_alt', 'hetero', 'homo_ref', 'p', 'q', 'exonic', 'inGnomad']
     eggReport_13 = pd.DataFrame(columns = cols)
-    varTypeList = list()
-    otherClassList = list()
+    gtList = list()
+    clinvarList = list()
+    lovdList = list()
+    findlayList = list()
     for i in range(len(df2)):
-        otherClass = "NA"
         x = df2.iloc[i]['variant']
+        pos = int(x.split(',')[1])
+        clinvarClass, lovdClass, findlayScore = getInfo(brcaDF, pos)
         if x in onlyHomo_13:
             eggReport_13 = eggReport_13.append(df2.iloc[i][cols])
-            varTypeList.append('homozygous')
+            gtList.append('homozygous')
+            clinvarList.append(clinvarClass)
+            lovdList.append(lovdClass)
+            findlayList.append(findlayScore)
         elif x in onlyCoocs_13:
             eggReport_13 = eggReport_13.append(df2.iloc[i][cols])
-            varTypeList.append('cooccurring')
-        if x in both_13:
+            gtList.append('cooccurring')
+            clinvarList.append(clinvarClass)
+            lovdList.append(lovdClass)
+            findlayList.append(findlayScore)
+        elif x in both_13:
             eggReport_13 = eggReport_13.append(df2.iloc[i][cols])
-            varTypeList.append('both')
-        pos = x[1]
-        try:
-            otherClass = brcaDF.loc[brcaDF['Pos'] == pos]['Pathogenicity_all']
-        except Exception as e:
+            gtList.append('both')
+            clinvarList.append(clinvarClass)
+            lovdList.append(lovdClass)
+            findlayList.append(findlayScore)
+        else:
             pass
-        otherClassList.append(otherClass)
 
-    eggReport_13['varType'] = varTypeList
+    eggReport_13['genotype'] = gtList
+    eggReport_13['clinvar'] = clinvarList
+    eggReport_13['lovd'] = lovdList
+    eggReport_13['findlay'] = findlayList
     eggReport_13.to_csv(outputDir + '/f8-brca2-forEGG.tsv', index=False, header=True, sep='\t')
-    eggReport_13['otherClass'] = otherClassList
+
 
     eggReport_17 = pd.DataFrame(columns = cols)
-    varTypeList = list()
-    otherClassList = list()
+    gtList = list()
+    clinvarList = list()
+    lovdList = list()
+    findlayList = list()
     for i in range(len(df1)):
-        otherClass = "NA"
         x = df1.iloc[i]['variant']
+        pos = int(x.split(',')[1])
+        clinvarClass, lovdClass, findlayScore = getInfo(brcaDF, pos)
         if x in onlyHomo_17:
             eggReport_17 = eggReport_17.append(df1.iloc[i][cols])
-            varTypeList.append('homozygous')
+            gtList.append('homozygous')
+            clinvarList.append(clinvarClass)
+            lovdList.append(lovdClass)
+            findlayList.append(findlayScore)
         elif x in onlyCoocs_17:
             eggReport_17 = eggReport_17.append(df1.iloc[i][cols])
-            varTypeList.append('cooccurring')
-        if x in both_17:
+            gtList.append('cooccurring')
+            clinvarList.append(clinvarClass)
+            lovdList.append(lovdClass)
+            findlayList.append(findlayScore)
+        elif x in both_17:
             eggReport_17 = eggReport_17.append(df1.iloc[i][cols])
-            varTypeList.append('both')
-        pos = x[1]
-        try:
-            otherClass = brcaDF.loc[brcaDF['Pos'] == pos]['Pathogenicity_all']
-        except Exception as e:
+            gtList.append('both')
+            clinvarList.append(clinvarClass)
+            lovdList.append(lovdClass)
+            findlayList.append(findlayScore)
+        else:
             pass
-        otherClassList.append(otherClass)
 
-    eggReport_17['varType'] = varTypeList
+    eggReport_17['genotype'] = gtList
+    eggReport_17['clinvar'] = clinvarList
+    eggReport_17['lovd'] = lovdList
+    eggReport_17['findlay'] = findlayList
     eggReport_17.to_csv(outputDir + '/f8-brca1-forEGG.tsv', index=False, sep='\t', header=True)
-    eggReport_17['otherClass'] = otherClassList
+
 
 if __name__ == "__main__":
     main()
