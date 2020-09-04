@@ -9,8 +9,8 @@ def main():
         sys.exit(1)
 
     inputDir =sys.argv[1]
-    outputDir = sys.argv[2]
-    brcaVariantsFile = sys.argv[3]
+    brcaVariantsFile = sys.argv[2]
+    outputDir = sys.argv[3]
     df1 = pd.read_csv(inputDir + '/f8_chr17_brca1_gruhmb_report.tsv', sep='\t')
     df2 = pd.read_csv(inputDir + '/f8_chr13_brca2_gruhmb_report.tsv', sep='\t')
     brcaDF = pd.read_csv(brcaVariantsFile, sep='\t', header=0)
