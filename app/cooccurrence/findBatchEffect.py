@@ -44,6 +44,7 @@ def findBatch(vpiDict, outDict):
                 countsPerStudy[study] = {'homoVUS': 0, 'heteroVUS': 0,
                                          'homoBen': 0, 'heteroBen': 0,
                                          'totalHomo': 0, 'totalHetero': 0,
+                                         'homoVUS_0': 1,
                                          'homoVUS_0.1': 0, 'homoVUS_0.01': 0,
                                          'homoVUS_0.001': 0, 'homoVUS_0.0001': 0}
             if genotype == '3':
@@ -86,6 +87,7 @@ def findBatch(vpiDict, outDict):
                 countsPerCenter[seqCenter] = {'homoVUS': 0, 'heteroVUS': 0,
                                               'homoBen': 0, 'heteroBen': 0,
                                               'totalHomo': 0, 'totalHetero': 0,
+                                              'homoVUS_0': 0,
                                               'homoVUS_0.1': 0, 'homoVUS_0.01': 0,
                                               'homoVUS_0.001': 0, 'homoVUS_0.0001': 0
                                               }
