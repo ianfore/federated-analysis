@@ -43,7 +43,8 @@ def findBatch(vpiDict, outDict):
                                               'totalHomo': 0, 'totalHetero': 0,
                                               'homoVUS_0': 0,
                                               'homoVUS_0.1': 0, 'homoVUS_0.01': 0,
-                                              'homoVUS_0.001': 0, 'homoVUS_0.0001': 0
+                                              'homoVUS_0.001': 0, 'homoVUS_0.0001': 0,
+                                              'homoVUS_0.00001':0
                                               }
             if not study in countsPerStudy:
                 countsPerStudy[study] = {'homoVUS': 0, 'heteroVUS': 0,
@@ -51,7 +52,9 @@ def findBatch(vpiDict, outDict):
                                          'totalHomo': 0, 'totalHetero': 0,
                                          'homoVUS_0': 0,
                                          'homoVUS_0.1': 0, 'homoVUS_0.01': 0,
-                                         'homoVUS_0.001': 0, 'homoVUS_0.0001': 0}
+                                         'homoVUS_0.001': 0, 'homoVUS_0.0001': 0,
+                                         'homoVUS_0.00001': 0
+                                         }
             if genotype == '3':
                 centersPerHomo[varStr].add(seqCenter)
                 studiesPerHomo[varStr].add(study)
@@ -61,7 +64,9 @@ def findBatch(vpiDict, outDict):
                 countsPerStudy[study]['totalHomo'] += 1
                 if varStr in outDict['homozygous vus']:
                     freq = 0.5 * (outDict['homozygous vus'][varStr]['maxPopFreq'] + outDict['homozygous vus'][varStr]['cohortFreq'])
-                    if freq <= 0.0001:
+                    if freq <= 0.00001:
+                        countsPerCenter[seqCenter]['homoVUS_0.00001'] += 1
+                    elif freq <= 0.0001:
                         countsPerCenter[seqCenter]['homoVUS_0.0001'] += 1
                     elif freq <= 0.001:
                         countsPerCenter[seqCenter]['homoVUS_0.001'] += 1
