@@ -38,13 +38,18 @@ def findBatch(vpiDict, outDict):
             study = vus[3]
             varStr = str(tuple(variant))
             if not seqCenter in countsPerCenter:
-                countsPerCenter[seqCenter] = {'homoVUS': 0, 'heteroVUS': 0, 'homoBen': 0, 'heteroBen': 0,
-                                              'totalHomo': 0, 'totalHetero': 0}
+                countsPerCenter[seqCenter] = {'homoVUS': 0, 'heteroVUS': 0,
+                                              'homoBen': 0, 'heteroBen': 0,
+                                              'totalHomo': 0, 'totalHetero': 0,
+                                              'homoVUS_0': 0,
+                                              'homoVUS_0.1': 0, 'homoVUS_0.01': 0,
+                                              'homoVUS_0.001': 0, 'homoVUS_0.0001': 0
+                                              }
             if not study in countsPerStudy:
                 countsPerStudy[study] = {'homoVUS': 0, 'heteroVUS': 0,
                                          'homoBen': 0, 'heteroBen': 0,
                                          'totalHomo': 0, 'totalHetero': 0,
-                                         'homoVUS_0': 1,
+                                         'homoVUS_0': 0,
                                          'homoVUS_0.1': 0, 'homoVUS_0.01': 0,
                                          'homoVUS_0.001': 0, 'homoVUS_0.0001': 0}
             if genotype == '3':
@@ -54,17 +59,18 @@ def findBatch(vpiDict, outDict):
                 countsPerCenter[seqCenter]['totalHomo'] += 1
                 countsPerStudy[study]['homoVUS'] += 1
                 countsPerStudy[study]['totalHomo'] += 1
-                freq = 0.5 * (outDict['homozygous vus'][varStr]['maxPopFreq'] + outDict['homozygous vus'][varStr]['cohortFreq'])
-                if freq <= 0.0001:
-                    countsPerCenter[seqCenter]['homoVUS_0.0001'] += 1
-                elif freq <= 0.001:
-                    countsPerCenter[seqCenter]['homoVUS_0.001'] += 1
-                elif freq < 0.01:
-                    countsPerCenter[seqCenter]['homoVUS_0.01'] += 1
-                elif freq < 0.1:
-                    countsPerCenter[seqCenter]['homoVUS_0.1'] += 1
-                else:
-                    countsPerCenter[seqCenter]['homoVUS_0'] += 1
+                if varStr in outDict['homozygous vus']:
+                    freq = 0.5 * (outDict['homozygous vus'][varStr]['maxPopFreq'] + outDict['homozygous vus'][varStr]['cohortFreq'])
+                    if freq <= 0.0001:
+                        countsPerCenter[seqCenter]['homoVUS_0.0001'] += 1
+                    elif freq <= 0.001:
+                        countsPerCenter[seqCenter]['homoVUS_0.001'] += 1
+                    elif freq < 0.01:
+                        countsPerCenter[seqCenter]['homoVUS_0.01'] += 1
+                    elif freq < 0.1:
+                        countsPerCenter[seqCenter]['homoVUS_0.1'] += 1
+                    else:
+                        countsPerCenter[seqCenter]['homoVUS_0'] += 1
 
 
 
@@ -94,6 +100,7 @@ def findBatch(vpiDict, outDict):
             if not study in countsPerStudy:
                 countsPerStudy[study] = {'homoVUS': 0, 'heteroVUS': 0,
                                          'homoBen': 0, 'heteroBen': 0,
+                                         'homoVUS_0': 0,
                                          'totalHomo': 0, 'totalHetero': 0,
                                          'homoVUS_0.1': 0, 'homoVUS_0.01': 0,
                                          'homoVUS_0.001': 0, 'homoVUS_0.0001': 0
@@ -105,17 +112,18 @@ def findBatch(vpiDict, outDict):
                 countsPerCenter[seqCenter]['totalHomo'] += 1
                 countsPerStudy[study]['homoBen'] += 1
                 countsPerStudy[study]['totalHomo'] += 1
-                freq = 0.5 * (outDict['homozygous vus'][varStr]['maxPopFreq'] + outDict['homozygous vus'][varStr]['cohortFreq'])
-                if freq <= 0.0001:
-                    countsPerCenter[seqCenter]['homoVUS_0.0001'] += 1
-                elif freq <= 0.001:
-                    countsPerCenter[seqCenter]['homoVUS_0.001'] += 1
-                elif freq < 0.01:
-                    countsPerCenter[seqCenter]['homoVUS_0.01'] += 1
-                elif freq < 0.1:
-                    countsPerCenter[seqCenter]['homoVUS_0.1'] += 1
-                else:
-                    countsPerCenter[seqCenter]['homoVUS_0'] += 1
+                if varStr in outDict['homozygous vus']:
+                    freq = 0.5 * (outDict['homozygous vus'][varStr]['maxPopFreq'] + outDict['homozygous vus'][varStr]['cohortFreq'])
+                    if freq <= 0.0001:
+                        countsPerCenter[seqCenter]['homoVUS_0.0001'] += 1
+                    elif freq <= 0.001:
+                        countsPerCenter[seqCenter]['homoVUS_0.001'] += 1
+                    elif freq < 0.01:
+                        countsPerCenter[seqCenter]['homoVUS_0.01'] += 1
+                    elif freq < 0.1:
+                        countsPerCenter[seqCenter]['homoVUS_0.1'] += 1
+                    else:
+                        countsPerCenter[seqCenter]['homoVUS_0'] += 1
 
             else:
                 countsPerCenter[seqCenter]['heteroBen'] += 1
