@@ -28,7 +28,7 @@ class NpEncoder(json.JSONEncoder):
         else:
             return super(NpEncoder, self).default(obj)
 
-def findBatch(vpiDict):
+def findBatch(vpiDict, outDict):
 
     for individual in vpiDict:
         for vus in vpiDict[individual]['vus']:
@@ -36,60 +36,100 @@ def findBatch(vpiDict):
             genotype = vus[1]
             seqCenter = vus[2]
             study = vus[3]
+            varStr = str(tuple(variant))
             if not seqCenter in countsPerCenter:
                 countsPerCenter[seqCenter] = {'homoVUS': 0, 'heteroVUS': 0, 'homoBen': 0, 'heteroBen': 0,
                                               'totalHomo': 0, 'totalHetero': 0}
             if not study in countsPerStudy:
-                countsPerStudy[study] = {'homoVUS': 0, 'heteroVUS': 0, 'homoBen': 0, 'heteroBen': 0,
-                                              'totalHomo': 0, 'totalHetero': 0}
+                countsPerStudy[study] = {'homoVUS': 0, 'heteroVUS': 0,
+                                         'homoBen': 0, 'heteroBen': 0,
+                                         'totalHomo': 0, 'totalHetero': 0,
+                                         'homoVUS_0.1': 0, 'homoVUS_0.01': 0,
+                                         'homoVUS_0.001': 0, 'homoVUS_0.0001': 0}
             if genotype == '3':
-                centersPerHomo[str(tuple(variant))].add(seqCenter)
-                studiesPerHomo[str(tuple(variant))].add(study)
+                centersPerHomo[varStr].add(seqCenter)
+                studiesPerHomo[varStr].add(study)
                 countsPerCenter[seqCenter]['homoVUS'] += 1
                 countsPerCenter[seqCenter]['totalHomo'] += 1
                 countsPerStudy[study]['homoVUS'] += 1
                 countsPerStudy[study]['totalHomo'] += 1
+                freq = 0.5 * (outDict[varStr]['maxPopFreq'] + outDict[varStr]['cohortFreq'])
+                if freq <= 0.0001:
+                    countsPerCenter[seqCenter]['homoVUS_0.0001']
+                elif freq <= 0.001:
+                    countsPerCenter[seqCenter]['homoVUS_0.001']
+                elif freq < 0.01:
+                    countsPerCenter[seqCenter]['homoVUS_0.01']
+                elif freq < 0.1:
+                    countsPerCenter[seqCenter]['homoVUS_0.1']
+                else:
+                    countsPerCenter[seqCenter]['homoVUS_0']
+
+
+
             else:
                 countsPerCenter[seqCenter]['heteroVUS'] += 1
                 countsPerCenter[seqCenter]['totalHetero'] += 1
                 countsPerStudy[study]['heteroVUS'] += 1
                 countsPerStudy[study]['totalHetero'] += 1
 
+
+
+
         for ben in vpiDict[individual]['benign']:
             variant = ben[0]
             genotype = ben[1]
             seqCenter = ben[2]
             study = ben[3]
+            varStr = str(tuple(variant))
             if not seqCenter in countsPerCenter:
-                countsPerCenter[seqCenter] = {'homoVUS': 0, 'heteroVUS': 0, 'homoBen': 0, 'heteroBen': 0,
-                                              'totalHomo': 0, 'totalHetero': 0}
+                countsPerCenter[seqCenter] = {'homoVUS': 0, 'heteroVUS': 0,
+                                              'homoBen': 0, 'heteroBen': 0,
+                                              'totalHomo': 0, 'totalHetero': 0,
+                                              'homoVUS_0.1': 0, 'homoVUS_0.01': 0,
+                                              'homoVUS_0.001': 0, 'homoVUS_0.0001': 0
+                                              }
             if not study in countsPerStudy:
-                countsPerStudy[study] = {'homoVUS': 0, 'heteroVUS': 0, 'homoBen': 0, 'heteroBen': 0,
-                                              'totalHomo': 0, 'totalHetero': 0}
+                countsPerStudy[study] = {'homoVUS': 0, 'heteroVUS': 0,
+                                         'homoBen': 0, 'heteroBen': 0,
+                                         'totalHomo': 0, 'totalHetero': 0,
+                                         'homoVUS_0.1': 0, 'homoVUS_0.01': 0,
+                                         'homoVUS_0.001': 0, 'homoVUS_0.0001': 0
+                                         }
             if genotype == '3':
-                centersPerHomo[str(tuple(variant))].add(seqCenter)
-                studiesPerHomo[str(tuple(variant))].add(study)
+                centersPerHomo[varStr].add(seqCenter)
+                studiesPerHomo[varStr].add(study)
                 countsPerCenter[seqCenter]['homoBen'] += 1
                 countsPerCenter[seqCenter]['totalHomo'] += 1
                 countsPerStudy[study]['homoBen'] += 1
                 countsPerStudy[study]['totalHomo'] += 1
+                freq = 0.5 * (outDict[varStr]['maxPopFreq'] + outDict[varStr]['cohortFreq'])
+                if freq <= 0.0001:
+                    countsPerCenter[seqCenter]['homoVUS_0.0001']
+                elif freq <= 0.001:
+                    countsPerCenter[seqCenter]['homoVUS_0.001']
+                elif freq < 0.01:
+                    countsPerCenter[seqCenter]['homoVUS_0.01']
+                elif freq < 0.1:
+                    countsPerCenter[seqCenter]['homoVUS_0.1']
+                else:
+                    countsPerCenter[seqCenter]['homoVUS_0']
+
             else:
                 countsPerCenter[seqCenter]['heteroBen'] += 1
                 countsPerCenter[seqCenter]['totalHetero'] += 1
                 countsPerStudy[study]['heteroBen'] += 1
                 countsPerStudy[study]['totalHetero'] += 1
 
-    #return countsPerCenter, countsPerStudy, centersPerHomo, studiesPerHomo
-
 def main():
     # read in vpi
     if len(sys.argv) != 6:
-        print('usage: findBatchEffect 13-vpi.json 13-ipv-f.json 17-vpi.json 17-ipv-f.json output-dir')
+        print('usage: findBatchEffect 13-vpi.json 13-out.json 17-vpi.json 17-out.json output-dir')
         sys.exit(1)
     vpi13FileName = sys.argv[1]
-    ipv13FileName = sys.argv[2]
+    out13FileName = sys.argv[2]
     vpi17FileName = sys.argv[3]
-    ipv17FileName = sys.argv[4]
+    out17FileName = sys.argv[4]
     centersPerHomoOutputFileName = sys.argv[5] + '/centersPerHomo.json'
     studiesPerHomoOutputFileName = sys.argv[5] + '/studiesPerHomo.json'
     countsPerCenterOutputFileName = sys.argv[5] + '/countsPerCenter.json'
@@ -100,9 +140,9 @@ def main():
         vpi13Dict = json.load(f)
     f.close()
 
-    logger.info('reading data from ' + ipv13FileName)
-    with open(ipv13FileName, 'r') as f:
-        ipv13Dict = json.load(f)
+    logger.info('reading data from ' + out13FileName)
+    with open(out13FileName, 'r') as f:
+        out13Dict = json.load(f)
     f.close()
 
     logger.info('reading data from ' + vpi17FileName)
@@ -110,118 +150,13 @@ def main():
         vpi17Dict = json.load(f)
     f.close()
 
-    logger.info('reading data from ' + ipv17FileName)
-    with open(ipv17FileName, 'r') as f:
-        ipv17Dict = json.load(f)
+    logger.info('reading data from ' + out17FileName)
+    with open(out17FileName, 'r') as f:
+        out17Dict = json.load(f)
     f.close()
 
-    '''centersPerHomo = defaultdict(set)
-    studiesPerHomo = defaultdict(set)
-    countsPerCenter = dict()
-    countsPerStudy = dict()
-
-    for individual in vpi13Dict:
-        for vus in vpi13Dict[individual]['vus']:
-            variant = vus[0]
-            genotype = vus[1]
-            seqCenter = vus[2]
-            study = vus[3]
-            if not seqCenter in countsPerCenter:
-                countsPerCenter[seqCenter] = {'homoVUS': 0, 'heteroVUS': 0, 'homoBen': 0, 'heteroBen': 0,
-                                              'totalHomo': 0, 'totalHetero': 0}
-            if not study in countsPerStudy:
-                countsPerStudy[study] = {'homoVUS': 0, 'heteroVUS': 0, 'homoBen': 0, 'heteroBen': 0,
-                                              'totalHomo': 0, 'totalHetero': 0}
-            if genotype == '3':
-                centersPerHomo[str(tuple(variant))].add(seqCenter)
-                studiesPerHomo[str(tuple(variant))].add(study)
-                countsPerCenter[seqCenter]['homoVUS'] += 1
-                countsPerCenter[seqCenter]['totalHomo'] += 1
-                countsPerStudy[study]['homoVUS'] += 1
-                countsPerStudy[study]['totalHomo'] += 1
-            else:
-                countsPerCenter[seqCenter]['heteroVUS'] += 1
-                countsPerCenter[seqCenter]['totalHetero'] += 1
-                countsPerStudy[study]['heteroVUS'] += 1
-                countsPerStudy[study]['totalHetero'] += 1
-
-        for ben in vpi13Dict[individual]['benign']:
-            variant = ben[0]
-            genotype = ben[1]
-            seqCenter = ben[2]
-            study = ben[3]
-            if not seqCenter in countsPerCenter:
-                countsPerCenter[seqCenter] = {'homoVUS': 0, 'heteroVUS': 0, 'homoBen': 0, 'heteroBen': 0,
-                                              'totalHomo': 0, 'totalHetero': 0}
-            if not study in countsPerStudy:
-                countsPerStudy[study] = {'homoVUS': 0, 'heteroVUS': 0, 'homoBen': 0, 'heteroBen': 0,
-                                              'totalHomo': 0, 'totalHetero': 0}
-            if genotype == '3':
-                centersPerHomo[str(tuple(variant))].add(seqCenter)
-                studiesPerHomo[str(tuple(variant))].add(study)
-                countsPerCenter[seqCenter]['homoBen'] += 1
-                countsPerCenter[seqCenter]['totalHomo'] += 1
-                countsPerStudy[study]['homoBen'] += 1
-                countsPerStudy[study]['totalHomo'] += 1
-            else:
-                countsPerCenter[seqCenter]['heteroBen'] += 1
-                countsPerCenter[seqCenter]['totalHetero'] += 1
-                countsPerStudy[study]['heteroBen'] += 1
-                countsPerStudy[study]['totalHetero'] += 1
-
-
-    for individual in vpi17Dict:
-        for vus in vpi17Dict[individual]['vus']:
-            variant = vus[0]
-            genotype = vus[1]
-            seqCenter = vus[2]
-            study = vus[3]
-            if not seqCenter in countsPerCenter:
-                countsPerCenter[seqCenter] = {'homoVUS': 0, 'heteroVUS': 0, 'homoBen': 0, 'heteroBen': 0,
-                                              'totalHomo': 0, 'totalHetero': 0}
-            if not study in countsPerStudy:
-                countsPerStudy[study] = {'homoVUS': 0, 'heteroVUS': 0, 'homoBen': 0, 'heteroBen': 0,
-                                              'totalHomo': 0, 'totalHetero': 0}
-            if genotype == '3':
-                centersPerHomo[str(tuple(variant))].add(seqCenter)
-                studiesPerHomo[str(tuple(variant))].add(study)
-                countsPerCenter[seqCenter]['homoVUS'] += 1
-                countsPerCenter[seqCenter]['totalHomo'] += 1
-                countsPerStudy[study]['homoVUS'] += 1
-                countsPerStudy[study]['totalHomo'] += 1
-            else:
-                countsPerCenter[seqCenter]['heteroVUS'] += 1
-                countsPerCenter[seqCenter]['totalHetero'] += 1
-                countsPerStudy[study]['heteroVUS'] += 1
-                countsPerStudy[study]['totalHetero'] += 1
-
-        for ben in vpi17Dict[individual]['benign']:
-            variant = ben[0]
-            genotype = ben[1]
-            seqCenter = ben[2]
-            study = ben[3]
-            if not seqCenter in countsPerCenter:
-                countsPerCenter[seqCenter] = {'homoVUS': 0, 'heteroVUS': 0, 'homoBen': 0, 'heteroBen': 0,
-                                              'totalHomo': 0, 'totalHetero': 0}
-            if not study in countsPerStudy:
-                countsPerStudy[study] = {'homoVUS': 0, 'heteroVUS': 0, 'homoBen': 0, 'heteroBen': 0,
-                                              'totalHomo': 0, 'totalHetero': 0}
-            if genotype == '3':
-                centersPerHomo[str(tuple(variant))].add(seqCenter)
-                studiesPerHomo[str(tuple(variant))].add(study)
-                countsPerCenter[seqCenter]['homoBen'] += 1
-                countsPerCenter[seqCenter]['totalHomo'] += 1
-                countsPerStudy[study]['homoBen'] += 1
-                countsPerStudy[study]['totalHomo'] += 1
-            else:
-                countsPerCenter[seqCenter]['heteroBen'] += 1
-                countsPerCenter[seqCenter]['totalHetero'] += 1
-                countsPerStudy[study]['heteroBen'] += 1
-                countsPerStudy[study]['totalHetero'] += 1'''
-
-    findBatch(vpi13Dict)
-    findBatch(vpi17Dict)
-
+    findBatch(vpi13Dict, out13Dict)
+    findBatch(vpi17Dict, out17Dict)
 
     with open(centersPerHomoOutputFileName, 'w') as f:
         json.dump(centersPerHomo, f, cls=NpEncoder)
