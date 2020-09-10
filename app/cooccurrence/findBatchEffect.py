@@ -71,16 +71,11 @@ def findBatch(vpiDict, outDict):
                         countsPerCenter[seqCenter]['homoVUS_0.1'] += 1
                     else:
                         countsPerCenter[seqCenter]['homoVUS_0'] += 1
-
-
-
             else:
                 countsPerCenter[seqCenter]['heteroVUS'] += 1
                 countsPerCenter[seqCenter]['totalHetero'] += 1
                 countsPerStudy[study]['heteroVUS'] += 1
                 countsPerStudy[study]['totalHetero'] += 1
-
-
 
 
         for ben in vpiDict[individual]['benign']:
@@ -112,19 +107,6 @@ def findBatch(vpiDict, outDict):
                 countsPerCenter[seqCenter]['totalHomo'] += 1
                 countsPerStudy[study]['homoBen'] += 1
                 countsPerStudy[study]['totalHomo'] += 1
-                if varStr in outDict['homozygous vus']:
-                    freq = 0.5 * (outDict['homozygous vus'][varStr]['maxPopFreq'] + outDict['homozygous vus'][varStr]['cohortFreq'])
-                    if freq <= 0.0001:
-                        countsPerCenter[seqCenter]['homoVUS_0.0001'] += 1
-                    elif freq <= 0.001:
-                        countsPerCenter[seqCenter]['homoVUS_0.001'] += 1
-                    elif freq < 0.01:
-                        countsPerCenter[seqCenter]['homoVUS_0.01'] += 1
-                    elif freq < 0.1:
-                        countsPerCenter[seqCenter]['homoVUS_0.1'] += 1
-                    else:
-                        countsPerCenter[seqCenter]['homoVUS_0'] += 1
-
             else:
                 countsPerCenter[seqCenter]['heteroBen'] += 1
                 countsPerCenter[seqCenter]['totalHetero'] += 1
