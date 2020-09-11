@@ -43,7 +43,8 @@ class ReceptorCounts:
             fileObject = sys.stdout
         else:
             fileObject = open(myFDA.configFile.outputFile, mode='a')
-        print(json.dumps(self.__dict__, sort_keys=True), file=fileObject)
+        print(json.dumps(self.__dict__, indent=4, sort_keys=True), file=fileObject)
+
 
 
 def run(myFDA):

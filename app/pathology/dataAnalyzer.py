@@ -3,8 +3,8 @@ import statistics
 import json
 import pandas
 import numpy
-import app.customDataAnalyzer
-import app.supplementaryTable4
+import customDataAnalyzer
+import supplementaryTable4
 import os
 
 class ConfigFile:
@@ -306,8 +306,8 @@ def main():
     myFederatedDataAnalyzer = FederatedDataAnalyzer(configFileName)
 
     # run analyzer and any custom code
-    return myFederatedDataAnalyzer.run() and app.customDataAnalyzer.run(myFederatedDataAnalyzer) \
-            and app.supplementaryTable4.run(myFederatedDataAnalyzer)
+    return myFederatedDataAnalyzer.run() and customDataAnalyzer.run(myFederatedDataAnalyzer) \
+            and supplementaryTable4.run(myFederatedDataAnalyzer)
 
     #return myFederatedDataAnalyzer.run() and app.supplementaryTable4.run(myFederatedDataAnalyzer)
 
