@@ -118,6 +118,18 @@ def findBatch(vpiDict, outDict):
                 countsPerStudy[study]['heteroBen'] += 1
                 countsPerStudy[study]['totalHetero'] += 1
 
+    statList = ['homoVUS', 'heteroVUS', 'homoBen', 'heteroBen', 'homoVUS_0', 'totalHomo', 'totalHetero',
+                'homoVUS_0.1', 'homoVUS_0.01', 'homoVUS_0.001', 'homoVUS_0.0001']
+    for center in countsPerCenter:
+        total = countsPerCenter[center]['totalHomo'] + countsPerCenter[center]['totalHetero']
+        for stat in statList:
+            countsPerCenter[center][stat + '_ratio'] = countsPerCenter[center][stat] / total
+    for study in countsPerStudy:
+        total = countsPerStudy[study]['totalHomo'] + countsPerStudy[study]['totalHetero']
+        for stat in statList:
+            countsPerStudy[study][stat + '_ratio'] = countsPerStudy[study][stat] / total
+
+
 def main():
     # read in vpi
     if len(sys.argv) != 6:
