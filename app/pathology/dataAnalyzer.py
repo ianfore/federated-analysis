@@ -241,7 +241,7 @@ class FederatedDataAnalyzer:
         for myField in self.valueFrequency.keys():
             print('column: ' + myField + ' / type: ' + self.fieldFilter[myField]['fieldType'], file=fileObject)
             if self.fieldFilter[myField]['printFieldCount'] == "True":
-                print(json.dumps(self.valueFrequency[myField].__dict__, sort_keys=True), file=fileObject)
+                print(json.dumps(self.valueFrequency[myField].__dict__, indent=4, sort_keys=True), file=fileObject)
             if self.fieldFilter[myField]['fieldType'] == 'numerical' and self.fieldFilter[myField]['printStats'] == "True":
                 print('min = ' + str(self.frequencyStats[myField]['min']) +
                       ', max = ' + str(self.frequencyStats[myField]['max']) +
