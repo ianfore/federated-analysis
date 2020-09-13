@@ -43,7 +43,6 @@ then
 
 	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 --user=`id -u`:`id -g` -v ${APP_PATH}/cooccurrence:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${COOCCUR_DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder_nontopmed.py --vcf $VCF_FILE --out $OUTPUT_FILE --h $HG_VERSION --e $ENSEMBL_RELEASE --c $CHROM --g $GENE --p $PHASED --n 1 --b $BRCA_VARS --vpi $VPI_FILE --ipv $IPV_FILE --all $ALL_FILE 
 
-
 else
 	echo "wrong usage"
 	exit 1
