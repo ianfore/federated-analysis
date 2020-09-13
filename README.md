@@ -41,31 +41,23 @@ $ cd federated-analysis/
 2. Run the runMe.sh script as follows:
 
 ```console
-$ ./runMe_nontopmed.sh /data/BreastCancer.shuffle.vcf /data/13-out.json 37 75 13 False BRCA2 /data/brca-variants.tsv /data/13-ipv.json /data/13-vpi.json /data/all-13.json
+$ ./runMe_nontopmed.sh BreastCancer.shuffle.vcf  37 75 13 False BRCA2 
+
+$ ./runMe_nontopmed.sh BreastCancer.shuffle.vcf 37 75 17 False BRCA1
 ```
 
 where:
 * BreastCancer.shuffle.vcf is the name of the VCF file in the federated-analysis/data directory
 
-* output.json is the name of the JSON output file in the federated-analysis/data directory
-
 * 38 is the version of the human genome for the coordinates in the VCF file (37 is also supported)
 
 * 99 is the build of ensembl for retrieving gene names for the coordinates (use 75 for hg37)
 
-* 13 is the chromosome to filter in the VCF file
+* 13 (or 17) is the chromosome to filter in the VCF file
 
 * True is a boolean value for whether the VCF data is phased (True) or not (False)
 
-* BRCA2 is the name of the gene of interest on the chromosome of interest
-
-* True is the boolean value for whether or not to save variants per individual
-
-* brca-variants.tsv is the latest release of BRCA variants from https://brcaexchange.org
-
-* 13-ipv.json is the name of the JSON file containing individuals per variant
-
-* 13-vpi.json is the name of the JSON file containing variants per individual
+* BRCA2 (or BRCA1) is the name of the gene of interest on the chromosome of interest
 
 3. This will generate a report in federated-analysis/data called output.json which contains a list of VUS, each in the following format:
 
