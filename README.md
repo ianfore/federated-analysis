@@ -117,7 +117,7 @@ In order to use this solution, perform the following steps.
 cd federated-analysis/
 ```
 
-2. Optionally, edit the config/conf.json file to reflect the metadata regarding the data file (file name, header line, field delimiter) as well as the correct fields of interest.
+2. Edit the config/conf.json file to reflect the metadata regarding the data file (file name, header line, field delimiter) as well as the correct fields of interest.
 
 ```console
 vi config/conf.json
