@@ -24,7 +24,7 @@ then
 	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 -w / --user=`id -u`:`id -g` -v ${APP_PATH}/pathology:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data ${PATHOLOGY_DOCKER_IMAGE_NAME} /usr/bin/python3 /app/dataAnalyzer.py /config/conf.json 
 	exit 0
 
-elif [ $# -eq 7 ]
+elif [ $# -eq 6 ]
 then
 
 	VCF_FILE=$1
@@ -33,7 +33,7 @@ then
 	CHROM=$4
 	PHASED=$5
 	GENE=$6
-        BRCA_VARS=$7
+        BRCA_VARS=/data/brca-variants.tsv
 	IPV_FILE=/data/${CHROM}-ipv.json
 	VPI_FILE=/data/${CHROM}-vpi.json
 	ALL_FILE=/data/${CHROM}-all.json
