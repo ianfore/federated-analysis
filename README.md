@@ -13,7 +13,7 @@ To prepare for a co-occurrence analysis, perform the following steps:
 1. Clone this github repository to your local system where the VCF file resides.
 
 ```console
-$ **git clone https://github.com/BRCAChallenge/federated-analysis **
+$ git clone https://github.com/BRCAChallenge/federated-analysis
 ```
 
 2. Put a copy of the VCF file in the federated-analysis/data directory.
