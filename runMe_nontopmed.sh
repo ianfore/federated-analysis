@@ -27,7 +27,7 @@ then
 elif [ $# -eq 6 ]
 then
 
-	VCF_FILE=$1
+	VCF_FILE=/data/$1
 	HG_VERSION=$2
 	ENSEMBL_RELEASE=$3
 	CHROM=$4
