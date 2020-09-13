@@ -88,26 +88,6 @@ where:
 ```
 
 
-## Run co-occurrence analysis container from WDL
-Define the environment variables for the workflow, such as the following example shows:
-```
-PYTHON_SCRIPT=/home/jcasalet/src/cooccurrenceFinder.py
-VCF_FILE=/data/chr13_brca2.vcf 
-BRCA_FILE=/data/brca-variants.tsv 
-OUTPUT_FILENAME=13-out.json 
-HG_VERSION=38 
-ENSEMBL_RELEASE=99 
-PHASED=True 
-SAVE_VARS=True 
-CHROM=13 
-GENE=BRCA2 
-NUM_CORES=16
-INDIVIDUALS_FILENAME=13-vpi.json
-VARIANTS_FILENAME=13-ipv.json
-```
-
-Then run the WDL workflow using the values of the environment variables defined above.
-
 ## Basic stats and validity checking
 
 Additionally, this software allows users to run a Docker container which has the necessary code to perform basic statistical analysis and validity checking.  There's a configuration file that the cooperating owner of the data must fill out in conjunction with the scientist to define the fields of interest in the data set.  
@@ -164,3 +144,24 @@ cd federated-analysis/
 ```console
 python -m unittest tests.test_dataAnalyzer
 ```
+
+# Run co-occurrence analysis container from WDL
+Define the environment variables for the workflow, such as the following example shows:
+```
+PYTHON_SCRIPT=/home/jcasalet/src/cooccurrenceFinder.py
+VCF_FILE=/data/chr13_brca2.vcf 
+BRCA_FILE=/data/brca-variants.tsv 
+OUTPUT_FILENAME=13-out.json 
+HG_VERSION=38 
+ENSEMBL_RELEASE=99 
+PHASED=True 
+SAVE_VARS=True 
+CHROM=13 
+GENE=BRCA2 
+NUM_CORES=16
+INDIVIDUALS_FILENAME=13-vpi.json
+VARIANTS_FILENAME=13-ipv.json
+```
+
+Then run the WDL workflow using the values of the environment variables defined above.
+
