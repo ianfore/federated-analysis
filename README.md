@@ -41,7 +41,7 @@ $ cd federated-analysis/
 2. Run the runMe.sh script as follows:
 
 ```console
-$ ./runMe.sh BreastCancer.shuffle.vcf output.json 38 99 13 True BRCA2 True brca-variants.tsv 13-ipv.json 13-vpi.json 
+$ ./runMe_nontopmed.sh /data/BreastCancer.shuffle.vcf /data/13-out.json 37 75 13 False BRCA2 /data/brca-variants.tsv /data/13-ipv.json /data/13-vpi.json /data/all-13.json
 ```
 
 where:
@@ -96,7 +96,7 @@ where:
 ```
 
 
-### Run co-occurrence analysis container from WDL
+## Run co-occurrence analysis container from WDL
 Define the environment variables for the workflow, such as the following example shows:
 ```
 PYTHON_SCRIPT=/home/jcasalet/src/cooccurrenceFinder.py
@@ -156,6 +156,8 @@ vi config/conf.json
 ```console
 ./runMe.sh analyze
 ```
+
+## Software unit testing 
 
 To run the unit tests, perform the following steps:
 
