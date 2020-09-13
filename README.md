@@ -1,13 +1,13 @@
-# federated-analysis
+# Summary 
 
 HIPAA requires that medical records be kept private, yet scientists need this data in order to conduct their research.  So instead of sharing data, hospitals and clinics can run software on that data and share the summarized, aggregated, anonymized results with the interested scientists.  In this way, people's privacy is protected, and science can move forward on important research.
 
 This software repository contains scripts that achieve the above goal.  
 
-## Cooccurrence analysis
+# Cooccurrence analysis
 Run the following steps to find variants of uncertain significance (VUS) in a VCF file that co-occur with known pathogenic variants in the BRCA Exchange database.
 
-### Prepare for co-occurrence 
+## Prepare for co-occurrence 
 To prepare for a co-occurrence analysis, perform the following steps:
 
 1. Clone this github repository to your local system where the VCF file resides.
@@ -29,7 +29,7 @@ $ chmod a+r federated-analysis/data/*.vcf
 ```
  
 
-### Run co-occurrence analysis container from command line
+## Run co-occurrence analysis container from command line
 To run the co-occurrence analysis, perform the following steps:
 
 1. Change directory to the top-level directory of the repository.
@@ -88,7 +88,7 @@ where:
 ```
 
 
-## Basic stats and validity checking
+# Pathology statistics
 
 Additionally, this software allows users to run a Docker container which has the necessary code to perform basic statistical analysis and validity checking.  There's a configuration file that the cooperating owner of the data must fill out in conjunction with the scientist to define the fields of interest in the data set.  
 There are three Python modules in this repository: one which performs default analysis (dataAnalyzer.py), one that performs custom analysis (customDataAnalyzer.py), and one that creates a table (supplementaryTable4.py).  
@@ -129,7 +129,7 @@ vi config/conf.json
 ./runMe.sh analyze
 ```
 
-## Software unit testing 
+# Software unit testing 
 
 To run the unit tests, perform the following steps:
 
