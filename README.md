@@ -150,8 +150,9 @@ column: ER / type: categorical
 }
 
 ...
-```json
+```
 
+This output will also contain any custom reporting you add to the script.
 
 # Intersection of co-occurrence and pathology
 
