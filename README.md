@@ -147,7 +147,7 @@ $ ./runMe_nontopmed.sh intersection 13 shuffle.tsv
 $ ./runMe_nontopmed.sh intersection 17 shuffle.tsv
 ```
 
-3. This will create 2 JSON files called 13-intersection.json and 17-intersection.json.
+3. This will create 2 JSON files called `13-intersection.json` and `17-intersection.json`.
 
 
 
