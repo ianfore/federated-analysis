@@ -3,13 +3,14 @@ import pandas as pd
 import sys
 
 def main():
-    if len(sys.argv) != 4:
+    if len(sys.argv) != 5:
         print(
-            'chr-out.json chr-ipv.json shuffle.tsv ')
+            'chr-out.json chr-ipv.json shuffle.tsv output.json')
         sys.exit(1)
     variantsFile = sys.argv[1]
     ipvFile = sys.argv[2]
     pathologyFile = sys.argv[3]
+    outputFile = sys.argv[4]
 
     with open(variantsFile, 'r') as f:
         variantsDF = json.load(f)
@@ -39,7 +40,10 @@ def main():
                 pathologies['Tissue type (3 groups)'] = row['Tissue type (3 groups)'].tolist()
                 pathologyPerCoocIndividual[pv].append(pathologies)
 
-    print(json.dumps(pathologyPerCoocIndividual, indent=4, sort_keys=True))
+    json_dump = json.dumps(pathologyPerCoocIndividual, indent=4, sort_keys=True)
+    with open(outputFile, 'w') as f:
+        f.write(json_dump)
+    f.close()
 
 if __name__ == "__main__":
     main()

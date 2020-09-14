@@ -22,13 +22,16 @@ then
 	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 -w / --user=`id -u`:`id -g` -v ${APP_PATH}/pathology:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data ${PATHOLOGY_DOCKER_IMAGE_NAME} /usr/bin/python3 /app/dataAnalyzer.py /config/conf.json 
 	exit 0
 
-elif [ $# -eq 4 -a $1 == 'intersect' ]
+elif [ $# -eq 3 -a $1 == 'intersect' ]
 then
-	OUT_FILENAME=$2
-	IPV_FILENAME=$3
-	PATHOLOGY_FILENAME=$4
+	CHROM=$2
+	OUT_FILENAME=/data/${CHROM}-out.json
+	IPV_FILENAME=/data/${CHROM}-ipv.json
+	PATHOLOGY_FILENAME=/data/$3
+	OUTPUT_FILENAME=/data/${CHROM}-intersection.json
+
 	docker build -t ${COOCCUR_DOCKER_IMAGE_NAME} - < docker/cooccurrence/Dockerfile
-	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 -w / --user=`id -u`:`id -g` -v ${APP_PATH}/intersection:/app:ro -v "${DATA_PATH}":/data ${COOCCUR_DOCKER_IMAGE_NAME} /usr/bin/python3 /app/getPathologyPerCooccurrence.py /data/$OUT_FILENAME /data/$IPV_FILENAME /data/$PATHOLOGY_FILENAME
+	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 -w / --user=`id -u`:`id -g` -v ${APP_PATH}/intersection:/app:ro -v "${DATA_PATH}":/data ${COOCCUR_DOCKER_IMAGE_NAME} /usr/bin/python3 /app/getPathologyPerCooccurrence.py $OUT_FILENAME $IPV_FILENAME $PATHOLOGY_FILENAME $OUTPUT_FILENAME
 	exit 0
 
 
