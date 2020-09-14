@@ -59,27 +59,29 @@ where:
 
 * BRCA2 (or BRCA1) is the name of the gene of interest on the chromosome of interest
 
-3. This will generate a report in federated-analysis/data called output.json which contains a list of VUS, each in the following format:
+3. This will generate a report in federated-analysis/data called `13-out.json` (or `17-out.json`) which contains a list of VUS, each in the following format:
 
 ```json
-"(13, 32317399, 'T', 'G')": {
+"(13, 32911164, 'T', 'A')": {
             "likelihood data": {
-                "p1": 0.25,
+                "p1": 0.0015891032917139615,
                 "p2": 0.001,
-                "n": 2,
-                "k": 2,
-                "likelihood": 1.6e-05
+                "n": 25,
+                "k": 1,
+                "likelihood": 0.6382577479687377
             },
             "allele frequencies": {
-                "maxPop": "Allele_frequency_genome_AMR_GnomAD",
-                "maxPopFreq": 0.001179,
-                "cohortFreq": 1.0
+                "maxPop": null,
+                "maxPopFreq": 0.0,
+                "minPop": null,
+                "minPopFreq": 1.0,
+                "cohortFreq": 0.0008107669855683476
             },
             "pathogenic variants": [
                 [
                     13,
-                    32338277,
-                    "G",
+                    32911297,
+                    "TAAAC",
                     "T"
                 ]
             ],
