@@ -38,7 +38,7 @@ To run the co-occurrence analysis, perform the following steps:
 $ cd federated-analysis/
 ```
 
-2. Run the runMe.sh script as follows:
+2. Run the runMe_nontopmed.sh script as follows:
 
 ```console
 $ ./runMe_nontopmed.sh BreastCancer.shuffle.vcf 37 75 13 False BRCA2 
@@ -123,11 +123,29 @@ cd federated-analysis/
 vi config/conf.json
 ```
 
-3. Run the runMe.sh script as follows:
+3. Run the runMe_nontopmed.sh script as follows:
 
 ```console
-./runMe.sh analyze
+$ ./runMe_nontopmed.sh analyze
 ```
+
+# Intersection of co-occurrence and pathology
+
+1. Change directory to the top-level directory of the repository.
+
+```console
+cd federated-analysis/
+```
+
+2. Run the runMe_nontopmed.sh script as follows:
+
+```console
+$ ./runMe_nontopmed.sh intersection 13-out.json 13-ipv.json shuffle.tsv
+
+$ ./runMe_nontopmed.sh intersection 17-out.json 17-ipv.json shuffle.tsv
+```
+
+
 
 # Software unit testing 
 
