@@ -129,6 +129,8 @@ vi config/conf.json
 $ ./runMe_nontopmed.sh analyze
 ```
 
+4. This will generate a report that is printed to standard output. 
+
 # Intersection of co-occurrence and pathology
 
 1. Change directory to the top-level directory of the repository.
@@ -140,10 +142,12 @@ cd federated-analysis/
 2. Run the runMe_nontopmed.sh script as follows:
 
 ```console
-$ ./runMe_nontopmed.sh intersection 13-out.json 13-ipv.json shuffle.tsv
+$ ./runMe_nontopmed.sh intersection 13 shuffle.tsv
 
-$ ./runMe_nontopmed.sh intersection 17-out.json 17-ipv.json shuffle.tsv
+$ ./runMe_nontopmed.sh intersection 17 shuffle.tsv
 ```
+
+3. This will create 2 JSON files called 13-intersection.json and 17-intersection.json.
 
 
 
