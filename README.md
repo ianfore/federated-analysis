@@ -152,8 +152,6 @@ column: ER / type: categorical
 ...
 ```json
 
-The output will also contain any custom reporting you include in the script.
-
 
 # Intersection of co-occurrence and pathology
 
