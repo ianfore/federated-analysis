@@ -59,7 +59,7 @@ where:
 
 * BRCA2 (or BRCA1) is the name of the gene of interest on the chromosome of interest
 
-3. This will generate a report in federated-analysis/data called `13-out.json` (or `17-out.json`) which contains a list of VUS, each in the following format:
+3. This will generate a report in federated-analysis/data called `13-out.json` (and `17-out.json`) which contains a list of VUS, each in the following format:
 
 ```json
 "(13, 32911164, 'T', 'A')": {
@@ -88,6 +88,8 @@ where:
             "RARE": true
 
 ```
+
+4. This will also create some ancillary files in the federated-analysis/data directory called `13-all.json`, `17-all.json`, `13-ipv.json`, `17-ipv.json`, `13-vpi.json`, and `17-vpi.json`.
 
 
 # Pathology statistics
@@ -131,7 +133,27 @@ vi config/conf.json
 $ ./runMe_nontopmed.sh analyze
 ```
 
-4. This will generate a report that is printed to standard output. 
+4. This will generate a report that is printed to standard output containing records such as the following:
+
+```json
+
+============================================
+total records read from data file: 7051
+============================================
+column: ER / type: categorical
+{
+    "fieldCount": {
+        "NA": 2200,
+        "Negative": 1313,
+        "Positive": 3538
+    }
+}
+
+...
+```json
+
+The output will also contain any custom reporting you include in the script.
+
 
 # Intersection of co-occurrence and pathology
 
