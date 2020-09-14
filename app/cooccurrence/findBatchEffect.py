@@ -66,16 +66,22 @@ def findBatch(vpiDict, outDict):
                     freq = 0.5 * (outDict['homozygous vus'][varStr]['maxPopFreq'] + outDict['homozygous vus'][varStr]['cohortFreq'])
                     if freq <= 0.00001:
                         countsPerCenter[seqCenter]['homoVUS_0.00001'] += 1
+                        countsPerStudy[study]['homoVUS_0.00001'] += 1
                     elif freq <= 0.0001:
                         countsPerCenter[seqCenter]['homoVUS_0.0001'] += 1
+                        countsPerStudy[study]['homoVUS_0.0001'] += 1
                     elif freq <= 0.001:
                         countsPerCenter[seqCenter]['homoVUS_0.001'] += 1
+                        countsPerStudy[study]['homoVUS_0.001'] += 1
                     elif freq < 0.01:
                         countsPerCenter[seqCenter]['homoVUS_0.01'] += 1
+                        countsPerStudy[study]['homoVUS_0.01'] += 1
                     elif freq < 0.1:
                         countsPerCenter[seqCenter]['homoVUS_0.1'] += 1
+                        countsPerStudy[study]['homoVUS_0.1'] += 1
                     else:
                         countsPerCenter[seqCenter]['homoVUS_0'] += 1
+                        countsPerStudy[study]['homoVUS_0'] += 1
             else:
                 countsPerCenter[seqCenter]['heteroVUS'] += 1
                 countsPerCenter[seqCenter]['totalHetero'] += 1
