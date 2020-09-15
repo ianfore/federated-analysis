@@ -44,6 +44,7 @@ def main():
                 pathologies['ER'] = row['ER'].tolist()
                 pathologies['PgR'] = row['PgR'].tolist()
                 pathologies['HER2'] = row['HER2'].tolist()
+                
                 pathologyPerCoocIndividual[pv].append(pathologies)
 
     json_dump = json.dumps(pathologyPerCoocIndividual, indent=4, sort_keys=True)
