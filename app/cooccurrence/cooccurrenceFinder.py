@@ -248,8 +248,8 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
     # calculate total number of benign, pathogenic, and vus variants in cohort
     logger.info('getting all variants for cohort')
     allVariants = getAllVariantsPerClass(variantsPerIndividual)
-    numBenign = len(set(allVariants['benign']))
-    p1 =  0.5 * numBenign / cohortSize
+    numPathogenic = len(set(allVariants['pathogenic']))
+    p1 =  0.5 * numPathogenic / cohortSize
     logger.info('saving all variants to ' + allVariantsFileName)
     json_dump = json.dumps(allVariants, cls=NpEncoder)
     with open(allVariantsFileName, 'w') as f:
