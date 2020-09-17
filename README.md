@@ -41,7 +41,7 @@ $ cd federated-analysis/
 2. Run the runMe_nontopmed.sh script as follows:
 
 ```console
-$ ./runMe_nontopmed.sh BreastCancer.shuffle.vcf 37 75 13 False BRCA2  shuffle.tsv
+$ ./runMe_nontopmed.sh BreastCancer.shuffle.vcf 37 75 13 False BRCA2 shuffle.tsv
 
 $ ./runMe_nontopmed.sh BreastCancer.shuffle.vcf 37 75 17 False BRCA1 shuffle.tsv
 ```
