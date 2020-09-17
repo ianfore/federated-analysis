@@ -35,7 +35,7 @@ then
 	exit 0
 
 
-elif [ $# -eq 6 ]
+elif [ $# -eq 7 ]
 then
 
 	VCF_FILE=/data/$1
@@ -44,6 +44,7 @@ then
 	CHROM=$4
 	PHASED=$5
 	GENE=$6
+	PATHOLOGY_FILE=/data/$7
         BRCA_VARS=/data/brca-variants.tsv
 	IPV_FILE=/data/${CHROM}-ipv.json
 	VPI_FILE=/data/${CHROM}-vpi.json
@@ -52,7 +53,7 @@ then
 
 	docker build -t ${COOCCUR_DOCKER_IMAGE_NAME} - < docker/cooccurrence/Dockerfile
 
-	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 --user=`id -u`:`id -g` -v ${APP_PATH}/cooccurrence:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${COOCCUR_DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder_nontopmed.py --vcf $VCF_FILE --out $OUTPUT_FILE --h $HG_VERSION --e $ENSEMBL_RELEASE --c $CHROM --g $GENE --p $PHASED --n 1 --b $BRCA_VARS --vpi $VPI_FILE --ipv $IPV_FILE --all $ALL_FILE 
+	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 --user=`id -u`:`id -g` -v ${APP_PATH}/cooccurrence:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${COOCCUR_DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder_nontopmed.py --vcf $VCF_FILE --out $OUTPUT_FILE --h $HG_VERSION --e $ENSEMBL_RELEASE --c $CHROM --g $GENE --p $PHASED --n 1 --b $BRCA_VARS --vpi $VPI_FILE --ipv $IPV_FILE --all $ALL_FILE --pf $PATHOLOGY_FILE
 
 else
 	echo "wrong usage"

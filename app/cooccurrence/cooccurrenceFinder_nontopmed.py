@@ -86,6 +86,8 @@ def main():
 
     parser.add_argument("--r", dest="r", help="Rare frequency cutoff. Default=0.01", default=0.01)
 
+    parser.add_argument("--pf", dest="pf", help="Pathology input file. Default=None", default=None)
+
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" % defaultLogLevel, default=defaultLogLevel)
 
     options = parser.parse_args()
@@ -118,15 +120,16 @@ def main():
     e_options = int(options.e)
     n_options = int(options.n)
     r_options = float(options.r)
+    pf_options = options.pf
 
     print(options)
 
 
     run(h_options, e_options, c_options, g_options, p_options, v_options, n_options, b_options, d_options, r_options,
-        ipv_options, vpi_options, all_options, out_options)
+        ipv_options, vpi_options, all_options, out_options, pf_options)
 
 def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, numProcs,
-        brcaFileName, pyensemblDir, rareCutoff, ipvFileName, vpiFileName, allVariantsFileName, outputFileName):
+        brcaFileName, pyensemblDir, rareCutoff, ipvFileName, vpiFileName, allVariantsFileName, outputFileName, pathologyFile):
 
     logger.info('setting pyensembl dir to ' + pyensemblDir)
     os.environ['PYENSEMBL_CACHE_DIR'] = '/var/tmp/pyensembl-cache'
@@ -195,14 +198,15 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, numPro
     individualsPerVariant = addVariantInfo(individualsPerVariant, vcf, chromosome, ['FIBC_I', 'FIBC_P'], brcaDF,
                                            hgVersion, cohortSize, ensemblRelease)
 
-    logger.info('saving vpi to ' + vpiFileName)
-    with open(vpiFileName, 'w') as f:
-        json.dump(variantsPerIndividual, f, cls=NpEncoder)
-    f.close()
-    logger.info('saving ipv to ' + ipvFileName)
-    with open(ipvFileName, 'w') as f:
-        json.dump(individualsPerVariant, f, cls=NpEncoder)
-    f.close()
+    # commenting out for biobank japan
+    #logger.info('saving vpi to ' + vpiFileName)
+    #with open(vpiFileName, 'w') as f:
+    #    json.dump(variantsPerIndividual, f, cls=NpEncoder)
+    #f.close()
+    #logger.info('saving ipv to ' + ipvFileName)
+    #with open(ipvFileName, 'w') as f:
+    #    json.dump(individualsPerVariant, f, cls=NpEncoder)
+    #f.close()
 
 
     logger.info('finding homozygous individuals per vus')
@@ -248,6 +252,51 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, numPro
     with open(outputFileName, 'w') as f:
         f.write(json_dump)
     f.close()
+
+    logger.info('intersecting variants with pathology data')
+    intersectionFile = '/data/' + str(chromosome) + '-intersection.json'
+    intersectPathology(pathologyFile, data_set, individualsPerVariant, intersectionFile )
+
+def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
+    logger.info('reading data from ' + pathologyFile)
+    pathologyDF = pandas.read_csv(pathologyFile, sep='\t', header=0)
+
+    #variantsDF = pandas.DataFrame.from_dict(data_set)
+    variantsDF = data_set
+
+    #ipvDF = pandas.DataFrame.from_dict(ipv)
+    ipvDF = ipv
+
+    pathologyPerCoocIndividual = dict()
+    for variant in variantsDF['cooccurring vus']:
+        for pathogenicVariant in variantsDF['cooccurring vus'][variant]['pathogenic variants']:
+            pv = str(tuple(pathogenicVariant))
+            heterozygousIndividuals = ipvDF[pv]['heterozygous individuals']
+            pathologyPerCoocIndividual[pv] = list()
+            pathologies = dict()
+            for hi in heterozygousIndividuals:
+                hiInt = int(hi)
+                row = pathologyDF.loc[pathologyDF['ID'] == hiInt]
+                aao = row['Age at onset'].tolist()
+                if aao:
+                    pathologies['Age at onset'] = aao[0]
+                pathologies['Ovarian cancer history'] = row['Ovarian cancer history'].tolist()
+                pathologies['Bilateral breast cancer'] = row['Bilateral breast cancer'].tolist()
+                pathologies['Tissue type (3 groups)'] = row['Tissue type (3 groups)'].tolist()
+                pathologies['TMN classification / T'] = row['TMN classification / T'].tolist()
+                pathologies['TNM classification / N'] = row['TNM classification / N'].tolist()
+                pathologies['TNM classification / M'] = row['TNM classification / M'].tolist()
+                pathologies['ER'] = row['ER'].tolist()
+                pathologies['PgR'] = row['PgR'].tolist()
+                pathologies['HER2'] = row['HER2'].tolist()
+
+                pathologyPerCoocIndividual[pv].append(pathologies)
+
+    json_dump = json.dumps(pathologyPerCoocIndividual, indent=4, sort_keys=True)
+    with open(intersectFile, 'w') as f:
+        f.write(json_dump)
+    f.close()
+
 
 def isExonic(ensemblRelease, chrom, pos):
     ensembl = pyensembl.EnsemblRelease(release=ensemblRelease)

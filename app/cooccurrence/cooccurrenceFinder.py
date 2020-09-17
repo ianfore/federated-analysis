@@ -94,6 +94,7 @@ def main():
 
     parser.add_argument("--f", dest="f", help="Topmed freeze. Default=0", default=0)
 
+
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" % defaultLogLevel, default=defaultLogLevel)
 
     options = parser.parse_args()
@@ -129,7 +130,6 @@ def main():
     n_options = int(options.n)
     r_options = float(options.r)
     f_options = int(options.f)
-
     print(options)
 
 
@@ -244,12 +244,12 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
     # TODO check this math!
     logger.info('calculating p1')
     # p1 = P(VUS is benign and patient carries a path variant in trans) = 0.5 * overall freq of path muts in cohort
-
     # calculate total number of benign, pathogenic, and vus variants in cohort
     logger.info('getting all variants for cohort')
     allVariants = getAllVariantsPerClass(variantsPerIndividual)
     numPathogenic = len(set(allVariants['pathogenic']))
     p1 =  0.5 * numPathogenic / cohortSize
+
     logger.info('saving all variants to ' + allVariantsFileName)
     json_dump = json.dumps(allVariants, cls=NpEncoder)
     with open(allVariantsFileName, 'w') as f:
@@ -267,6 +267,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
     with open(outputFileName, 'w') as f:
         f.write(json_dump)
     f.close()
+
 
 def isExonic(ensemblRelease, chrom, pos):
     ensembl = pyensembl.EnsemblRelease(release=ensemblRelease)
