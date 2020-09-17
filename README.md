@@ -41,9 +41,9 @@ $ cd federated-analysis/
 2. Run the runMe_nontopmed.sh script as follows:
 
 ```console
-$ ./runMe_nontopmed.sh BreastCancer.shuffle.vcf 37 75 13 False BRCA2 
+$ ./runMe_nontopmed.sh BreastCancer.shuffle.vcf 37 75 13 False BRCA2  shuffle.tsv
 
-$ ./runMe_nontopmed.sh BreastCancer.shuffle.vcf 37 75 17 False BRCA1
+$ ./runMe_nontopmed.sh BreastCancer.shuffle.vcf 37 75 17 False BRCA1 shuffle.tsv
 ```
 
 where:
@@ -58,6 +58,8 @@ where:
 * True is a boolean value for whether the VCF data is phased (True) or not (False)
 
 * BRCA2 (or BRCA1) is the name of the gene of interest on the chromosome of interest
+
+* shuffle.tsv is the name of the pathology report located in the federated-analysis/data directory
 
 3. This will generate a report in federated-analysis/data called `13-out.json` (and `17-out.json`) which contains a list of VUS, each in the following format:
 
@@ -89,7 +91,9 @@ where:
 
 ```
 
-4. This will also create some ancillary files in the federated-analysis/data directory called `13-all.json`, `17-all.json`, `13-ipv.json`, `17-ipv.json`, `13-vpi.json`, and `17-vpi.json`.
+5. This will create 2 JSON files called `13-intersection.json` and `17-intersection.json` in the federated-analysis/data directory which intersect the pathology report with the co-occurrence results.
+
+6. This will also create some ancillary files in the federated-analysis/data directory called `13-all.json` and `17-all.json` .
 
 
 # Pathology statistics
@@ -153,24 +157,6 @@ column: ER / type: categorical
 ```
 
 This output will also contain any custom reporting you add to the script.
-
-# Intersection of co-occurrence and pathology
-
-1. Change directory to the top-level directory of the repository.
-
-```console
-cd federated-analysis/
-```
-
-2. Run the runMe_nontopmed.sh script as follows:
-
-```console
-$ ./runMe_nontopmed.sh intersection 13 shuffle.tsv
-
-$ ./runMe_nontopmed.sh intersection 17 shuffle.tsv
-```
-
-3. This will create 2 JSON files called `13-intersection.json` and `17-intersection.json`.
 
 
 
