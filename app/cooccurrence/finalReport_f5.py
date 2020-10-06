@@ -176,7 +176,8 @@ def addInfo(variantsDF, sitesDF):
 			infoPairs = finalDF.iloc[i]['INFO'].split('|')[0].split(';')
 		except Exception as e:
 			continue
-		for pair in infoPairs:
+		for pair in infoPairs
+			print('pair = ' + pair)
 			vv = pair.split('=')
 			infoDict[i][vv[0]] = vv[1]
 	infoDF = pd.DataFrame.from_dict(infoDict).transpose()
