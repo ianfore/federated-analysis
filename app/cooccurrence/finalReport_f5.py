@@ -94,9 +94,13 @@ def main():
 		exonic = str(ipvDict[v]['exonic'])
 		chisquare = str(ipvDict[v]['chisquare'])
 		if len(ipvDict[v]['homozygous individuals']) == 0:
-			homoSample = "None"
+			homoSamples = "None"
 		else:
-			homoSample = ipvDict[v]['homozygous individuals'][0]
+			homoSamples = ipvDict[v]['homozygous individuals'][0]
+		if len(ipvDict[v]['heterozygous individuals']) == 0:
+			heteroSamples = "None"
+		else:
+			heteroSamples = ipvDict[v]['heterozygous individuals'][0]
 		v = v.replace(' ', '')	
 		v = v.replace("'", "")
 		#study = studyPerVariant[v]
@@ -113,7 +117,8 @@ def main():
 		variantsDict[v]['class'] = vClass
 		variantsDict[v]['popFreq'] = vPopFreq
 		variantsDict[v]['cohortFreq'] = vCohortFreq
-		variantsDict[v]['homozygousSample'] = homoSample
+		variantsDict[v]['homozygousSamples'] = homoSamples
+		variantsDict[v]['heterozygousSamples'] = heteroSamples
 		variantsDict[v]['inGnomad'] = vIn
 		variantsDict[v]['homo_alt'] = aa
 		variantsDict[v]['hetero'] = Aa
@@ -132,7 +137,7 @@ def main():
 	variantsDF = pd.DataFrame.from_dict(variantsDict)
 	variantsDF = variantsDF.transpose()
 	variantsDF['variant'] = variantsDF.index
-	variantsDF.to_csv('/tmp/brcaDF.tsv', sep='\t', index=True)
+	#variantsDF.to_csv('/tmp/brcaDF.tsv', sep='\t', index=True)
 
 	variantsWithInfoDF = addInfo(variantsDF, sitesDF)
 
