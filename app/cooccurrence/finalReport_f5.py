@@ -170,7 +170,17 @@ def addInfo(variantsDF, sitesDF):
 	infoDict = dict()
 	for i in range(len(finalDF.index)):
 		infoDict[i] = dict()
-		infoPairs = finalDF.iloc[i]['INFO'].split('|')[0].split(';')
+		row = finalDF.iloc[i]
+		print('row = ' + str(row))
+		infoPair_info = row['INFO']
+		print('info = ' + str(infoPair_info))
+		infoPair_info_pairs = infoPair_info.split('|')[0]
+		print('info pairs = ' + str(infoPair_info_pairs))
+
+		try:
+			infoPairs = finalDF.iloc[i]['INFO'].split('|')[0].split(';')
+		except Exception as e:
+			continue
 		for pair in infoPairs:
 			vv = pair.split('=')
 			infoDict[i][vv[0]] = vv[1]
