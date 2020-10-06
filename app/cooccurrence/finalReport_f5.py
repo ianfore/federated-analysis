@@ -96,11 +96,11 @@ def main():
 		if len(ipvDict[v]['homozygous individuals']) == 0:
 			homoSamples = "None"
 		else:
-			homoSamples = ipvDict[v]['homozygous individuals'][0]
+			homoSamples = ipvDict[v]['homozygous individuals']
 		if len(ipvDict[v]['heterozygous individuals']) == 0:
 			heteroSamples = "None"
 		else:
-			heteroSamples = ipvDict[v]['heterozygous individuals'][0]
+			heteroSamples = ipvDict[v]['heterozygous individuals']
 		v = v.replace(' ', '')	
 		v = v.replace("'", "")
 		#study = studyPerVariant[v]
@@ -173,6 +173,7 @@ def addInfo(variantsDF, sitesDF):
 		row = finalDF.iloc[i]
 		print('row = ' + str(row))
 		infoPair_info = row['INFO']
+		print('info type = ' + str(type(infoPair_info)))
 		print('info = ' + str(infoPair_info))
 		infoPair_info_pairs = infoPair_info.split('|')[0]
 		print('info pairs = ' + str(infoPair_info_pairs))
