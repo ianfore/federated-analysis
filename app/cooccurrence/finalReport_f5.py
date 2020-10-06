@@ -169,15 +169,9 @@ def addInfo(variantsDF, sitesDF):
 
 	infoDict = dict()
 	for i in range(len(finalDF.index)):
-		infoDict[i] = dict()
-		row = finalDF.iloc[i]
-		print('row = ' + str(row))
-		infoPair_info = row['INFO']
-		print('info type = ' + str(type(infoPair_info)))
-		print('info = ' + str(infoPair_info))
-		infoPair_info_pairs = infoPair_info.split('|')[0]
-		print('info pairs = ' + str(infoPair_info_pairs))
-
+		if not type(finalDF.iloc[i]['INFO']) is str:
+			logger.info('info column N/A: ' + str(finalDF.iloc[i]))
+			continue
 		try:
 			infoPairs = finalDF.iloc[i]['INFO'].split('|')[0].split(';')
 		except Exception as e:
