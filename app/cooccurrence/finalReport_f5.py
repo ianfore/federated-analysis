@@ -166,9 +166,9 @@ def addInfo(variantsDF, sitesDF):
 
 	# now iterate through the INFO column and pull out each var=val pair
 	# we'll make new cols based on these pairs
+
 	infoDict = dict()
 	for i in range(len(finalDF.index)):
-		infoDict[i] = dict()
 		if not type(finalDF.iloc[i]['INFO']) is str:
 			logger.info('info column N/A: ' + str(finalDF.iloc[i]))
 			continue
@@ -177,6 +177,7 @@ def addInfo(variantsDF, sitesDF):
 		except Exception as e:
 			continue
 		for pair in infoPairs:
+			print('pair = ' + pair)
 			vv = pair.split('=')
 			infoDict[i][vv[0]] = vv[1]
 	infoDF = pd.DataFrame.from_dict(infoDict).transpose()
