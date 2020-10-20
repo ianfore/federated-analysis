@@ -166,7 +166,6 @@ def addInfo(variantsDF, sitesDF):
 
 	# now iterate through the INFO column and pull out each var=val pair
 	# we'll make new cols based on these pairs
-
 	infoDict = dict()
 	for i in range(len(finalDF.index)):
 		infoDict[i] = dict()
