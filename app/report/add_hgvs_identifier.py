@@ -109,7 +109,7 @@ def main():
     args = parser.parse_args()
 
     hdp = hgvs.dataproviders.uta.connect()
-    varmapper = hgvs.assemblymapper.AssemblyMapper(hdp, assembly_name='GRCh37',
+    varmapper = hgvs.assemblymapper.AssemblyMapper(hdp, assembly_name='GRCh38',
                                                    alt_aln_method='splign')
     with open(args.input, 'r') as fin:
         vardata = json.load(fin)

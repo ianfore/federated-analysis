@@ -6,11 +6,8 @@ logging.basicConfig()
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
-def writeHeaders(f):
-    header = '#CHROM  POS     ID      REF     ALT     QUAL    FILTER  INFO'
-    print('##fileformat=VCFv4.0', file=f)
-    print('##source=brcaexchange', file=f)
-    print('##reference=GRCh38', file=f)
+def writeHeader(f):
+    header = ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER',  'INFO']
     for word in header:
         f.write(word + '\t')
     f.write('\n')
@@ -28,13 +25,19 @@ def main():
         inputDict = json.load(f)
     f.close()
 
+    # sort input on chr then pos
+    coocList = list(inputDict['cooccurring vus'].keys())
+    homoList = list(inputDict['homozygous vus'].keys())
+    inputList = coocList + homoList
+    inputList.sort()
     f = open(outputFileName, 'w')
-    writeHeaders(f)
+    writeHeader(f)
 
-    for vus in inputDict['cooccurring vus']:
+    for vus in inputList:
+        vus = eval(vus)
         row = [vus[0], vus[1], '.', vus[2], vus[3], '.', '.', '.']
         for word in row:
-            f.write(word + '\t')
+            f.write(str(word) + '\t')
         f.write('\n')
 
     f.close()

@@ -9,7 +9,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 def main():
-    if(len(sys.argv) != 4):
+    if(len(sys.argv) != 5):
         print('usage: bayesdel.vcf intersection.json out.json to-translate.txt')
         sys.exit(1)
 
