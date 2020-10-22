@@ -30,6 +30,7 @@ def main():
     homoList = list(inputDict['homozygous vus'].keys())
     inputList = coocList + homoList
     inputList.sort()
+    inputList = list(set(inputList))
     f = open(outputFileName, 'w')
     writeHeader(f)
 

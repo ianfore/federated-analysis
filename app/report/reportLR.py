@@ -30,20 +30,32 @@ def main():
         outDict = json.load(f)
     f.close()
 
-    reportDict = dict()
-
-    for vus in outDict['homozygous vus']:
+    for vus in outDict['cooccurring vus']:
         vus = eval(vus)
         chrom = vus[0]
         pos = vus[1]
         ref = vus[2]
         alt = vus[3]
-        hg38Coord = 'chr' + str(chrom) + ':' + str(pos) + ':' + ref + '>' + alt
-        hsgvsCoord = variantsDF[variantsDF['Genomic_Coordinate_hg38'] == hg38Coord]['pyhgvs_cDNA']
-        bayesDel = variantsDF[variantsDF['Genomic_Coordinate_hg38'] == hg38Coord]['BayesDel_nsfp33a_noAF']
-        print(hsgvsCoord)
-        print(bayesDel)
+        hgvsCoord = vus[4]
+        infoField = tuple(variantsDF[variantsDF['POS'] == pos]['INFO'])
+        try:
+            bayesdelScore = infoField[0].split('BayesDel')[1].split('=')[1]
+        except Exception as e:
+            continue
+        print(bayesdelScore)
 
+    for vus in outDict['homozygous vus']:
+        chrom = vus[0]
+        pos = vus[1]
+        ref = vus[2]
+        alt = vus[3]
+        hgvsCoord = vus[4]
+        infoField = variantsDF[variantsDF['POS']==pos]['INFO']
+        try:
+            bayesdelScore = float(infoField.iloc[1].split('=')[3])
+        except Exception as e:
+            continue
+        print(bayesdelScore)
 
 
 
