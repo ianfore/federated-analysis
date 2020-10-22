@@ -29,8 +29,10 @@ def main():
     coocList = list(inputDict['cooccurring vus'].keys())
     homoList = list(inputDict['homozygous vus'].keys())
     inputList = coocList + homoList
-    inputList.sort()
+    print(inputList)
     inputList = list(set(inputList))
+    inputList.sort()
+    print(inputList)
     f = open(outputFileName, 'w')
     writeHeader(f)
 
