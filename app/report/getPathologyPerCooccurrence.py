@@ -47,7 +47,36 @@ def main():
                 
                 pathologyPerCoocIndividual[pv].append(pathologies)
 
-    json_dump = json.dumps(pathologyPerCoocIndividual, indent=4, sort_keys=True)
+    pathologyPerHomoIndividual = dict()
+    for variant in variantsDF['homozygous vus']:
+        for pathogenicVariant in variantsDF['cooccurring vus'][variant]['pathogenic variants']:
+            pv = str(tuple(pathogenicVariant))
+            homozygousIndividuals = ipvDF[pv]['homozygous individuals']
+            pathologyPerHomoIndividual[pv] = list()
+            pathologies = dict()
+            for hi in homozygousIndividuals:
+                hiInt = int(hi)
+                row = pathologyDF.loc[pathologyDF['ID'] == hiInt]
+                aao = row['Age at onset'].tolist()
+                if aao:
+                    pathologies['Age at onset'] = aao[0]
+                pathologies['Ovarian cancer history'] = row['Ovarian cancer history'].tolist()
+                pathologies['Bilateral breast cancer'] = row['Bilateral breast cancer'].tolist()
+                pathologies['Tissue type (3 groups)'] = row['Tissue type (3 groups)'].tolist()
+                pathologies['TMN classification / T'] = row['TMN classification / T'].tolist()
+                pathologies['TNM classification / N'] = row['TNM classification / N'].tolist()
+                pathologies['TNM classification / M'] = row['TNM classification / M'].tolist()
+                pathologies['ER'] = row['ER'].tolist()
+                pathologies['PgR'] = row['PgR'].tolist()
+                pathologies['HER2'] = row['HER2'].tolist()
+
+                pathologyPerHomoIndividual[pv].append(pathologies)
+
+    pathologyPerAllIndividuals = dict()
+    pathologyPerAllIndividuals.update(pathologyPerHomoIndividual)
+    pathologyPerAllIndividuals.update(pathologyPerCoocIndividual)
+
+    json_dump = json.dumps(pathologyPerAllIndividuals, indent=4, sort_keys=True)
     with open(outputFile, 'w') as f:
         f.write(json_dump)
     f.close()
