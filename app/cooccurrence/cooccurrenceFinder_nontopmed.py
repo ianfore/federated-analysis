@@ -292,7 +292,35 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
 
                 pathologyPerCoocIndividual[pv].append(pathologies)
 
-    json_dump = json.dumps(pathologyPerCoocIndividual, indent=4, sort_keys=True)
+    pathologyPerHomoIndividual = dict()
+    for variant in variantsDF['homozygous vus']:
+        homozygousIndividuals = ipvDF[variant]['homozygous individuals']
+        pathologyPerHomoIndividual[variant] = list()
+        pathologies = dict()
+        for hi in homozygousIndividuals:
+            hiInt = int(hi)
+            row = pathologyDF.loc[pathologyDF['ID'] == hiInt]
+            try:
+                row['Age at onset'].tolist()[0]
+            except Exception as e:
+                pathologies['Age at onset'] = 0.0
+            pathologies['Ovarian cancer history'] = row['Ovarian cancer history'].tolist()
+            pathologies['Bilateral breast cancer'] = row['Bilateral breast cancer'].tolist()
+            pathologies['Tissue type (3 groups)'] = row['Tissue type (3 groups)'].tolist()
+            pathologies['TMN classification / T'] = row['TMN classification / T'].tolist()
+            pathologies['TNM classification / N'] = row['TNM classification / N'].tolist()
+            pathologies['TNM classification / M'] = row['TNM classification / M'].tolist()
+            pathologies['ER'] = row['ER'].tolist()
+            pathologies['PgR'] = row['PgR'].tolist()
+            pathologies['HER2'] = row['HER2'].tolist()
+
+            pathologyPerHomoIndividual[variant].append(pathologies)
+
+    pathologyPerAllIndividuals = dict()
+    pathologyPerAllIndividuals.update(pathologyPerHomoIndividual)
+    pathologyPerAllIndividuals.update(pathologyPerCoocIndividual)
+
+    json_dump = json.dumps(pathologyPerAllIndividuals, indent=4, sort_keys=True)
     with open(intersectFile, 'w') as f:
         f.write(json_dump)
     f.close()
