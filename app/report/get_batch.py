@@ -55,15 +55,22 @@ b1_with_list = get_variant_list("ENSG00000012048", "gnomad_r3")
 for v in b1_with_list:
     b1_dict[v['variant_id']] = dict()
     b1_dict[v['variant_id']]['ac_hom_with'] = v['genome']['ac_hom']  
+    b1_dict[v['variant_id']]['ac_hom_without'] = 0 
+    b1_dict[v['variant_id']]['delta'] = 0
 
  
 b1_without_list = get_variant_list("ENSG00000012048", "gnomad_r3_non_topmed")
 for v in b1_without_list:
     if v['variant_id'] not in b1_dict:
         b1_dict[v['variant_id']] = dict()
+        b1_dict[v['variant_id']]['delta'] = 0
+        b1_dict[v['variant_id']]['ac_hom_with'] = 0
+ 
     b1_dict[v['variant_id']]['ac_hom_without'] = v['genome']['ac_hom']  
+    b1_dict[v['variant_id']]['delta'] = b1_dict[v['variant_id']]['ac_hom_with'] - b1_dict[v['variant_id']]['ac_hom_without']
 
-print(b1_dict)
+for v in b1_dict:
+    print(b1_dict[v]['delta'])
 
 # brca2
 
@@ -74,12 +81,19 @@ b2_with_list = get_variant_list("ENSG00000139618", "gnomad_r3")
 for v in b2_with_list:
     b2_dict[v['variant_id']] = dict()
     b2_dict[v['variant_id']]['ac_hom_with'] = v['genome']['ac_hom']  
+    b2_dict[v['variant_id']]['ac_hom_without'] = 0 
+    b2_dict[v['variant_id']]['delta'] = 0
 
  
 b2_without_list = get_variant_list("ENSG00000139618", "gnomad_r3_non_topmed")
 for v in b2_without_list:
-    if v['variant_id'] not in b1_dict:
+    if v['variant_id'] not in b2_dict:
         b2_dict[v['variant_id']] = dict()
+        b2_dict[v['variant_id']]['delta'] = 0
+        b2_dict[v['variant_id']]['ac_hom_with'] = 0
+ 
     b2_dict[v['variant_id']]['ac_hom_without'] = v['genome']['ac_hom']  
+    b2_dict[v['variant_id']]['delta'] = b2_dict[v['variant_id']]['ac_hom_with'] - b2_dict[v['variant_id']]['ac_hom_without']
 
-print(b2_dict)
+for v in b2_dict:
+    print(b2_dict[v]['delta'])
