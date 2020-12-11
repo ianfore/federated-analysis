@@ -92,8 +92,13 @@ def coords_to_variants(chrom, start, stop, dataset_id, reference_genome):
         'http://gnomad.broadinstitute.org/api',
         json={ "query": region_query, "variables": region_variables },
         headers=headers)
-    parse = json.loads(response.text)
-    variants = parse['data']['region']['variants']
+    try:
+        parse = json.loads(response.text)
+        variants = parse['data']['region']['variants']
+    except json.decoder.JSONDecodeError:
+        print('json decode error')
+        return None
+
     return(unique_variant_set(variants))
 
 def gene_to_region_variants(gene_id, dataset_id, reference_genome):
@@ -106,7 +111,7 @@ def gene_to_region_variants(gene_id, dataset_id, reference_genome):
                                      coords["stop"], dataset_id, reference_genome)
     return(set(variantList))
 
-def fetch_data_for_one_variant(variant_id, dataset, max_retries=5):
+def fetch_data_for_one_variant(variant_id, dataset, reference_genome, max_retries=5):
     variant_detail_query = """
         query GnomadVariant($variantId: String!, $datasetId: DatasetId!) {
             variant(variantId: $variantId, dataset: $datasetId) {
@@ -161,10 +166,11 @@ def fetch_data_for_one_variant(variant_id, dataset, max_retries=5):
     variant_detail_variables = {
         "variantId": variant_id,
         "datasetId": dataset,
-        "referenceGenome": "GRCh38",
+        "referenceGenome": reference_genome,
     }
     retries = 0
     while retries < max_retries:
+        parse = None
         try:
             # https://stackoverflow.com/questions/49064398/requests-exceptions-chunkedencodingerror-connection-broken-incompleteread0
             with requests.post(
@@ -175,16 +181,36 @@ def fetch_data_for_one_variant(variant_id, dataset, max_retries=5):
                 },
                 headers=headers) as response:
                 parse = json.loads(response.text)
+                if response.status_code == 400:
+                    print(response.reason)
         except json.decoder.JSONDecodeError:
+            print('json decode error')
             retries += 1
             time.sleep(0.1)
+            continue
         except requests.exceptions.ConnectionError:
+            print('connection error')
             retries += 1
             time.sleep(0.1)
-        else:
-            print(parse)
+            continue
+        except requests.exceptions.StreamConsumedError:
+            print('stream consumed error')
+            retries += 1
+            time.sleep(0.1)
+            continue
+        except requests.exceptions.RequestException:
+            print('request exception')
+            retries += 1
+            time.sleep(0.1)
+            continue
+        except Exception as e:
+            print('generic exception: ' + str(e))
+            return None
+
+        if not parse is None:
             return(parse['data']['variant'])
-    return None
+        else:
+            return None
 
 
 def add_delta_one_assay(fvd, svd):
@@ -216,16 +242,22 @@ def add_deltas(full_variant_data, subset_variant_data):
     return full_variant_data
 
 
-def variant_set_to_variant_data(variants, full_dataset, subset_dataset):
+def variant_set_to_variant_data(variants, full_dataset, subset_dataset, reference_genome):
     variant_details = []
+    count = 0
     for this_variant in variants:
-        full_variant_data = fetch_data_for_one_variant(this_variant, full_dataset)
+        print(count)
+        if count == 20:
+            time.sleep(30)
+            count = 0
+        full_variant_data = fetch_data_for_one_variant(this_variant, full_dataset, reference_genome)
         if full_variant_data is not None:
-            subset_variant_data = fetch_data_for_one_variant(this_variant, subset_dataset)
+            subset_variant_data = fetch_data_for_one_variant(this_variant, subset_dataset, reference_genome)
             if subset_variant_data is not None:
                 full_variant_data = add_deltas(full_variant_data, subset_variant_data)
                 variant_details.append(full_variant_data)
-                time.sleep(0.01)
+                #time.sleep(0.01)
+        count += 2
     return(variant_details)
 
 
@@ -331,22 +363,25 @@ def main():
     #full_dataset = "gnomad_r2_1"
     full_dataset = "gnomad_r3"
     brca1_transcript ="ENST00000357654"
+    brca1_gene = "ENSG00000012048"
     brca2_transcript = "ENST00000544455"
+    brca2_gene = "ENSG00000139618"
+    reference_genome = "GRCh38"
     transcripts = (brca1_transcript, brca2_transcript)
 
     # organize brca1 request
-    brca1_exonic_variants = transcript_to_variants(brca1_transcript, non_topmed_dataset, "GRCh38")
-    brca1_intronic_variants = gene_to_region_variants("ENSG00000012048", non_topmed_dataset, "GRCh38")
+    brca1_exonic_variants = transcript_to_variants(brca1_transcript, non_topmed_dataset, reference_genome)
+    brca1_intronic_variants = gene_to_region_variants(brca1_gene, non_topmed_dataset, reference_genome)
     brca1_variants = brca1_intronic_variants | brca1_exonic_variants
 
     # organize brca2 request
-    brca2_exonic_variants = transcript_to_variants(brca2_transcript, non_topmed_dataset, "GRCh38")
-    brca2_intronic_variants = gene_to_region_variants("ENSG00000139618", non_topmed_dataset, "GRCh38")
+    brca2_exonic_variants = transcript_to_variants(brca2_transcript, non_topmed_dataset, reference_genome)
+    brca2_intronic_variants = gene_to_region_variants(brca2_gene, non_topmed_dataset, reference_genome)
     brca2_variants = brca2_intronic_variants | brca2_exonic_variants
 
     # combine requests and get brca1 and brca2 data from gnomAD
     brca12_variants = brca1_variants | brca2_variants
-    brca12_variant_data = variant_set_to_variant_data(brca12_variants, full_dataset, non_topmed_dataset)
+    brca12_variant_data = variant_set_to_variant_data(brca12_variants, full_dataset, non_topmed_dataset, reference_genome)
 
     # find hgvs, flatten, convert to dataframe, compute allele frequencies, and normalize
     variants_with_hgvs = find_correct_hgvs(brca12_variant_data, transcripts)

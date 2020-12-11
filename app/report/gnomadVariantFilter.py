@@ -67,6 +67,7 @@ def main():
             except:
                 pass
             deltaSum = ed + gd
+            print(deltaSum)
             inSubset.write('(' + str(c) + ',' + str(p) + ',' + str(r) + ',' + str(a)  + ')' + '\n')
 
     inSubset.close()

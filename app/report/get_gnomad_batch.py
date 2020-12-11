@@ -1,0 +1,108 @@
+#!/usr/bin/env python
+
+import requests
+import pprint
+from collections import defaultdict
+import argparse
+import sys
+
+prettyprint = pprint.PrettyPrinter(indent=2).pprint
+
+def fetch(jsondata, url="https://gnomad.broadinstitute.org/api"):
+    # The server gives a generic error message if the content type isn't
+    # explicitly set
+    headers = {"Content-Type": "application/json"}
+    response = requests.post(url, json=jsondata, headers=headers)
+    json = response.json()
+    if "errors" in json:
+        raise Exception(str(json["errors"]))
+    return json
+
+def get_variant_list(gene_symbol, dataset):
+    # Note that this is GraphQL, not JSON.
+    fmt_graphql = """
+    {
+        gene(gene_symbol: "%s", reference_genome: GRCh38) {
+          variants(dataset: %s) {
+            variant_id: variantId
+            exome {
+		ac
+		an
+		ac_hom
+	    }
+            genome {
+		ac
+		an
+		ac_hom
+	    }
+
+          }
+        }
+      }
+    """
+    # This part will be JSON encoded, but with the GraphQL part left as a
+    # glob of text.
+    req_variantlist = {
+        "query": fmt_graphql % (gene_symbol, dataset),
+        "variables": {}
+        }
+    response = fetch(req_variantlist)
+    return response["data"]["gene"]["variants"]
+
+def generate_variant_dict(gene_symbol, with_dataset, without_dataset):
+    theDict = defaultdict(dict)
+    with_list = get_variant_list(gene_symbol, with_dataset)
+    without_list = get_variant_list(gene_symbol, without_dataset)
+
+    all_list = with_list + without_list
+    for v in all_list:
+        theDict[v['variant_id']]['genome_ac_hom_with'] = 0
+        theDict[v['variant_id']]['genome_ac_hom_without'] = 0
+        theDict[v['variant_id']]['exome_ac_hom_with'] = 0
+        theDict[v['variant_id']]['exome_ac_hom_without'] = 0
+
+    # { 'exome': None, 'genome': {'ac': 2, 'ac_hom': 0, 'an': 80488}, 'variant_id': '17-43125258-G-A'}
+    for v in with_list:
+        #theDict[v['variant_id']] = dict()
+        if not v['genome'] is None:
+            theDict[v['variant_id']]['genome_ac_hom_with'] = v['genome']['ac_hom']
+        if not v['exome'] is None:
+            theDict[v['variant_id']]['exome_ac_hom_with'] = v['exome']['ac_hom']
+
+    for v in without_list:
+        #if v['variant_id'] not in theDict:
+        #    theDict[v['variant_id']] = dict()
+        if not v['genome'] is None:
+            theDict[v['variant_id']]['genome_ac_hom_without'] = v['genome']['ac_hom']
+        if not v['exome'] is None:
+            theDict[v['variant_id']]['exome_ac_hom_without'] = v['exome']['ac_hom']
+
+    for v in theDict:
+        theDict[v]['genome_ac_hom_delta'] = theDict[v]['genome_ac_hom_with'] - theDict[v]['genome_ac_hom_without']
+        theDict[v]['exome_ac_hom_delta'] = theDict[v]['exome_ac_hom_with'] - theDict[v]['exome_ac_hom_without']
+
+    return theDict
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-o', '--output', help='output tsv file result')
+    parser.add_argument('-g', '--gene', help='gene (brca1 or brca2)')
+    options = parser.parse_args()
+    return options
+
+
+def main():
+    geneName = parse_args().gene
+    outputFile = parse_args().output + '_' + geneName + '.tsv'
+    theDict = generate_variant_dict(geneName, "gnomad_r3", "gnomad_r3_non_topmed")
+    print('writing output to ' + outputFile)
+    with open(outputFile, 'w') as f:
+        f.write('variant' + '\t' + 'genome_ac_hom_delta' + '\t' + 'exome_ac_hom_delta' + '\n')
+        for v in theDict:
+            f.write(str(v) + '\t' + str(theDict[v]['genome_ac_hom_delta']) + '\t' + str(theDict[v]['exome_ac_hom_delta']))
+            f.write('\n')
+    f.close()
+
+
+if __name__ == "__main__":
+    main()
