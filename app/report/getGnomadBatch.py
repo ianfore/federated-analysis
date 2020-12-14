@@ -9,8 +9,7 @@ import sys
 prettyprint = pprint.PrettyPrinter(indent=2).pprint
 
 def fetch(jsondata, url="https://gnomad.broadinstitute.org/api"):
-    # The server gives a generic error message if the content type isn't
-    # explicitly set
+    # The server gives a generic error message if the content type isn't explicitly set
     headers = {"Content-Type": "application/json"}
     response = requests.post(url, json=jsondata, headers=headers)
     json = response.json()
@@ -40,8 +39,7 @@ def get_variant_list(gene_symbol, dataset):
         }
       }
     """
-    # This part will be JSON encoded, but with the GraphQL part left as a
-    # glob of text.
+    # This part will be JSON encoded, but with the GraphQL part left as a glob of text.
     req_variantlist = {
         "query": fmt_graphql % (gene_symbol, dataset),
         "variables": {}
@@ -60,26 +58,38 @@ def generate_variant_dict(gene_symbol, with_dataset, without_dataset):
         theDict[v['variant_id']]['genome_ac_hom_without'] = 0
         theDict[v['variant_id']]['exome_ac_hom_with'] = 0
         theDict[v['variant_id']]['exome_ac_hom_without'] = 0
+        theDict[v['variant_id']]['genome_ac_with'] = 0
+        theDict[v['variant_id']]['genome_ac_without'] = 0
+        theDict[v['variant_id']]['exome_ac_with'] = 0
+        theDict[v['variant_id']]['exome_ac_without'] = 0
+
 
     # { 'exome': None, 'genome': {'ac': 2, 'ac_hom': 0, 'an': 80488}, 'variant_id': '17-43125258-G-A'}
+
+    # construct dict of variants that ARE from topmed
     for v in with_list:
-        #theDict[v['variant_id']] = dict()
         if not v['genome'] is None:
             theDict[v['variant_id']]['genome_ac_hom_with'] = v['genome']['ac_hom']
+            theDict[v['variant_id']]['genome_ac_with'] = v['genome']['ac']
         if not v['exome'] is None:
             theDict[v['variant_id']]['exome_ac_hom_with'] = v['exome']['ac_hom']
+            theDict[v['variant_id']]['exome_ac_with'] = v['exome']['ac']
 
+    # construct dict of variants that are NOT from topmed
     for v in without_list:
-        #if v['variant_id'] not in theDict:
-        #    theDict[v['variant_id']] = dict()
         if not v['genome'] is None:
             theDict[v['variant_id']]['genome_ac_hom_without'] = v['genome']['ac_hom']
+            theDict[v['variant_id']]['genome_ac_without'] = v['genome']['ac']
         if not v['exome'] is None:
             theDict[v['variant_id']]['exome_ac_hom_without'] = v['exome']['ac_hom']
+            theDict[v['variant_id']]['exome_ac_without'] = v['exome']['ac']
 
+    # construct delta of counts per variant
     for v in theDict:
         theDict[v]['genome_ac_hom_delta'] = theDict[v]['genome_ac_hom_with'] - theDict[v]['genome_ac_hom_without']
         theDict[v]['exome_ac_hom_delta'] = theDict[v]['exome_ac_hom_with'] - theDict[v]['exome_ac_hom_without']
+        theDict[v]['genome_ac_delta'] = theDict[v]['genome_ac_with'] - theDict[v]['genome_ac_without']
+        theDict[v]['exome_ac_delta'] = theDict[v]['exome_ac_with'] - theDict[v]['exome_ac_without']
 
     return theDict
 
@@ -95,14 +105,22 @@ def main():
     geneName = parse_args().gene
     outputFile = parse_args().output + '_' + geneName + '.tsv'
     theDict = generate_variant_dict(geneName, "gnomad_r3", "gnomad_r3_non_topmed")
-    print('writing output to ' + outputFile)
+    print('writing output')
     with open(outputFile, 'w') as f:
-        f.write('variant' + '\t' + 'genome_ac_hom_delta' + '\t' + 'exome_ac_hom_delta' + '\n')
+        f.write('variant' + '\t' +
+                'genome_ac_hom_delta' + '\t' +
+                'exome_ac_hom_delta' +
+                'genome_ac_delta' + '\t' +
+                'exome_ac_delta')
+        f.write('\n')
         for v in theDict:
-            f.write(str(v) + '\t' + str(theDict[v]['genome_ac_hom_delta']) + '\t' + str(theDict[v]['exome_ac_hom_delta']))
+            f.write(str(v) + '\t' +
+                    str(theDict[v]['genome_ac_hom_delta']) + '\t' +
+                    str(theDict[v]['exome_ac_hom_delta']) + '\t' +
+                    str(theDict[v]['genome_ac_delta']) + '\t' +
+                    str(theDict[v]['exome_ac_delta']))
             f.write('\n')
     f.close()
-
 
 if __name__ == "__main__":
     main()
