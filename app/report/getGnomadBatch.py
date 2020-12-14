@@ -17,11 +17,11 @@ def fetch(jsondata, url="https://gnomad.broadinstitute.org/api"):
         raise Exception(str(json["errors"]))
     return json
 
-def get_variant_list(gene_symbol, dataset):
+def get_variant_list(gene_symbol, dataset, reference):
     # Note that this is GraphQL, not JSON.
     fmt_graphql = """
     {
-        gene(gene_symbol: "%s", reference_genome: GRCh38) {
+        gene(gene_symbol: "%s", reference_genome: %s) {
           variants(dataset: %s) {
             variant_id: variantId
             exome {
@@ -41,16 +41,16 @@ def get_variant_list(gene_symbol, dataset):
     """
     # This part will be JSON encoded, but with the GraphQL part left as a glob of text.
     req_variantlist = {
-        "query": fmt_graphql % (gene_symbol, dataset),
+        "query": fmt_graphql % (gene_symbol, reference, dataset),
         "variables": {}
         }
     response = fetch(req_variantlist)
     return response["data"]["gene"]["variants"]
 
-def generate_variant_dict(gene_symbol, with_dataset, without_dataset):
+def generate_variant_dict(gene_symbol, with_dataset, without_dataset, reference):
     theDict = defaultdict(dict)
-    with_topmed_list = get_variant_list(gene_symbol, with_dataset)
-    without_topmed_list = get_variant_list(gene_symbol, without_dataset)
+    with_topmed_list = get_variant_list(gene_symbol, with_dataset, reference)
+    without_topmed_list = get_variant_list(gene_symbol, without_dataset, reference)
 
     all_list = with_topmed_list + without_topmed_list
     for v in all_list:
@@ -103,14 +103,19 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-o', '--output', help='output tsv file result')
     parser.add_argument('-g', '--gene', help='gene (brca1 or brca2)')
+    parser.add_argument('-v', '--version', help='gnomad version (r2_1 or r3)')
+    parser.add_argument('-r', '--reference', help='hg reference (GRCh37 or GRCh38)')
     options = parser.parse_args()
     return options
 
 
 def main():
     geneName = parse_args().gene
-    outputFile = parse_args().output + '_' + geneName + '.tsv'
-    theDict = generate_variant_dict(geneName, "gnomad_r3", "gnomad_r3_non_topmed")
+    version = parse_args().version
+    reference = str(parse_args().reference)
+    outputFile = parse_args().output + '_' + geneName + '_' + version + '_' + reference + '.tsv'
+    dataset = "gnomad_" + version
+    theDict = generate_variant_dict(geneName, dataset, dataset + "_non_topmed", reference)
     print('writing output')
     with open(outputFile, 'w') as f:
         f.write('variant' + '\t' +
