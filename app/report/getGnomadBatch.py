@@ -49,25 +49,25 @@ def get_variant_list(gene_symbol, dataset):
 
 def generate_variant_dict(gene_symbol, with_dataset, without_dataset):
     theDict = defaultdict(dict)
-    with_list = get_variant_list(gene_symbol, with_dataset)
-    without_list = get_variant_list(gene_symbol, without_dataset)
+    with_topmed_list = get_variant_list(gene_symbol, with_dataset)
+    without_topmed_list = get_variant_list(gene_symbol, without_dataset)
 
-    all_list = with_list + without_list
+    all_list = with_topmed_list + without_topmed_list
     for v in all_list:
-        theDict[v['variant_id']]['genome_ac_hom_with'] = 0
-        theDict[v['variant_id']]['genome_ac_hom_without'] = 0
-        theDict[v['variant_id']]['exome_ac_hom_with'] = 0
-        theDict[v['variant_id']]['exome_ac_hom_without'] = 0
-        theDict[v['variant_id']]['genome_ac_with'] = 0
-        theDict[v['variant_id']]['genome_ac_without'] = 0
-        theDict[v['variant_id']]['exome_ac_with'] = 0
-        theDict[v['variant_id']]['exome_ac_without'] = 0
+        theDict[v['variant_id']]['genome_ac_hom_with'] = '-'
+        theDict[v['variant_id']]['genome_ac_hom_without'] = '-'
+        theDict[v['variant_id']]['exome_ac_hom_with'] = '-'
+        theDict[v['variant_id']]['exome_ac_hom_without'] = '-'
+        theDict[v['variant_id']]['genome_ac_with'] = '-'
+        theDict[v['variant_id']]['genome_ac_without'] = '-'
+        theDict[v['variant_id']]['exome_ac_with'] = '-'
+        theDict[v['variant_id']]['exome_ac_without'] = '-'
 
 
     # { 'exome': None, 'genome': {'ac': 2, 'ac_hom': 0, 'an': 80488}, 'variant_id': '17-43125258-G-A'}
 
     # construct dict of variants that ARE from topmed
-    for v in with_list:
+    for v in with_topmed_list:
         if not v['genome'] is None:
             theDict[v['variant_id']]['genome_ac_hom_with'] = v['genome']['ac_hom']
             theDict[v['variant_id']]['genome_ac_with'] = v['genome']['ac']
@@ -76,7 +76,7 @@ def generate_variant_dict(gene_symbol, with_dataset, without_dataset):
             theDict[v['variant_id']]['exome_ac_with'] = v['exome']['ac']
 
     # construct dict of variants that are NOT from topmed
-    for v in without_list:
+    for v in without_topmed_list:
         if not v['genome'] is None:
             theDict[v['variant_id']]['genome_ac_hom_without'] = v['genome']['ac_hom']
             theDict[v['variant_id']]['genome_ac_without'] = v['genome']['ac']
@@ -86,12 +86,18 @@ def generate_variant_dict(gene_symbol, with_dataset, without_dataset):
 
     # construct delta of counts per variant
     for v in theDict:
-        theDict[v]['genome_ac_hom_delta'] = theDict[v]['genome_ac_hom_with'] - theDict[v]['genome_ac_hom_without']
-        theDict[v]['exome_ac_hom_delta'] = theDict[v]['exome_ac_hom_with'] - theDict[v]['exome_ac_hom_without']
-        theDict[v]['genome_ac_delta'] = theDict[v]['genome_ac_with'] - theDict[v]['genome_ac_without']
-        theDict[v]['exome_ac_delta'] = theDict[v]['exome_ac_with'] - theDict[v]['exome_ac_without']
+        theDict[v]['genome_ac_hom_delta'] = get_delta(theDict[v], 'genome_ac_hom_with', 'genome_ac_hom_without')
+        theDict[v]['exome_ac_hom_delta'] = get_delta(theDict[v], 'exome_ac_hom_with', 'exome_ac_hom_without')
+        theDict[v]['genome_ac_delta'] = get_delta(theDict[v], 'genome_ac_with', 'genome_ac_without')
+        theDict[v]['exome_ac_delta'] = get_delta(theDict[v], 'exome_ac_with', 'exome_ac_without')
 
     return theDict
+
+def get_delta(d, k1, k2):
+    try:
+        return d[k1] - d[k2]
+    except:
+        return '-'
 
 def parse_args():
     parser = argparse.ArgumentParser()
