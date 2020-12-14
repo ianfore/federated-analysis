@@ -109,7 +109,7 @@ def main():
     with open(outputFile, 'w') as f:
         f.write('variant' + '\t' +
                 'genome_ac_hom_delta' + '\t' +
-                'exome_ac_hom_delta' +
+                'exome_ac_hom_delta' + '\t'
                 'genome_ac_delta' + '\t' +
                 'exome_ac_delta')
         f.write('\n')
