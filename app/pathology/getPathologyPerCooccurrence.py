@@ -73,8 +73,10 @@ def main():
                 pathologyPerHomoIndividual[pv].append(pathologies)
 
     pathologyPerAllIndividuals = dict()
-    pathologyPerAllIndividuals.update(pathologyPerHomoIndividual)
-    pathologyPerAllIndividuals.update(pathologyPerCoocIndividual)
+    #pathologyPerAllIndividuals.update(pathologyPerHomoIndividual)
+    #pathologyPerAllIndividuals.update(pathologyPerCoocIndividual)
+    pathologyPerAllIndividuals['homozygous'] = pathologyPerHomoIndividual
+    pathologyPerAllIndividuals['cooccurring'] = pathologyPerCoocIndividual
 
     json_dump = json.dumps(pathologyPerAllIndividuals, indent=4, sort_keys=True)
     with open(outputFile, 'w') as f:
