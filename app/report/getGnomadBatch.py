@@ -119,13 +119,22 @@ def main():
     print('writing output')
     with open(outputFile, 'w') as f:
         f.write('variant' + '\t' +
+                'chrom' + '\t' +
+                'pos' + '\t' +
+                'ref' + '\t' +
+                'alt' + '\t' +
                 'genome_ac_hom_delta' + '\t' +
                 'exome_ac_hom_delta' + '\t'
                 'genome_ac_delta' + '\t' +
                 'exome_ac_delta')
         f.write('\n')
         for v in theDict:
+            varArray = v.split('-')
             f.write(str(v) + '\t' +
+                    str(varArray[0]) + '\t' +
+                    str(varArray[1]) + '\t' +
+                    str(varArray[2]) + '\t' +
+                    str(varArray[3]) + '\t' +
                     str(theDict[v]['genome_ac_hom_delta']) + '\t' +
                     str(theDict[v]['exome_ac_hom_delta']) + '\t' +
                     str(theDict[v]['genome_ac_delta']) + '\t' +

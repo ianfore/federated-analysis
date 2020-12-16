@@ -19,8 +19,8 @@ their sum.'''
 
 
 def main():
-    if len(sys.argv) != 6:
-        print('vcf-input brca-input mc-file notinsubset-file inubset-file')
+    if len(sys.argv) != 7:
+        print('vcf-input brca-input mc-file notinsubset-file inubset-file hg-version')
         sys.exit(1)
 
     vcfFileName = sys.argv[1]
@@ -28,6 +28,7 @@ def main():
     mcFileName = sys.argv[3]
     notInSubsetFileName = sys.argv[4]
     inSubsetFileName = sys.argv[5]
+    inputHG = sys.argv[6]
 
     logger.info('finding variants from ' + brcaFileName)
     brcaDF = findVariantsInBRCA(brcaFileName)
@@ -49,10 +50,10 @@ def main():
         p = int(vcf['variants/POS'][variant])
         r = str(vcf['variants/REF'][variant])
         a = str(vcf['variants/ALT'][variant][0])
-        logger.debug((c,p,r,a))
+        #logger.debug((c,p,r,a))
         #if not checkGnomad(brcaDF, (c,p,r,a), 38, keyStrings):
         #    f.write('chr' + str(c) + '\t' + str(p) + '\t' + str(r) + '\t' + str(a) + '\n')
-        exomeDelta, genomeDelta, hg37 = checkMelissaTable((c,p,r,a), mcDF, brcaDF)
+        exomeDelta, genomeDelta, hg = checkMelissaTable((c,p,r,a), mcDF, brcaDF, inputHG)
         if exomeDelta in effectivelyZeroValues and genomeDelta in effectivelyZeroValues:
             notInSubset.write('(' + str(c) + ',' + str(p) + ',' + str(r) + ',' + str(a)  + ')' + '\n')
         else:
@@ -61,19 +62,24 @@ def main():
             try:
                 ed = float(exomeDelta)
             except:
+                logger.error('couldnt convert exomedelta to float')
                 pass
             try:
                 gd = float(genomeDelta)
             except:
+                logger.error('couldnt convert genomedelta to float')
                 pass
             deltaSum = ed + gd
-            print(deltaSum)
-            inSubset.write('(' + str(c) + ',' + str(p) + ',' + str(r) + ',' + str(a)  + ')' + '\n')
+            logger.debug(deltaSum)
+            if deltaSum in effectivelyZeroValues:
+                notInSubset.write('(' + str(c) + ',' + str(p) + ',' + str(r) + ',' + str(a) + ')' + '\n')
+            else:
+                inSubset.write('(' + str(c) + ',' + str(p) + ',' + str(r) + ',' + str(a)  + ')' + '\n')
 
     inSubset.close()
     notInSubset.close()
 
-def checkMelissaTable(variant, mcDF, brcaDF):
+def checkMelissaTable(variant, mcDF, brcaDF, inputHG):
     chrom = variant[0]
     pos = variant[1]
     ref = variant[2]
@@ -82,15 +88,15 @@ def checkMelissaTable(variant, mcDF, brcaDF):
     row = brcaDF[brcaDF[coordinateColumnBase + str(hgVersion)] == hgString]
     if len(row) == 0:
         return None, None, 0
-    coord = str(row['Genomic_Coordinate_hg37'])
-    pos_37 = int(coord.split(':')[1].split('.')[1])
-    row = mcDF[(mcDF['chrom'] == str(chrom)) & (mcDF['pos'] == str(pos_37)) & (mcDF['ref'] == ref) & (mcDF['alt'] == alt)]
+    coord = str(row[coordinateColumnBase + str(inputHG)])
+    posIn = int(coord.split(':')[1].split('.')[1])
+    row = mcDF[(mcDF['chrom'] == str(chrom)) & (mcDF['pos'] == str(posIn)) & (mcDF['ref'] == ref) & (mcDF['alt'] == alt)]
     if len(row) == 0:
-        return None, None, pos_37
+        return None, None, posIn
     exomeDelta = row['exome_ac_hom_delta'].iloc[0]
     genomeDelta = row['genome_ac_hom_delta'].iloc[0]
 
-    return exomeDelta, genomeDelta, pos_37
+    return exomeDelta, genomeDelta, posIn
 
 
 
