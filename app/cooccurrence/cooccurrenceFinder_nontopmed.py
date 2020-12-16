@@ -280,6 +280,8 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
                 aao = row['Age at onset'].tolist()
                 if aao:
                     pathologies['Age at onset'] = aao[0]
+                else:
+                    pathologies['Age at onset'] = 0.0
                 pathologies['Ovarian cancer history'] = row['Ovarian cancer history'].tolist()
                 pathologies['Bilateral breast cancer'] = row['Bilateral breast cancer'].tolist()
                 pathologies['Tissue type (3 groups)'] = row['Tissue type (3 groups)'].tolist()
@@ -300,9 +302,10 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
         for hi in homozygousIndividuals:
             hiInt = int(hi)
             row = pathologyDF.loc[pathologyDF['ID'] == hiInt]
-            try:
-                row['Age at onset'].tolist()[0]
-            except Exception as e:
+            aao = row['Age at onset'].tolist()
+            if aao:
+                pathologies['Age at onset'] = aao[0]
+            else:
                 pathologies['Age at onset'] = 0.0
             pathologies['Ovarian cancer history'] = row['Ovarian cancer history'].tolist()
             pathologies['Bilateral breast cancer'] = row['Bilateral breast cancer'].tolist()
@@ -317,8 +320,10 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
             pathologyPerHomoIndividual[variant].append(pathologies)
 
     pathologyPerAllIndividuals = dict()
-    pathologyPerAllIndividuals.update(pathologyPerHomoIndividual)
-    pathologyPerAllIndividuals.update(pathologyPerCoocIndividual)
+    #pathologyPerAllIndividuals.update(pathologyPerHomoIndividual)
+    #pathologyPerAllIndividuals.update(pathologyPerCoocIndividual)
+    pathologyPerAllIndividuals['homozygous'] = pathologyPerHomoIndividual
+    pathologyPerAllIndividuals['cooccurring'] = pathologyPerCoocIndividual
 
     json_dump = json.dumps(pathologyPerAllIndividuals, indent=4, sort_keys=True)
     with open(intersectFile, 'w') as f:

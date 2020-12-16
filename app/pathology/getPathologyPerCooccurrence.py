@@ -35,6 +35,8 @@ def main():
                 aao = row['Age at onset'].tolist()
                 if aao:
                     pathologies['Age at onset'] = aao[0]
+                else:
+                    pathologies['Age at onset'] = 0.0
                 pathologies['Ovarian cancer history'] = row['Ovarian cancer history'].tolist()
                 pathologies['Bilateral breast cancer'] = row['Bilateral breast cancer'].tolist()
                 pathologies['Tissue type (3 groups)'] = row['Tissue type (3 groups)'].tolist()
@@ -60,6 +62,8 @@ def main():
                 aao = row['Age at onset'].tolist()
                 if aao:
                     pathologies['Age at onset'] = aao[0]
+                else:
+                    pathologies['Age at onset'] = 0.0
                 pathologies['Ovarian cancer history'] = row['Ovarian cancer history'].tolist()
                 pathologies['Bilateral breast cancer'] = row['Bilateral breast cancer'].tolist()
                 pathologies['Tissue type (3 groups)'] = row['Tissue type (3 groups)'].tolist()
@@ -78,10 +82,10 @@ def main():
     pathologyPerAllIndividuals['homozygous'] = pathologyPerHomoIndividual
     pathologyPerAllIndividuals['cooccurring'] = pathologyPerCoocIndividual
 
-    json_dump = json.dumps(pathologyPerAllIndividuals, indent=4, sort_keys=True)
+    '''json_dump = json.dumps(pathologyPerAllIndividuals, sort_keys=True)
     with open(outputFile, 'w') as f:
         f.write(json_dump)
-    f.close()
+    f.close()'''
 
 if __name__ == "__main__":
     main()
