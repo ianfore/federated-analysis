@@ -21,18 +21,15 @@ their sum.'''
 
 def main():
     if len(sys.argv) != 7:
-        print('vcf-input brca-input mc-file notinsubset-file inubset-file hg-version')
+        print('vcf-input mc-file notinsubset-file inubset-file vcf-hgversion gnomad-hgversion')
         sys.exit(1)
 
     vcfFileName = sys.argv[1]
-    brcaFileName = sys.argv[2]
-    mcFileName = sys.argv[3]
-    notInSubsetFileName = sys.argv[4]
-    inSubsetFileName = sys.argv[5]
-    inputHG = sys.argv[6]
-
-    logger.info('finding variants from ' + brcaFileName)
-    brcaDF = findVariantsInBRCA(brcaFileName)
+    mcFileName = sys.argv[2]
+    notInSubsetFileName = sys.argv[3]
+    inSubsetFileName = sys.argv[4]
+    vcfHG = sys.argv[5]
+    gnomadHG = sys.argv[6]
 
     logger.info('finding variants from ' + mcFileName)
     mcDF = pd.read_csv(mcFileName, delimiter='\t', header=0, dtype=str)
@@ -44,7 +41,7 @@ def main():
 
     effectivelyZeroValues = ['0', '0.0', '-', None]
 
-    lo = LiftOver('hg38', 'hg19')
+    lo = LiftOver(vcfHG, gnomadHG)
 
     notInSubset = open(notInSubsetFileName, 'w')
     inSubset = open(inSubsetFileName, 'w')
@@ -53,10 +50,8 @@ def main():
         p = int(vcf['variants/POS'][variant])
         r = str(vcf['variants/REF'][variant])
         a = str(vcf['variants/ALT'][variant][0])
-        #logger.debug((c,p,r,a))
-        #if not checkGnomad(brcaDF, (c,p,r,a), 38, keyStrings):
-        #    f.write('chr' + str(c) + '\t' + str(p) + '\t' + str(r) + '\t' + str(a) + '\n')
-        exomeDelta, genomeDelta, hg = checkMelissaTable((c,p,r,a), mcDF, brcaDF, inputHG, lo)
+
+        exomeDelta, genomeDelta, hg = checkMelissaTable((c,p,r,a), mcDF, lo)
         if exomeDelta in effectivelyZeroValues and genomeDelta in effectivelyZeroValues:
             notInSubset.write('(' + str(c) + ',' + str(p) + ',' + str(r) + ',' + str(a)  + ')' + '\n')
         else:
@@ -82,17 +77,12 @@ def main():
     inSubset.close()
     notInSubset.close()
 
-def checkMelissaTable(variant, mcDF, brcaDF, inputHG, lo):
+def checkMelissaTable(variant, mcDF, lo):
     chrom = variant[0]
     pos = variant[1]
     ref = variant[2]
     alt = variant[3]
-    '''hgString = 'chr' + str(chrom) + ':g.' + str(pos) + ':' + str(ref) + '>' + str(alt)
-    row = brcaDF[brcaDF[coordinateColumnBase + str(hgVersion)] == hgString]
-    if len(row) == 0:
-        return None, None, 0
-    coord = str(row[coordinateColumnBase + str(inputHG)])
-    posIn = int(coord.split(':')[1].split('.')[1])'''
+
     coord = lo.convert_coordinate('chr' + str(chrom), int(pos))
     if coord is None or len(coord) != 1:
         return None, None, None
