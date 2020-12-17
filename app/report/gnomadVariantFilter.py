@@ -18,6 +18,7 @@ logger.setLevel(logging.DEBUG)
 homozygous observations in gnomAD that came from topmed for the genome and exome data respectively. Take
 their sum.'''
 
+# vcf-hgversion and gnomad-hgversion must of the form hg38, hg19, ...
 
 def main():
     if len(sys.argv) != 7:
