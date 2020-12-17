@@ -15,6 +15,7 @@ from multiprocessing import Process, Queue, cpu_count
 logger = logging.getLogger()
 defaultLogLevel = "DEBUG"
 
+# you must define the PYENSEMBL_CACHE_DIR before importing the pyensembl module
 logger.info('setting pyensembl dir to /var/tmp/pyensembl-cache')
 os.environ['PYENSEMBL_CACHE_DIR'] = '/var/tmp/pyensembl-cache'
 import pyensembl

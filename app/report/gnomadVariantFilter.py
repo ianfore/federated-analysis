@@ -4,6 +4,7 @@ import pandas as pd
 import logging
 import time
 import json
+from pyliftover import LiftOver
 
 coordinateColumnBase = 'Genomic_Coordinate_hg'
 hgVersion = 38
@@ -43,6 +44,8 @@ def main():
 
     effectivelyZeroValues = ['0', '0.0', '-', None]
 
+    lo = LiftOver('hg38', 'hg19')
+
     notInSubset = open(notInSubsetFileName, 'w')
     inSubset = open(inSubsetFileName, 'w')
     for variant in range(len(vcf['calldata/GT'])):
@@ -53,7 +56,7 @@ def main():
         #logger.debug((c,p,r,a))
         #if not checkGnomad(brcaDF, (c,p,r,a), 38, keyStrings):
         #    f.write('chr' + str(c) + '\t' + str(p) + '\t' + str(r) + '\t' + str(a) + '\n')
-        exomeDelta, genomeDelta, hg = checkMelissaTable((c,p,r,a), mcDF, brcaDF, inputHG)
+        exomeDelta, genomeDelta, hg = checkMelissaTable((c,p,r,a), mcDF, brcaDF, inputHG, lo)
         if exomeDelta in effectivelyZeroValues and genomeDelta in effectivelyZeroValues:
             notInSubset.write('(' + str(c) + ',' + str(p) + ',' + str(r) + ',' + str(a)  + ')' + '\n')
         else:
@@ -79,17 +82,24 @@ def main():
     inSubset.close()
     notInSubset.close()
 
-def checkMelissaTable(variant, mcDF, brcaDF, inputHG):
+def checkMelissaTable(variant, mcDF, brcaDF, inputHG, lo):
     chrom = variant[0]
     pos = variant[1]
     ref = variant[2]
     alt = variant[3]
-    hgString = 'chr' + str(chrom) + ':g.' + str(pos) + ':' + str(ref) + '>' + str(alt)
+    '''hgString = 'chr' + str(chrom) + ':g.' + str(pos) + ':' + str(ref) + '>' + str(alt)
     row = brcaDF[brcaDF[coordinateColumnBase + str(hgVersion)] == hgString]
     if len(row) == 0:
         return None, None, 0
     coord = str(row[coordinateColumnBase + str(inputHG)])
-    posIn = int(coord.split(':')[1].split('.')[1])
+    posIn = int(coord.split(':')[1].split('.')[1])'''
+    coord = lo.convert_coordinate('chr' + str(chrom), int(pos))
+    if coord is None or len(coord) != 1:
+        return None, None, None
+    try:
+        posIn = int(coord[0][1])
+    except Exception as e:
+        return None, None, posIn
     row = mcDF[(mcDF['chrom'] == str(chrom)) & (mcDF['pos'] == str(posIn)) & (mcDF['ref'] == ref) & (mcDF['alt'] == alt)]
     if len(row) == 0:
         return None, None, posIn

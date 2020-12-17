@@ -144,3 +144,97 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# exonic variants? for brca2
+# sometimes both exome and genome are not null, sometimes just exome is null, sometimes just genome is null, never both null
+# ENST00000357654 for brca1
+'''{
+        transcript(transcript_id: "ENST00000544455", reference_genome: GRCh37) {
+          variants(dataset: gnomad_r2_1_non_topmed) {
+            variant_id: variantId
+       			exome {
+							ac
+							an
+							ac_hom
+	    			}
+            genome {
+							ac
+							an
+							ac_hom
+	    			}
+          }                                                                     
+        }                                                                       
+  }  '''
+
+'''{
+        transcript(transcript_id: "ENST00000357654", reference_genome: GRCh37) {
+          variants(dataset: gnomad_r2_1) {
+            variant_id: variantId
+       			exome {
+                        ac
+                        an
+                        ac_hom
+
+                       filters
+                            populations {
+                            id
+                            ac
+                            an
+                            ac_hom
+                       }                 
+                    }
+                    genome {
+                        ac
+                        an
+                        ac_hom
+                       filters
+                            populations {
+                            id
+                            ac
+                            an
+                            ac_hom
+                       }                 
+                    }
+          }                                                                     
+        }                                                                       
+  }   '''
+
+'''{
+        transcript(transcript_id: "ENST00000357654", reference_genome: GRCh37) {
+          variants(dataset: gnomad_r2_1) {
+            variant_id: variantId
+      			... on Variant {
+                        flags
+                        transcript_consequence {
+                            transcript_id
+                            hgvsc
+                        }
+                    }
+       			exome {
+                        ac
+                        an
+                        ac_hom
+
+                       filters
+                            populations {
+                            id
+                            ac
+                            an
+                            ac_hom
+                       }                 
+                    }
+                    genome {
+                        ac
+                        an
+                        ac_hom
+                       filters
+                            populations {
+                            id
+                            ac
+                            an
+                            ac_hom
+                       }                 
+                    }
+          }                                                                     
+        }                                                                       
+  }  '''

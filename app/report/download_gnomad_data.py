@@ -76,6 +76,7 @@ def coords_to_variants(chrom, start, stop, dataset_id, reference_genome):
             region(chrom: $chrom, start: $start, stop: $stop, reference_genome: GRCh38) {
                 variants(dataset: $dataset_id) {
                    variantId
+                   
                 }
             }
          }
@@ -207,6 +208,7 @@ def fetch_data_for_one_variant(variant_id, dataset, reference_genome, max_retrie
             print('generic exception: ' + str(e))
             return None
 
+        print(parse)
         if not parse is None:
             return(parse['data']['variant'])
         else:
@@ -244,12 +246,8 @@ def add_deltas(full_variant_data, subset_variant_data):
 
 def variant_set_to_variant_data(variants, full_dataset, subset_dataset, reference_genome):
     variant_details = []
-    count = 0
     for this_variant in variants:
-        print(count)
-        if count == 20:
-            time.sleep(30)
-            count = 0
+        time.sleep(0.5)
         full_variant_data = fetch_data_for_one_variant(this_variant, full_dataset, reference_genome)
         if full_variant_data is not None:
             subset_variant_data = fetch_data_for_one_variant(this_variant, subset_dataset, reference_genome)
@@ -257,7 +255,7 @@ def variant_set_to_variant_data(variants, full_dataset, subset_dataset, referenc
                 full_variant_data = add_deltas(full_variant_data, subset_variant_data)
                 variant_details.append(full_variant_data)
                 #time.sleep(0.01)
-        count += 2
+        print(full_variant_data)
     return(variant_details)
 
 
