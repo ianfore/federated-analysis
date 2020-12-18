@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# !/usr/bin/env python
 import requests
 import json
 import time
@@ -18,15 +18,17 @@ def fetch(jsondata, url="https://gnomad.broadinstitute.org/api"):
         raise Exception(str(json["errors"]))
     return json
 
+
 def unique_variant_set(variant_list_of_dicts):
-    """ 
-    Given a list of dicts, for which the items are variant IDs (as returned by the gnomAD API), 
+    """
+    Given a list of dicts, for which the items are variant IDs (as returned by the gnomAD API),
     generate a set of unique set of variant IDs
     """
     variant_set = set()
     for item in variant_list_of_dicts:
         variant_set.add(list(item.values())[0])
     return variant_set
+
 
 def transcript_to_variants(transcript_id, dataset, reference_genome):
     """
@@ -50,9 +52,10 @@ def transcript_to_variants(transcript_id, dataset, reference_genome):
     response = fetch(req_variantlist)
     return unique_variant_set(response["data"]["transcript"]["variants"])
 
+
 def gene_to_coords(gene_id, reference_genome):
-    """                                                                         
-    Given a gene symbol, return the coordinates.                                
+    """
+    Given a gene symbol, return the coordinates.
     """
     graphql_query = """                                                         
     {                                                                           
@@ -69,6 +72,7 @@ def gene_to_coords(gene_id, reference_genome):
     response = fetch(graphql_request)
     return response["data"]["gene"]
 
+
 def coords_to_variants(chrom, start, stop, dataset_id, reference_genome):
     region_query = """
         query GnomadRegion($chrom: String!, $start: Int!, $stop: Int!, 
@@ -76,7 +80,7 @@ def coords_to_variants(chrom, start, stop, dataset_id, reference_genome):
             region(chrom: $chrom, start: $start, stop: $stop, reference_genome: GRCh38) {
                 variants(dataset: $dataset_id) {
                    variantId
-                   
+
                 }
             }
          }
@@ -87,11 +91,11 @@ def coords_to_variants(chrom, start, stop, dataset_id, reference_genome):
         "stop": stop,
         "dataset_id": dataset_id,
         "reference_genome": reference_genome
-        }
-    headers = { "content-type": "application/json" }
+    }
+    headers = {"content-type": "application/json"}
     response = requests.post(
         'http://gnomad.broadinstitute.org/api',
-        json={ "query": region_query, "variables": region_variables },
+        json={"query": region_query, "variables": region_variables},
         headers=headers)
     try:
         parse = json.loads(response.text)
@@ -100,7 +104,8 @@ def coords_to_variants(chrom, start, stop, dataset_id, reference_genome):
         print('json decode error')
         return None
 
-    return(unique_variant_set(variants))
+    return (unique_variant_set(variants))
+
 
 def gene_to_region_variants(gene_id, dataset_id, reference_genome):
     """
@@ -110,7 +115,8 @@ def gene_to_region_variants(gene_id, dataset_id, reference_genome):
     coords = gene_to_coords(gene_id, reference_genome)
     variantList = coords_to_variants(coords["chrom"], coords["start"],
                                      coords["stop"], dataset_id, reference_genome)
-    return(set(variantList))
+    return (set(variantList))
+
 
 def fetch_data_for_one_variant(variant_id, dataset, reference_genome, max_retries=5):
     variant_detail_query = """
@@ -162,7 +168,7 @@ def fetch_data_for_one_variant(variant_id, dataset, reference_genome, max_retrie
                     }
                 }
              }"""
-    headers = { "content-type": "application/json" }
+    headers = {"content-type": "application/json"}
     print("Fetching", variant_id)
     variant_detail_variables = {
         "variantId": variant_id,
@@ -175,12 +181,12 @@ def fetch_data_for_one_variant(variant_id, dataset, reference_genome, max_retrie
         try:
             # https://stackoverflow.com/questions/49064398/requests-exceptions-chunkedencodingerror-connection-broken-incompleteread0
             with requests.post(
-                'http://gnomad.broadinstitute.org/api',
-                json={
-                    "query": variant_detail_query,
-                    "variables": variant_detail_variables
-                },
-                headers=headers) as response:
+                    'http://gnomad.broadinstitute.org/api',
+                    json={
+                        "query": variant_detail_query,
+                        "variables": variant_detail_variables
+                    },
+                    headers=headers) as response:
                 parse = json.loads(response.text)
                 if response.status_code == 400:
                     print(response.reason)
@@ -210,7 +216,7 @@ def fetch_data_for_one_variant(variant_id, dataset, reference_genome, max_retrie
 
         print(parse)
         if not parse is None:
-            return(parse['data']['variant'])
+            return (parse['data']['variant'])
         else:
             return None
 
@@ -222,7 +228,7 @@ def add_delta_one_assay(fvd, svd):
             fvd["an_delta"] = fvd["an"] - svd["an"]
             fvd["ac_hom_delta"] = fvd["ac_hom"] - svd["ac_hom"]
             if "populations" in fvd:
-                for counter  in range(0, len(fvd["populations"])):
+                for counter in range(0, len(fvd["populations"])):
                     full_pop = fvd["populations"][counter]
                     subset_pop = svd["populations"][counter]
                     full_pop = add_delta_one_assay(full_pop, subset_pop)
@@ -231,10 +237,11 @@ def add_delta_one_assay(fvd, svd):
             fvd["an_delta"] = 0
             fvd["ac_hom_delta"] = 0
             if "populations" in fvd:
-                for counter  in range(0, len(fvd["populations"])):
+                for counter in range(0, len(fvd["populations"])):
                     full_pop = fvd["populations"][counter]
                     full_pop = add_delta_one_assay(full_pop, None)
     return fvd
+
 
 def add_deltas(full_variant_data, subset_variant_data):
     if "exome" in full_variant_data:
@@ -254,19 +261,24 @@ def variant_set_to_variant_data(variants, full_dataset, subset_dataset, referenc
             if subset_variant_data is not None:
                 full_variant_data = add_deltas(full_variant_data, subset_variant_data)
                 variant_details.append(full_variant_data)
-                #time.sleep(0.01)
+                # time.sleep(0.01)
         print(full_variant_data)
-    return(variant_details)
+    return (variant_details)
 
 
 def compile_allele_values(df):
-    populations = ['AFR', 'AFR_FEMALE', 'AFR_MALE', 'AMR', 'AMR_FEMALE', 'AMR_MALE', 'ASJ', 'ASJ_FEMALE', 'ASJ_MALE', 'EAS',
-                   'EAS_JPN', 'EAS_KOR', 'EAS_OEA', 'EAS_FEMALE', 'EAS_MALE', 'FIN', 'FIN_FEMALE', 'FIN_MALE', 'NFE', 'NFE_BGR',
-                   'NFE_EST', 'NFE_NWE', 'NFE_ONF', 'NFE_SEU', 'NFE_SWE', 'NFE_FEMALE', 'NFE_MALE', 'OTH', 'OTH_FEMALE', 'OTH_MALE',
+    populations = ['AFR', 'AFR_FEMALE', 'AFR_MALE', 'AMR', 'AMR_FEMALE', 'AMR_MALE', 'ASJ', 'ASJ_FEMALE', 'ASJ_MALE',
+                   'EAS',
+                   'EAS_JPN', 'EAS_KOR', 'EAS_OEA', 'EAS_FEMALE', 'EAS_MALE', 'FIN', 'FIN_FEMALE', 'FIN_MALE', 'NFE',
+                   'NFE_BGR',
+                   'NFE_EST', 'NFE_NWE', 'NFE_ONF', 'NFE_SEU', 'NFE_SWE', 'NFE_FEMALE', 'NFE_MALE', 'OTH', 'OTH_FEMALE',
+                   'OTH_MALE',
                    'SAS', 'SAS_FEMALE', 'SAS_MALE', 'FEMALE', 'MALE']
     for population in populations:
-        df['genome_' + population + '_af'] = calculate_frequency(df['genome_' + population + '_ac'], df['genome_' + population + '_an'])
-        df['exome_' + population + '_af'] = calculate_frequency(df['exome_' + population + '_ac'], df['exome_' + population + '_an'])
+        df['genome_' + population + '_af'] = calculate_frequency(df['genome_' + population + '_ac'],
+                                                                 df['genome_' + population + '_an'])
+        df['exome_' + population + '_af'] = calculate_frequency(df['exome_' + population + '_ac'],
+                                                                df['exome_' + population + '_an'])
     df['exome_af'] = calculate_frequency(df['exome_ac'], df['exome_an'])
     df['genome_af'] = calculate_frequency(df['genome_ac'], df['genome_an'])
     return df
@@ -356,11 +368,11 @@ def parse_args():
 
 def main():
     f_out = parse_args().output
-    #non_topmed_dataset = "gnomad_r2_1_non_topmed"
+    # non_topmed_dataset = "gnomad_r2_1_non_topmed"
     non_topmed_dataset = "gnomad_r3_non_topmed"
-    #full_dataset = "gnomad_r2_1"
+    # full_dataset = "gnomad_r2_1"
     full_dataset = "gnomad_r3"
-    brca1_transcript ="ENST00000357654"
+    brca1_transcript = "ENST00000357654"
     brca1_gene = "ENSG00000012048"
     brca2_transcript = "ENST00000544455"
     brca2_gene = "ENSG00000139618"
@@ -379,7 +391,8 @@ def main():
 
     # combine requests and get brca1 and brca2 data from gnomAD
     brca12_variants = brca1_variants | brca2_variants
-    brca12_variant_data = variant_set_to_variant_data(brca12_variants, full_dataset, non_topmed_dataset, reference_genome)
+    brca12_variant_data = variant_set_to_variant_data(brca12_variants, full_dataset, non_topmed_dataset,
+                                                      reference_genome)
 
     # find hgvs, flatten, convert to dataframe, compute allele frequencies, and normalize
     variants_with_hgvs = find_correct_hgvs(brca12_variant_data, transcripts)
@@ -388,7 +401,8 @@ def main():
     variants_df['flags'] = variants_df['flags'].apply(', '.join)
     df_with_allele_values = compile_allele_values(variants_df)
     df_with_rounded_popmax = round_popmax(df_with_allele_values)
-    stringified_df_with_allele_values = df_with_rounded_popmax.replace(np.nan, '-', regex=True).replace('', '-', regex=True)
+    stringified_df_with_allele_values = df_with_rounded_popmax.replace(np.nan, '-', regex=True).replace('', '-',
+                                                                                                        regex=True)
 
     # output to .tsv
     stringified_df_with_allele_values.to_csv(f_out, sep='\t', index=False)
