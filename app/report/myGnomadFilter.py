@@ -43,22 +43,22 @@ def main():
     logger.info('finding variants from ' + mcFile)
     mcDF = pd.read_csv(mcFile, delimiter='\t', header=0, dtype=str)
 
-    lo = LiftOver(inputHG, gnomadHG)
+    try:
+        lo = LiftOver(inputHG, gnomadHG)
+    except Exception as e:
+        lo = None
 
-    notInSubset = open(notInSubsetFile, 'w')
-    inSubset = open(inSubsetFile, 'w')
+    processVariants(onlyHomozygousVariantsFile, inSubsetFile +'_homo.txt', notInSubsetFile + '_homo.txt', mcDF, 'homo', lo)
+    processVariants(onlyHeterozygousVariantsFile, inSubsetFile + '_hetero.txt', notInSubsetFile + '_hetero.txt', mcDF, 'hetero', lo)
+    processVariants(bothVariantsFile, inSubsetFile + '_both.txt', notInSubsetFile + '_both.txt', mcDF, 'both', lo)
 
-    processVariants(onlyHomozygousVariantsFile, inSubset, notInSubset, mcDF, 'homo', lo)
-    processVariants(onlyHeterozygousVariantsFile, inSubset, notInSubset, mcDF, 'hetero', lo)
-    processVariants(bothVariantsFile, inSubset, notInSubset, mcDF, 'both', lo)
 
-    inSubset.close()
-    notInSubset.close()
-
-def processVariants(variantsFile, inFile, notInFile, mcDF, fileType, lo):
+def processVariants(variantsFile, inSubsetFile, notInSubsetFile, mcDF, fileType, lo):
     effectivelyZeroValues = ['0', '0.0', '-', None]
 
     variants = open(variantsFile, 'r')
+    notInSubset = open(notInSubsetFile, 'w')
+    inSubset = open(inSubsetFile, 'w')
 
     for line in variants.readlines():
         variant = eval(line)
@@ -69,7 +69,7 @@ def processVariants(variantsFile, inFile, notInFile, mcDF, fileType, lo):
 
         exomeDelta, genomeDelta, hg = checkMelissaTable((c,p,r,a), mcDF, lo, fileType)
         if exomeDelta in effectivelyZeroValues and genomeDelta in effectivelyZeroValues:
-            notInFile.write('(' + str(c) + ',' + str(p) + ',' + str(r) + ',' + str(a)  + ')' + '\n')
+            notInSubset.write('(' + str(c) + ',' + str(p) + ',' + str(r) + ',' + str(a)  + ')' + '\n')
         else:
             ed = 0.0
             gd = 0.0
@@ -86,9 +86,11 @@ def processVariants(variantsFile, inFile, notInFile, mcDF, fileType, lo):
             deltaSum = ed + gd
             logger.debug(deltaSum)
             if deltaSum in effectivelyZeroValues:
-                notInFile.write('(' + str(c) + ',' + str(p) + ',' + str(r) + ',' + str(a) + ')' + '\n')
+                notInSubset.write('(' + str(c) + ',' + str(p) + ',' + str(r) + ',' + str(a) + ')' + '\n')
             else:
-                inFile.write('(' + str(c) + ',' + str(p) + ',' + str(r) + ',' + str(a)  + ')' + '\n')
+                inSubset.write('(' + str(c) + ',' + str(p) + ',' + str(r) + ',' + str(a)  + ')' + '\n')
+    inSubset.close()
+    notInSubset.close()
 
 def checkMelissaTable(variant, mcDF, lo, fileType):
     chrom = variant[0]
@@ -96,16 +98,17 @@ def checkMelissaTable(variant, mcDF, lo, fileType):
     ref = variant[2]
     alt = variant[3]
 
-    coord = lo.convert_coordinate('chr' + str(chrom), int(pos))
-    if coord is None or len(coord) != 1:
-        return None, None, None
-    try:
-        posIn = int(coord[0][1])
-    except Exception as e:
-        return None, None, posIn
-    row = mcDF[(mcDF['chrom'] == str(chrom)) & (mcDF['pos'] == str(posIn)) & (mcDF['ref'] == ref) & (mcDF['alt'] == alt)]
+    if not lo is None:
+        coord = lo.convert_coordinate('chr' + str(chrom), int(pos))
+        if coord is None or len(coord) != 1:
+            return None, None, None
+        try:
+            pos = int(coord[0][1])
+        except Exception as e:
+            return None, None, pos
+    row = mcDF[(mcDF['chrom'] == str(chrom)) & (mcDF['pos'] == str(pos)) & (mcDF['ref'] == ref) & (mcDF['alt'] == alt)]
     if len(row) == 0:
-        return None, None, posIn
+        return None, None, pos
 
     if fileType == 'homo':
         exomeDelta = row['exome_ac_hom_delta'].iloc[0]
@@ -118,10 +121,7 @@ def checkMelissaTable(variant, mcDF, lo, fileType):
         genomeDelta = row['genome_ac_delta'].iloc[0]
     else:
         return None, None, None
-    return exomeDelta, genomeDelta, posIn
-
-
-
+    return exomeDelta, genomeDelta, pos
 
 
 if __name__ == "__main__":

@@ -58,7 +58,7 @@ def gene_to_coords(gene_id, reference_genome):
     """
     graphql_query = """                                                         
     {                                                                           
-        gene(gene_id: "%s", reference_genome: %s) {                         
+        gene(gene_symbol: "%s", reference_genome: %s) {                         
             chrom                                                               
             start                                                               
             stop                                                                
@@ -72,18 +72,8 @@ def gene_to_coords(gene_id, reference_genome):
     return response["data"]["gene"]
 
 def coords_to_variants(chrom, start, stop, dataset_id, reference_genome):
-    region_query_38 = """
-            query GnomadRegion($chrom: String!, $start: Int!, $stop: Int!, $dataset_id: DatasetId!) {
-                region(chrom: $chrom, start: $start, stop: $stop, reference_genome: $reference_genome) {
-                    variants(dataset: $dataset_id) {
-                       variantId
-
-                    }
-                }
-             }
-             """
-    region_query_37 = """
-            {   region(chrom: "%s", start: %s, stop: %s, reference_genome: %s) {
+    region_query = """
+                {   region(chrom: "%s", start: %s, stop: %s, reference_genome: %s) {
                     variants(dataset: %s) {
                         variantId
                         exome {
@@ -99,14 +89,13 @@ def coords_to_variants(chrom, start, stop, dataset_id, reference_genome):
                     }
                 }
             }
-         """
-    region_variables = {}
-    headers = { "content-type": "application/json" }
+                """
     response = requests.post(
         'http://gnomad.broadinstitute.org/api',
-        json={ "query": region_query_37 % (chrom, start, stop, reference_genome, dataset_id),
-               "variables": region_variables },
-                headers=headers)
+        json={ "query": region_query % (chrom, start, stop, reference_genome, dataset_id),
+                 "variables": {}},
+            headers={"content-type": "application/json"})
+
     try:
         parse = json.loads(response.text)
         variants = parse['data']['region']['variants']
@@ -116,12 +105,12 @@ def coords_to_variants(chrom, start, stop, dataset_id, reference_genome):
 
     return variants
 
-def gene_to_region_variants(gene_id, dataset_id, reference_genome):
+def gene_to_region_variants(gene_symbol, dataset_id, reference_genome):
     """
     Given a gene name, return the list of variants via a region
     query.  These will mostly be the intronic variants.
     """
-    coords = gene_to_coords(gene_id, reference_genome)
+    coords = gene_to_coords(gene_symbol, reference_genome)
     variantList = coords_to_variants(coords["chrom"], coords["start"],
                                      coords["stop"], dataset_id, reference_genome)
     #return(set(variantList))
@@ -130,14 +119,16 @@ def gene_to_region_variants(gene_id, dataset_id, reference_genome):
 
 def add_delta_one_assay(fvd, svd, ome):
     myDict = dict()
-    if svd is not None:
-        myDict[ome + "_ac_delta"] = fvd["ac"] - svd["ac"]
-        myDict[ome + "_an_delta"] = fvd["an"] - svd["an"]
-        myDict[ome + "_ac_hom_delta"] = fvd["ac_hom"] - svd["ac_hom"]
-    else:
-        myDict[ome + "_ac_delta"] = 0
-        myDict[ome + "_an_delta"] = 0
-        myDict[ome + "_ac_hom_delta"] = 0
+    #if svd is not None:
+    try:
+        myDict[ome + "_ac_delta"] = float(fvd["ac"] - svd["ac"])
+        myDict[ome + "_an_delta"] = float(fvd["an"] - svd["an"])
+        myDict[ome + "_ac_hom_delta"] = float(fvd["ac_hom"] - svd["ac_hom"])
+    #else:
+    except Exception as e:
+        myDict[ome + "_ac_delta"] = '-'
+        myDict[ome + "_an_delta"] = '-'
+        myDict[ome + "_ac_hom_delta"] = '-'
     return myDict
 
 def add_deltas(full_variant_data, subset_variant_data, this_variant):
@@ -201,8 +192,8 @@ def writeToOutputFile(myDict, outputFile):
         for k in myDict:
             line = myDict[k]
             f.write(line['alt'] + '\t' + line['chrom'] + '\t' + line['pos'] + '\t' + line['ref'] + \
-                '\t' + str(line['exome_ac_hom_delta']) + '\t' + str(line['genome_ac_hom_delta'])+ '\t' + \
-                '\t' + str(line['exome_ac_delta']) + '\t' + str(line['genome_ac_delta']))
+                '\t' + str(line['exome_ac_hom_delta']) + '\t' + str(line['genome_ac_hom_delta'])+ \
+                 '\t' + str(line['exome_ac_delta']) + '\t' + str(line['genome_ac_delta']))
             f.write('\n')
     f.close()
 
@@ -222,9 +213,11 @@ def main():
     non_topmed_dataset = "gnomad_" + release + "_non_topmed"
     full_dataset = "gnomad_" + release
     brca1_transcript ="ENST00000357654"
-    brca1_gene = "ENSG00000012048"
+    #brca1_gene = "ENSG00000012048"
+    brca1_gene = "BRCA1"
     brca2_transcript = "ENST00000544455"
-    brca2_gene = "ENSG00000139618"
+    #brca2_gene = "ENSG00000139618"
+    brca2_gene = "BRCA2"
 
     # organize brca1 request
     brca1_variants_non_topmed = getVariants(brca1_transcript, brca1_gene, non_topmed_dataset, reference_genome)
