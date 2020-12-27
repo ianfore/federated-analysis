@@ -61,11 +61,20 @@ def processVariants(variantsFile, inSubsetFile, notInSubsetFile, mcDF, fileType,
     inSubset = open(inSubsetFile, 'w')
 
     for line in variants.readlines():
-        variant = eval(line)
-        c = int(variant[0])
-        p = int(variant[1])
-        r = str(variant[2])
-        a = str(variant[3])
+        try:
+            # line = (13, 32317275, 'A', 'G')
+            variant = eval(line)
+            c = int(variant[0])
+            p = int(variant[1])
+            r = str(variant[2])
+            a = str(variant[3])
+        except NameError:
+            # ['(13', ' 32315521', ' C', ' G)\n']
+            variant = line.split(',')
+            c = int(variant[0].split('(')[1])
+            p = int(variant[1])
+            r = str(variant[2]).strip()
+            a = str(variant[3].split(')')[0]).strip()
 
         exomeDelta, genomeDelta, hg = checkMelissaTable((c,p,r,a), mcDF, lo, fileType)
         if exomeDelta in effectivelyZeroValues and genomeDelta in effectivelyZeroValues:
