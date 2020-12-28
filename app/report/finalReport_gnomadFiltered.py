@@ -10,7 +10,7 @@ logger.setLevel(logging.INFO)
 
 def main():
 	if len(sys.argv) != 7:
-		print('ipv-f.json in.txt not.txt sites.tsv vpi.json output.tsv')
+		logger.error('ipv-f.json in.txt not.txt sites.tsv vpi.json output.tsv')
 		sys.exit(1)
 
 
@@ -106,10 +106,12 @@ def main():
 		#study = studyPerVariant[v]
 		if v in inList:
 			vIn = 'True'
+			logger.info(str(v) + ': in')
 		elif v in outList:
 			vIn = 'False'
+			logger.info(str(v) + ': out')
 		else:
-			print(str(v) + ': neither in in nor out?')
+			logger.error(str(v) + ': neither in in nor out?')
 			vIn = 'NA'
 		#print(v + '\t' + vClass + '\t' + vPopFreq + '\t' + vCohortFreq + \
 		# '\t' + aa + '\t' + Aa + '\t' + AA + '\t' + homoSample + '\t' + vIn)
@@ -177,7 +179,7 @@ def addInfo(variantsDF, sitesDF):
 		except Exception as e:
 			continue
 		for pair in infoPairs:
-			print('pair = ' + pair)
+			logger.debug('pair = ' + pair)
 			vv = pair.split('=')
 			infoDict[i][vv[0]] = vv[1]
 	infoDF = pd.DataFrame.from_dict(infoDict).transpose()
