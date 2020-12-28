@@ -46,9 +46,9 @@ def main():
     except Exception as e:
         lo = None
 
-    processVariants(onlyHomozygousVariantsFile, outputDir +'/homo-in.txt', dir + '/homo-not.txt', mcDF, 'homo', lo)
-    processVariants(onlyHeterozygousVariantsFile, outputDir  + '/hetero-in.txt', dir +  '/hetero-not.txt', mcDF, 'hetero', lo)
-    processVariants(bothVariantsFile, outputDir + '/both-in.txt', dir + '/both-not.txt', mcDF, 'both', lo)
+    processVariants(onlyHomozygousVariantsFile, outputDir +'/homo-in.txt', outputDir + '/homo-not.txt', mcDF, 'homo', lo)
+    processVariants(onlyHeterozygousVariantsFile, outputDir  + '/hetero-in.txt', outputDir +  '/hetero-not.txt', mcDF, 'hetero', lo)
+    processVariants(bothVariantsFile, outputDir + '/both-in.txt', outputDir + '/both-not.txt', mcDF, 'both', lo)
 
 
 def processVariants(variantsFile, inSubsetFile, notInSubsetFile, mcDF, fileType, lo):
