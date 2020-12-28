@@ -6,7 +6,7 @@ import hail as hl
 
 logging.basicConfig()
 logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 def main():
 	if len(sys.argv) != 7:
@@ -174,6 +174,7 @@ def addInfo(variantsDF, sitesDF):
 			infoPairs = finalDF.iloc[i]['INFO'].split('|')[0].split(';')
 		except Exception as e:
 			continue
+		infoDict[i] = dict()
 		for pair in infoPairs:
 			logger.debug('pair = ' + pair)
 			vv = pair.split('=')
