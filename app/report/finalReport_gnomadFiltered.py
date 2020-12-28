@@ -94,13 +94,13 @@ def main():
 		exonic = str(ipvDict[v]['exonic'])
 		chisquare = str(ipvDict[v]['chisquare'])
 		if len(ipvDict[v]['homozygous individuals']) == 0:
-			homoSamples = "None"
+			homoSample = "None"
 		else:
-			homoSamples = ipvDict[v]['homozygous individuals']
+			homoSample = ipvDict[v]['homozygous individuals'][0]
 		if len(ipvDict[v]['heterozygous individuals']) == 0:
-			heteroSamples = "None"
+			heteroSample = "None"
 		else:
-			heteroSamples = ipvDict[v]['heterozygous individuals']
+			heteroSample = ipvDict[v]['heterozygous individuals'][0]
 		v = v.replace(' ', '')	
 		v = v.replace("'", "")
 		study = studyPerVariant[v]
@@ -116,8 +116,9 @@ def main():
 		variantsDict[v]['class'] = vClass
 		variantsDict[v]['popFreq'] = vPopFreq
 		variantsDict[v]['cohortFreq'] = vCohortFreq
-		variantsDict[v]['homozygousSamples'] = homoSamples
-		variantsDict[v]['heterozygousSamples'] = heteroSamples
+
+		variantsDict[v]['homozygousSamples'] = homoSample
+		variantsDict[v]['heterozygousSamples'] = heteroSample
 		variantsDict[v]['inGnomad'] = vIn
 		variantsDict[v]['homo_alt'] = aa
 		variantsDict[v]['hetero'] = Aa
