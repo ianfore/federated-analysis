@@ -109,7 +109,7 @@ def main():
 		elif v in outList:
 			vIn = 'False'
 		else:
-			print('neither in in nor out?')
+			print(str(v) + ': neither in in nor out?')
 			vIn = 'NA'
 		#print(v + '\t' + vClass + '\t' + vPopFreq + '\t' + vCohortFreq + \
 		# '\t' + aa + '\t' + Aa + '\t' + AA + '\t' + homoSample + '\t' + vIn)
