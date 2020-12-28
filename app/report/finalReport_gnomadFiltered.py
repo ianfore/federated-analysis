@@ -59,7 +59,7 @@ def main():
 			if not v in centersPerHomoVus:
 				centersPerHomoVus[v] = set()
 			centersPerHomoVus[v].add(seqCenter)
-			#studyPerVariant[v] = vus[3]
+			studyPerVariant[v] = vus[3]
 		for vus in vpiDict[individual]['pathogenic']:
 			variant = vus[0]
 			seqCenter = vus[2]
@@ -67,7 +67,7 @@ def main():
 			if not v in centersPerHomoVus:
 				centersPerHomoVus[v] = set()
 			centersPerHomoVus[v].add(seqCenter)
-			#studyPerVariant[v] = vus[3]
+			studyPerVariant[v] = vus[3]
 		for vus in vpiDict[individual]['vus']:
 			variant = vus[0]
 			seqCenter = vus[2]
@@ -75,7 +75,7 @@ def main():
 			if not v in centersPerHomoVus:
 				centersPerHomoVus[v] = set()
 			centersPerHomoVus[v].add(seqCenter)
-			#studyPerVariant[v] = vus[3]
+			studyPerVariant[v] = vus[3]
 
 	allVariants = ipvDict.keys()
 	variantsDict = dict()
@@ -103,7 +103,7 @@ def main():
 			heteroSamples = ipvDict[v]['heterozygous individuals']
 		v = v.replace(' ', '')	
 		v = v.replace("'", "")
-		#study = studyPerVariant[v]
+		study = studyPerVariant[v]
 		if v in inList:
 			vIn = 'True'
 			logger.info(str(v) + ': in')
@@ -111,10 +111,7 @@ def main():
 			vIn = 'False'
 			logger.info(str(v) + ': out')
 		else:
-			logger.error(str(v) + ': neither in in nor out?')
-			vIn = 'NA'
-		#print(v + '\t' + vClass + '\t' + vPopFreq + '\t' + vCohortFreq + \
-		# '\t' + aa + '\t' + Aa + '\t' + AA + '\t' + homoSample + '\t' + vIn)
+			continue
 		variantsDict[v] = dict()
 		variantsDict[v]['class'] = vClass
 		variantsDict[v]['popFreq'] = vPopFreq
@@ -133,13 +130,12 @@ def main():
 		variantsDict[v]['chisquare'] = chisquare
 		variantsDict[v]['sequenceCenter'] = str(centersPerHomoVus[v]).replace(" ", "")
 		variantsDict[v]['exonic'] = exonic
-		#variantsDict[v]['study'] = study
+		variantsDict[v]['study'] = study
 
 
 	variantsDF = pd.DataFrame.from_dict(variantsDict)
 	variantsDF = variantsDF.transpose()
 	variantsDF['variant'] = variantsDF.index
-	#variantsDF.to_csv('/tmp/brcaDF.tsv', sep='\t', index=True)
 
 	variantsWithInfoDF = addInfo(variantsDF, sitesDF)
 
