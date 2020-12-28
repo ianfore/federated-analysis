@@ -117,8 +117,8 @@ def main():
 		variantsDict[v]['popFreq'] = vPopFreq
 		variantsDict[v]['cohortFreq'] = vCohortFreq
 
-		variantsDict[v]['homozygousSamples'] = homoSample
-		variantsDict[v]['heterozygousSamples'] = heteroSample
+		variantsDict[v]['homozygousSample'] = homoSample
+		variantsDict[v]['heterozygousSample'] = heteroSample
 		variantsDict[v]['inGnomad'] = vIn
 		variantsDict[v]['homo_alt'] = aa
 		variantsDict[v]['hetero'] = Aa
