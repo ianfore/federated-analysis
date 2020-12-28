@@ -22,8 +22,7 @@ def parse_args():
     parser.add_argument('-e', '--heterozygous', help='only heterozygous variants input file')
     parser.add_argument('-b', '--both', help='both homo- and hetero-zygous variants input file')
     parser.add_argument('-m', '--mcfile', help='melissas gnomad input file')
-    parser.add_argument('-n', '--notinfile', help='not in gnomad output file')
-    parser.add_argument('-i', '--infile', help='in gnomad output file')
+    parser.add_argument('-d', '--dir', help='output directory')
     parser.add_argument('-v', '--version', help='hg version of input files')
     parser.add_argument('-g', '--gnomadversion', help='hg version of gnomad')
     options = parser.parse_args()
@@ -35,8 +34,7 @@ def main():
     onlyHeterozygousVariantsFile = parse_args().heterozygous
     bothVariantsFile = parse_args().both
     mcFile = parse_args().mcfile
-    notInSubsetFile = parse_args().notinfile
-    inSubsetFile = parse_args().infile
+    outputDir = parse_args().dir
     inputHG = parse_args().version
     gnomadHG = parse_args().gnomadversion
 
@@ -48,9 +46,9 @@ def main():
     except Exception as e:
         lo = None
 
-    processVariants(onlyHomozygousVariantsFile, inSubsetFile +'_homo.txt', notInSubsetFile + '_homo.txt', mcDF, 'homo', lo)
-    processVariants(onlyHeterozygousVariantsFile, inSubsetFile + '_hetero.txt', notInSubsetFile + '_hetero.txt', mcDF, 'hetero', lo)
-    processVariants(bothVariantsFile, inSubsetFile + '_both.txt', notInSubsetFile + '_both.txt', mcDF, 'both', lo)
+    processVariants(onlyHomozygousVariantsFile, dir +'/homo-in.txt', dir + '/homo-not.txt', mcDF, 'homo', lo)
+    processVariants(onlyHeterozygousVariantsFile, dir  + '/hetero-in.txt', dir +  '/hetero-not.txt', mcDF, 'hetero', lo)
+    processVariants(bothVariantsFile, dir + '/both-in.txt', dir + '/both-not.txt', mcDF, 'both', lo)
 
 
 def processVariants(variantsFile, inSubsetFile, notInSubsetFile, mcDF, fileType, lo):
