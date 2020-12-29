@@ -7,50 +7,56 @@ import hgvs.assemblymapper
 import hgvs.dataproviders.uta
 import hgvs.edit, hgvs.posedit
 import hgvs.sequencevariant
+import argparse
 
 logging.basicConfig()
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
+def parse_args():
+	parser = argparse.ArgumentParser()
+	parser.add_argument('-i', '--ipv', help='individuals per variant json file')
+	parser.add_argument('-v', '--vpi', help='variants per individual json file')
+	parser.add_argument('-n', '--no', help='variants not in gnomad file')
+	parser.add_argument('-y', '--yes', help='variants in gnomad file')
+	parser.add_argument('-s', '--sites', help='variants sites file')
+	parser.add_argument('-o', '--output', help='output file')
+	return parser.parse_args()
+
 def main():
-	if len(sys.argv) != 7:
-		logger.error('ipv-f.json in.txt not.txt sites.tsv vpi.json output.tsv')
-		sys.exit(1)
-
-
-	ipvFileName = sys.argv[1]
+	ipvFileName = parse_args().ipv
 	logger.info('reading data from ' + ipvFileName)
 	with open(ipvFileName, 'r') as f:
 		ipvDict = json.load(f)
 	f.close()
 
-	inFileName = sys.argv[2]
+	inFileName = parse_args().yes
 	logger.info('reading data from ' + inFileName)
 	f = open(inFileName, 'r')
 	inList = f.readlines() 
 	f.close()
 	inList = [x.strip() for x in inList]
 
-	outFileName = sys.argv[3]
+	outFileName = parse_args().no
 	logger.info('reading data from ' + outFileName)
 	f = open(outFileName, 'r')
 	outList = f.readlines() 
 	f.close()
 	outList = [x.strip() for x in outList]
 
-	sitesFileName = sys.argv[4]
+	sitesFileName = parse_args().sites
 	logger.info('reading data from ' + sitesFileName)
 	f = open(sitesFileName, 'r')
 	sitesDF = pd.read_csv(sitesFileName, header=0, sep='\t')
 	f.close()
 
-	vpiFileName = sys.argv[5]
+	vpiFileName = parse_args().vpi
 	logger.info('reading data from ' + vpiFileName)
 	with open(vpiFileName, 'r') as f:
 		vpiDict = json.load(f)
 	f.close()
 
-	outputFileName = sys.argv[6]
+	outputFileName = parse_args().output
 
 	# get batch effect info
 	centersPerHomoVus = dict()
