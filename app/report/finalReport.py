@@ -33,16 +33,16 @@ def main():
 	inFileName = parse_args().yes
 	logger.info('reading data from ' + inFileName)
 	f = open(inFileName, 'r')
-	inList = f.readlines() 
-	f.close()
+	inList = f.readlines()
 	inList = [x.strip() for x in inList]
+	f.close()
 
 	outFileName = parse_args().no
 	logger.info('reading data from ' + outFileName)
 	f = open(outFileName, 'r')
-	outList = f.readlines() 
-	f.close()
+	outList = f.readlines()
 	outList = [x.strip() for x in outList]
+	f.close()
 
 	sitesFileName = parse_args().sites
 	logger.info('reading data from ' + sitesFileName)
@@ -59,37 +59,22 @@ def main():
 	outputFileName = parse_args().output
 
 	# get batch effect info
-	centersPerHomoVus = dict()
-	studyPerVariant = dict()
-	for individual in vpiDict:
-		for vus in vpiDict[individual]['benign']:
-			variant = vus[0]
-			seqCenter = vus[2]
-			v = str(tuple(variant)).replace("'", "").replace(" ", "")
-			if not v in centersPerHomoVus:
-				centersPerHomoVus[v] = set()
-			centersPerHomoVus[v].add(seqCenter)
-			studyPerVariant[v] = vus[3]
-		for vus in vpiDict[individual]['pathogenic']:
-			variant = vus[0]
-			seqCenter = vus[2]
-			v = str(tuple(variant)).replace("'", "").replace(" ", "")
-			if not v in centersPerHomoVus:
-				centersPerHomoVus[v] = set()
-			centersPerHomoVus[v].add(seqCenter)
-			studyPerVariant[v] = vus[3]
-		for vus in vpiDict[individual]['vus']:
-			variant = vus[0]
-			seqCenter = vus[2]
-			v = str(tuple(variant)).replace("'", "").replace(" ", "")
-			if not v in centersPerHomoVus:
-				centersPerHomoVus[v] = set()
-			centersPerHomoVus[v].add(seqCenter)
-			studyPerVariant[v] = vus[3]
+	studyPerVariant, centersPerHomoVus = getStudyAndCenter(vpiDict)
 
+	variantsDict = getVariantStats(ipvDict, studyPerVariant, centersPerHomoVus, inList, outList)
+
+	variantsDF = pd.DataFrame.from_dict(variantsDict)
+	variantsDF = variantsDF.transpose()
+	variantsDF['variant'] = variantsDF.index
+
+	variantsWithInfoDF = addInfo(variantsDF, sitesDF)
+
+	logger.info('writing output to ' + outputFileName)
+	variantsWithInfoDF.to_csv(outputFileName, sep='\t', index=False)
+
+def getVariantStats(ipvDict, studyPerVariant, centersPerHomoVus, inList, outList):
 	allVariants = ipvDict.keys()
 	variantsDict = dict()
-	#print('variant\tclass\tpopFreq\tcohortFreq\taa\tAa\tAA\thomozygousSample\tinGnomad')
 	for v in allVariants:
 		vClass = ipvDict[v]['class']
 		vPopFreq = '%.4f'%(ipvDict[v]['maxFreq'])
@@ -111,7 +96,7 @@ def main():
 			heteroSample = "None"
 		else:
 			heteroSample = ipvDict[v]['heterozygous individuals'][0]
-		v = v.replace(' ', '')	
+		v = v.replace(' ', '')
 		v = v.replace("'", "")
 		study = studyPerVariant[v]
 		if v in inList:
@@ -143,16 +128,40 @@ def main():
 		variantsDict[v]['exonic'] = exonic
 		variantsDict[v]['study'] = study
 
+	return variantsDict
 
-	variantsDF = pd.DataFrame.from_dict(variantsDict)
-	variantsDF = variantsDF.transpose()
-	variantsDF['variant'] = variantsDF.index
+def getStudyAndCenter(vpiDict):
+	# get batch effect info
+	centersPerHomoVus = dict()
+	studyPerVariant = dict()
 
-	variantsWithInfoDF = addInfo(variantsDF, sitesDF)
+	for individual in vpiDict:
+		for vus in vpiDict[individual]['benign']:
+			variant = vus[0]
+			seqCenter = vus[2]
+			v = str(tuple(variant)).replace("'", "").replace(" ", "")
+			if not v in centersPerHomoVus:
+				centersPerHomoVus[v] = set()
+			centersPerHomoVus[v].add(seqCenter)
+			studyPerVariant[v] = vus[3]
+		for vus in vpiDict[individual]['pathogenic']:
+			variant = vus[0]
+			seqCenter = vus[2]
+			v = str(tuple(variant)).replace("'", "").replace(" ", "")
+			if not v in centersPerHomoVus:
+				centersPerHomoVus[v] = set()
+			centersPerHomoVus[v].add(seqCenter)
+			studyPerVariant[v] = vus[3]
+		for vus in vpiDict[individual]['vus']:
+			variant = vus[0]
+			seqCenter = vus[2]
+			v = str(tuple(variant)).replace("'", "").replace(" ", "")
+			if not v in centersPerHomoVus:
+				centersPerHomoVus[v] = set()
+			centersPerHomoVus[v].add(seqCenter)
+			studyPerVariant[v] = vus[3]
 
-	logger.info('writing output to ' + outputFileName)
-	variantsWithInfoDF.to_csv(outputFileName, sep='\t', index=False)
-
+	return studyPerVariant, centersPerHomoVus
 
 def addInfo(variantsDF, sitesDF):
 	variants = list(variantsDF['variant'])
