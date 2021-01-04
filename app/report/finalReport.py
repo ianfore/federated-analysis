@@ -67,7 +67,12 @@ def main():
 	variantsDF = variantsDF.transpose()
 	variantsDF['variant'] = variantsDF.index
 
-	variantsWithInfoDF = addInfo(variantsDF, sitesDF)
+	hdp = hgvs.dataproviders.uta.connect()
+	varmapper = hgvs.assemblymapper.AssemblyMapper(hdp, assembly_name='GRCh38',
+												   alt_aln_method='splign')
+	variantsWithInfoDF = addInfo(variantsDF, sitesDF, varmapper)
+
+
 
 	logger.info('writing output to ' + outputFileName)
 	variantsWithInfoDF.to_csv(outputFileName, sep='\t', index=False)
@@ -163,7 +168,7 @@ def getStudyAndCenter(vpiDict):
 
 	return studyPerVariant, centersPerHomoVus
 
-def addInfo(variantsDF, sitesDF):
+def addInfo(variantsDF, sitesDF, varmapper):
 	variants = list(variantsDF['variant'])
 	brca_dict = dict()
 	pass_dict = dict()
@@ -199,6 +204,8 @@ def addInfo(variantsDF, sitesDF):
 			logger.debug('pair = ' + pair)
 			vv = pair.split('=')
 			infoDict[i][vv[0]] = vv[1]
+		infoDict[i]['hgvs'] = translate_to_hgvs(finalDF.iloc[i]['variant'], varmapper)
+
 	infoDF = pd.DataFrame.from_dict(infoDict).transpose()
 
 	for k in infoDF.keys():
@@ -210,29 +217,25 @@ def addInfo(variantsDF, sitesDF):
 		
 
 def translate_to_hgvs(vartokens, varmapper):
-    """
-    Given the variant expressed as a list translated to a string,
-    return the cDNA HGVS string for that variant
-    """
-    chrom = vartokens[0]
-    pos = vartokens[1]
-    ref = vartokens[2]
-    alt = vartokens[3]
-    if chrom == 17:
-        accessioned_chrom = "NC_000017.10"
-        ref_cdna = "NM_007294.3"
-    else:
-        accessioned_chrom = "NC_000013.10"
-        ref_cdna = "NM_000059.3"
-    start = hgvs.location.BaseOffsetPosition(base=pos)
-    end = hgvs.location.BaseOffsetPosition(base=pos + len(ref) - 1)
-    iv = hgvs.location.Interval(start=start,end=end)
-    edit = hgvs.edit.NARefAlt(ref=ref,alt=alt)
-    posedit = hgvs.posedit.PosEdit(pos=iv,edit=edit)
-    var_g = hgvs.sequencevariant.SequenceVariant(ac=accessioned_chrom,
-                                                 type='g', posedit = posedit)
-    var_c = varmapper.g_to_c(var_g,ref_cdna)
-    return(str(var_c))
+	varArray = vartokens.split(',')
+	chrom = int(varArray[0].split('(')[1])
+	pos = int(varArray[1])
+	ref = varArray[2]
+	alt = varArray[3].split(')')[0]
+	if chrom == 17:
+		accessioned_chrom = "NC_000017.11"
+		ref_cdna = "NM_007294.4"
+	else:
+		accessioned_chrom = "NC_000013.11"
+		ref_cdna = "NM_000059.3"
+	start = hgvs.location.BaseOffsetPosition(base=pos)
+	end = hgvs.location.BaseOffsetPosition(base=pos + len(ref) - 1)
+	iv = hgvs.location.Interval(start=start,end=end)
+	edit = hgvs.edit.NARefAlt(ref=ref,alt=alt)
+	posedit = hgvs.posedit.PosEdit(pos=iv,edit=edit)
+	var_g = hgvs.sequencevariant.SequenceVariant(ac=accessioned_chrom, type='g', posedit = posedit)
+	var_c = varmapper.g_to_c(var_g,ref_cdna)
+	return(str(var_c))
 
 if __name__ == "__main__":
     main()

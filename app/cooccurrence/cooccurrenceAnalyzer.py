@@ -22,8 +22,8 @@ logger.setLevel(logging.DEBUG)
 
 
 def main():
-    if len(sys.argv) != 10:
-        print('13-out.json 13-vpi.json 13-ipv.json brca-variants.tsv brca-regions.json ancestries.tsv /tmp/myout 16 filter-freq')
+    if len(sys.argv) != 9:
+        print('13-out.json 13-vpi.json 13-ipv.json brca-variants.tsv brca-regions.json ancestries.tsv /tmp/myout 16 ')
         sys.exit(1)
 
     variantsFileName =sys.argv[1]
@@ -34,7 +34,6 @@ def main():
     ancestriesFileName = sys.argv[6]
     outputDir = sys.argv[7]
     numProcesses = int(sys.argv[8])
-    frequencyFilter = float(sys.argv[9])
     c = 0.5
 
     logger.info('reading data from ' + vpiFileName)
@@ -71,13 +70,9 @@ def main():
     q1 = Queue()
     q2 = Queue()
     processList = list()
-    if frequencyFilter == 0.0:
-        rare = False
-    else:
-        rare = True
     for i in range(numProcesses):
         p = Process(target=countTotalGenotypesForVariants,
-                    args=(q1, q2, vpiDF, frequencyFilter, brcaDF, ancestriesDF, hgVersion, rare, i, numProcesses,))
+                    args=(q1, q2, vpiDF, brcaDF, ancestriesDF, hgVersion, rare, i, numProcesses,))
         p.start()
         processList.append(p)
     logger.info('joining results from forked threads')
@@ -1129,7 +1124,7 @@ def getMaxAncestry(row):
     return maxAncestry
 
 
-def countTotalGenotypesForVariants(q1, q2, vpiDF, rareThreshold, brcaDF, ancestriesDF, hgVersion, rare, threadID, numProcesses):
+def countTotalGenotypesForVariants(q1, q2, vpiDF, brcaDF, ancestriesDF, hgVersion, rare, threadID, numProcesses):
 
     genotypeCounts = {'benign': {'homo':0, 'hetero': 0},
                      'pathogenic': {'homo': 0, 'hetero': 0},
@@ -1160,8 +1155,6 @@ def countTotalGenotypesForVariants(q1, q2, vpiDF, rareThreshold, brcaDF, ancestr
 
         for b in vpiDF[individual]['benign']:
             if b:
-                if rare and getGnomadData(brcaDF, tuple(b[0]), hgVersion, ethnicity)['max']['frequency'] > rareThreshold:
-                    continue
                 if b[1] == '3':
                     genotypeCounts['benign']['homo'] += 1
                     frequenciesPerIndividual[individual]['benign']['homo'] += 1
@@ -1170,8 +1163,6 @@ def countTotalGenotypesForVariants(q1, q2, vpiDF, rareThreshold, brcaDF, ancestr
                     frequenciesPerIndividual[individual]['benign']['hetero'] += 1
         for p in vpiDF[individual]['pathogenic']:
             if p:
-                if rare and getGnomadData(brcaDF, tuple(p[0]), hgVersion, ethnicity)['max']['frequency'] > rareThreshold:
-                    continue
                 if p[1] == '3':
                     genotypeCounts['pathogenic']['homo'] += 1
                     frequenciesPerIndividual[individual]['pathogenic']['homo'] += 1
@@ -1180,8 +1171,6 @@ def countTotalGenotypesForVariants(q1, q2, vpiDF, rareThreshold, brcaDF, ancestr
                     frequenciesPerIndividual[individual]['pathogenic']['hetero'] += 1
         for v in vpiDF[individual]['vus']:
             if v:
-                if rare and getGnomadData(brcaDF, tuple(v[0]), hgVersion, ethnicity)['max']['frequency'] > rareThreshold:
-                    continue
                 if v[1] == '3':
                     genotypeCounts['vus']['homo'] += 1
                     frequenciesPerIndividual[individual]['vus']['homo'] += 1
