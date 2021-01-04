@@ -72,7 +72,7 @@ def main():
     processList = list()
     for i in range(numProcesses):
         p = Process(target=countTotalGenotypesForVariants,
-                    args=(q1, q2, vpiDF, brcaDF, ancestriesDF, hgVersion, i, numProcesses,))
+                    args=(q1, q2, vpiDF, ancestriesDF, i, numProcesses,))
         p.start()
         processList.append(p)
     logger.info('joining results from forked threads')
@@ -115,10 +115,6 @@ def main():
 
 
     ipvDict = getHardyWeinbergStats(vpiDict, variantsDict, ipvDict, c)
-
-
-    if frequencyFilter != 0:
-        ipvDict = filterOnFrequency(ipvDict, frequencyFilter)
 
     '''iphv = findIndividualsPerHomozygousVariant(vpiDict, variantsDict, 1.0)
     iphvFileName = 'iphv.json'
@@ -1124,7 +1120,7 @@ def getMaxAncestry(row):
     return maxAncestry
 
 
-def countTotalGenotypesForVariants(q1, q2, vpiDF, brcaDF, ancestriesDF, hgVersion, threadID, numProcesses):
+def countTotalGenotypesForVariants(q1, q2, vpiDF, ancestriesDF, threadID, numProcesses):
 
     genotypeCounts = {'benign': {'homo':0, 'hetero': 0},
                      'pathogenic': {'homo': 0, 'hetero': 0},
