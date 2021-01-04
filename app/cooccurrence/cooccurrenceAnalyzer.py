@@ -72,7 +72,7 @@ def main():
     processList = list()
     for i in range(numProcesses):
         p = Process(target=countTotalGenotypesForVariants,
-                    args=(q1, q2, vpiDF, brcaDF, ancestriesDF, hgVersion, rare, i, numProcesses,))
+                    args=(q1, q2, vpiDF, brcaDF, ancestriesDF, hgVersion, i, numProcesses,))
         p.start()
         processList.append(p)
     logger.info('joining results from forked threads')
@@ -1124,7 +1124,7 @@ def getMaxAncestry(row):
     return maxAncestry
 
 
-def countTotalGenotypesForVariants(q1, q2, vpiDF, brcaDF, ancestriesDF, hgVersion, rare, threadID, numProcesses):
+def countTotalGenotypesForVariants(q1, q2, vpiDF, brcaDF, ancestriesDF, hgVersion, threadID, numProcesses):
 
     genotypeCounts = {'benign': {'homo':0, 'hetero': 0},
                      'pathogenic': {'homo': 0, 'hetero': 0},
