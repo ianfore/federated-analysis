@@ -10,6 +10,7 @@ from multiprocessing import Process, Queue, cpu_count
 import math
 import scipy.stats as stats
 import subprocess
+import argparse
 
 
 coordinateColumnBase = 'Genomic_Coordinate_hg'
@@ -19,21 +20,31 @@ logging.basicConfig()
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-o', '--out', help='output json')
+    parser.add_argument('-v', '--vpi', help='vpi json')
+    parser.add_argument('-i', '--ipv', help='ipv json')
+    parser.add_argument('-b', '--brca', help='variants tsv')
+    parser.add_argument('-r', '--regions', help='regions json')
+    parser.add_argument('-a', '--ancestry', help='ancestry json')
+    parser.add_argument('-d', '--outputDir', help='output dir')
+    parser.add_argument('-n', '--numProcs', help='number of processes')
+
+    options = parser.parse_args()
+    return options
 
 
 def main():
-    if len(sys.argv) != 9:
-        print('13-out.json 13-vpi.json 13-ipv.json brca-variants.tsv brca-regions.json ancestries.tsv /tmp/myout 16 ')
-        sys.exit(1)
 
-    variantsFileName =sys.argv[1]
-    vpiFileName = sys.argv[2]
-    ipvFileName = sys.argv[3]
-    brcaFileName = sys.argv[4]
-    regionsFileName = sys.argv[5]
-    ancestriesFileName = sys.argv[6]
-    outputDir = sys.argv[7]
-    numProcesses = int(sys.argv[8])
+    variantsFileName =parse_args().out
+    vpiFileName = parse_args().vpi
+    ipvFileName = parse_args().ipv
+    brcaFileName = parse_args().brca
+    regionsFileName = parse_args().regions
+    ancestriesFileName = parse_args().ancestry
+    outputDir = parse_args().outputDir
+    numProcesses = int(parse_args().numProcs)
     c = 0.5
 
     logger.info('reading data from ' + vpiFileName)
