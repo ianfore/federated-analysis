@@ -1,17 +1,13 @@
 import json
-import sys
 import pandas as pd
 import logging
 import hail as hl
-import hgvs.assemblymapper
-import hgvs.dataproviders.uta
-import hgvs.edit, hgvs.posedit
-import hgvs.sequencevariant
 import argparse
+from app.utils.coord2hgvs import coordinateMapper
 
 logging.basicConfig()
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.WARN)
 
 def parse_args():
 	parser = argparse.ArgumentParser()
@@ -21,6 +17,7 @@ def parse_args():
 	parser.add_argument('-y', '--yes', help='variants in gnomad file')
 	parser.add_argument('-s', '--sites', help='variants sites file')
 	parser.add_argument('-o', '--output', help='output file')
+	parser.add_argument('-m', '--map', help='boolean map hgvs coords')
 	return parser.parse_args()
 
 def main():
@@ -58,6 +55,8 @@ def main():
 
 	outputFileName = parse_args().output
 
+	mapHgvs = bool(int(parse_args().map))
+
 	# get batch effect info
 	studyPerVariant, centersPerHomoVus = getStudyAndCenter(vpiDict)
 
@@ -67,12 +66,8 @@ def main():
 	variantsDF = variantsDF.transpose()
 	variantsDF['variant'] = variantsDF.index
 
-	hdp = hgvs.dataproviders.uta.connect()
-	varmapper = hgvs.assemblymapper.AssemblyMapper(hdp, assembly_name='GRCh38',
-												   alt_aln_method='splign')
-	variantsWithInfoDF = addInfo(variantsDF, sitesDF, varmapper)
-
-
+	coordMapper = coordinateMapper('GRCh38')
+	variantsWithInfoDF = addInfo(variantsDF, sitesDF, coordMapper, mapHgvs)
 
 	logger.info('writing output to ' + outputFileName)
 	variantsWithInfoDF.to_csv(outputFileName, sep='\t', index=False)
@@ -106,12 +101,10 @@ def getVariantStats(ipvDict, studyPerVariant, centersPerHomoVus, inList, outList
 		study = studyPerVariant[v]
 		if v in inList:
 			vIn = 'True'
-			logger.info(str(v) + ': in')
 		elif v in outList:
 			vIn = 'False'
-			logger.info(str(v) + ': out')
 		else:
-			continue
+			vIn = 'NA'
 		variantsDict[v] = dict()
 		variantsDict[v]['class'] = vClass
 		variantsDict[v]['popFreq'] = vPopFreq
@@ -168,7 +161,7 @@ def getStudyAndCenter(vpiDict):
 
 	return studyPerVariant, centersPerHomoVus
 
-def addInfo(variantsDF, sitesDF, varmapper):
+def addInfo(variantsDF, sitesDF, coordMapper, hgvs):
 	variants = list(variantsDF['variant'])
 	brca_dict = dict()
 	pass_dict = dict()
@@ -204,7 +197,8 @@ def addInfo(variantsDF, sitesDF, varmapper):
 			logger.debug('pair = ' + pair)
 			vv = pair.split('=')
 			infoDict[i][vv[0]] = vv[1]
-		infoDict[i]['hgvs'] = translate_to_hgvs(finalDF.iloc[i]['variant'], varmapper)
+		if hgvs:
+			infoDict[i]['hgvs'] = translate_to_hgvs(finalDF.iloc[i]['variant'], coordMapper)
 
 	infoDF = pd.DataFrame.from_dict(infoDict).transpose()
 
@@ -216,26 +210,14 @@ def addInfo(variantsDF, sitesDF, varmapper):
 	return finalDF
 		
 
-def translate_to_hgvs(vartokens, varmapper):
+def translate_to_hgvs(vartokens, coordMapper):
 	varArray = vartokens.split(',')
 	chrom = int(varArray[0].split('(')[1])
 	pos = int(varArray[1])
 	ref = varArray[2]
 	alt = varArray[3].split(')')[0]
-	if chrom == 17:
-		accessioned_chrom = "NC_000017.11"
-		ref_cdna = "NM_007294.4"
-	else:
-		accessioned_chrom = "NC_000013.11"
-		ref_cdna = "NM_000059.3"
-	start = hgvs.location.BaseOffsetPosition(base=pos)
-	end = hgvs.location.BaseOffsetPosition(base=pos + len(ref) - 1)
-	iv = hgvs.location.Interval(start=start,end=end)
-	edit = hgvs.edit.NARefAlt(ref=ref,alt=alt)
-	posedit = hgvs.posedit.PosEdit(pos=iv,edit=edit)
-	var_g = hgvs.sequencevariant.SequenceVariant(ac=accessioned_chrom, type='g', posedit = posedit)
-	var_c = varmapper.g_to_c(var_g,ref_cdna)
-	return(str(var_c))
+	coords = (chrom, pos, ref, alt)
+	return coordMapper.translate_to_hgvs(coords)
 
 if __name__ == "__main__":
     main()

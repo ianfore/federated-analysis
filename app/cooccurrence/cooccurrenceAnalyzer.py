@@ -30,10 +30,7 @@ def parse_args():
     parser.add_argument('-a', '--ancestry', help='ancestry json')
     parser.add_argument('-d', '--outputDir', help='output dir')
     parser.add_argument('-n', '--numProcs', help='number of processes')
-
-    options = parser.parse_args()
-    return options
-
+    return parser.parse_args()
 
 def main():
 
@@ -76,6 +73,37 @@ def main():
         ancestriesDF = json.load(f)
     f.close()
 
+    fpi = getFPI(numProcesses, vpiDF, ancestriesDF, outputDir, vpiDict)
+
+    plotVUSByPosition(variantsDict, outputDir)
+    plotZygosityRatiosPerIndividual(fpi, outputDir)
+    plotVUSByFrequency(variantsDict, 'maxPopFreq', outputDir)
+    plotVUSByFrequency(variantsDict, 'cohortFreq', outputDir)
+
+    ipvDict = getHardyWeinbergStats(vpiDict, variantsDict, ipvDict, c)
+
+    '''iphv = findIndividualsPerHomozygousVariant(vpiDict, variantsDict, 1.0)
+    iphvFileName = 'iphv.json'
+    logger.info('saving to ' + outputDir + '/' + iphvFileName)
+    with open(outputDir + '/' + iphvFileName, 'w') as f:
+        json.dump(iphv, f)
+    f.close()'''
+
+    inCIdomain = findRegionPerVariant(variantsDict, regionsDict)
+    domainFileName = 'domain.json'
+    logger.info('saving to ' + outputDir + '/' + domainFileName)
+    with open(outputDir + '/' + domainFileName, 'w') as f:
+        json.dump(inCIdomain, f)
+    f.close()
+    plotRegionsPerVariant(inCIdomain, outputDir)
+
+    # write ipv dict back out now that it has f-value
+    ipvOut = ipvFileName.replace('.json', '') + '-f.json'
+    with open(ipvOut, 'w') as f:
+        json.dump(ipvDict, f)
+    f.close()
+
+def getFPI(numProcesses, vpiDF, ancestriesDF, outputDir, vpiDict):
     logger.info('counting genotypes for variants on ' + str(numProcesses) + ' processes')
     t = time.time()
     q1 = Queue()
@@ -118,45 +146,7 @@ def main():
     print('pathogenic counts: ' + str(len(variantCounts['pathogenic'])))
     print('vus counts: ' + str(len(variantCounts['vus'])))
 
-
-    plotVUSByPosition(variantsDict, outputDir)
-
-    plotVUSByFrequency(variantsDict, 'maxPopFreq', outputDir)
-    plotVUSByFrequency(variantsDict, 'cohortFreq', outputDir)
-
-
-    ipvDict = getHardyWeinbergStats(vpiDict, variantsDict, ipvDict, c)
-
-    '''iphv = findIndividualsPerHomozygousVariant(vpiDict, variantsDict, 1.0)
-    iphvFileName = 'iphv.json'
-    logger.info('saving to ' + outputDir + '/' + iphvFileName)
-    with open(outputDir + '/' + iphvFileName, 'w') as f:
-        json.dump(iphv, f)
-    f.close()'''
-
-    inCIdomain = findRegionPerVariant(variantsDict, regionsDict)
-    domainFileName = 'domain.json'
-    logger.info('saving to ' + outputDir + '/' + domainFileName)
-    with open(outputDir + '/' + domainFileName, 'w') as f:
-        json.dump(inCIdomain, f)
-    f.close()
-    plotRegionsPerVariant(inCIdomain, outputDir)
-
-    # write ipv dict back out now that it has f-value
-    ipvOut = ipvFileName.replace('.json', '') + '-f.json'
-    with open(ipvOut, 'w') as f:
-        json.dump(ipvDict, f)
-    f.close()
-
-
-def filterOnFrequency(ipvDict, frequencyFilter):
-    filteredIPVDict = dict()
-    for v in ipvDict:
-        if ipvDict[v]['maxFreq'] <= frequencyFilter or ipvDict[v]['cohortFreq'] <= frequencyFilter:
-            filteredIPVDict[v] = ipvDict[v]
-    return filteredIPVDict
-
-
+    return frequenciesPerIndividual
 
 def plotRegionsPerVariant(inCIdomain, outputDir):
     '''"(17, 43048687, 'GT', 'G')": [
@@ -1153,12 +1143,13 @@ def countTotalGenotypesForVariants(q1, q2, vpiDF, ancestriesDF, threadID, numPro
             ethnicity = ancestriesDF[individual]['gnomadPop']
         except Exception as e:
             ethnicity = None
-        '''ancestry = getMaxAncestry(ancestriesDF[ancestriesDF['individual'] == individual])
-        ethnicity = hgdp_to_gnomad[ancestry]'''
+        #ancestry = getMaxAncestry(ancestriesDF[ancestriesDF['individual'] == individual])
+        #ethnicity = hgdp_to_gnomad[ancestry]
         logger.debug(individual)
         frequenciesPerIndividual[individual] = {'benign': {'homo': 0, 'hetero': 0},
                                             'pathogenic': {'homo': 0, 'hetero': 0},
-                                              'vus': {'homo': 0, 'hetero': 0}}
+                                              'vus': {'homo': 0, 'hetero': 0},
+                                                'ethnicity': ethnicity}
 
         for b in vpiDF[individual]['benign']:
             if b:
