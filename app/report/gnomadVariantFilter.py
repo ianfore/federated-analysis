@@ -5,6 +5,7 @@ import logging
 import time
 import json
 from pyliftover import LiftOver
+import argparse
 
 coordinateColumnBase = 'Genomic_Coordinate_hg'
 hgVersion = 38
@@ -20,17 +21,26 @@ their sum.'''
 
 # vcf-hgversion and gnomad-hgversion must of the form hg38, hg19, ...
 
-def main():
-    if len(sys.argv) != 7:
-        print('vcf-input mc-file notinsubset-file inubset-file vcf-hgversion gnomad-hgversion')
-        sys.exit(1)
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-v', '--vcfFile', help='vcf input file')
+    parser.add_argument('-m', '--mcFile', help='melissas gnomad input file')
+    parser.add_argument('-d', '--dir', help='output directory')
+    parser.add_argument('-i', '--inputVersion', help='hg version of input files')
+    parser.add_argument('-g', '--gnomadVersion', help='hg version of gnomad')
+    options = parser.parse_args()
+    return options
 
-    vcfFileName = sys.argv[1]
-    mcFileName = sys.argv[2]
-    notInSubsetFileName = sys.argv[3]
-    inSubsetFileName = sys.argv[4]
-    vcfHG = sys.argv[5]
-    gnomadHG = sys.argv[6]
+
+def main():
+    vcfFileName = parse_args().vcfFile
+    mcFileName = parse_args().mcFile
+    outputDir = parse_args().dir
+    vcfHG = parse_args().inputVersion
+    gnomadHG = parse_args().gnomadVersion
+    notInSubsetFileName = outputDir + '/not.txt'
+    inSubsetFileName = outputDir + '/in.txt'
+
 
     logger.info('finding variants from ' + mcFileName)
     mcDF = pd.read_csv(mcFileName, delimiter='\t', header=0, dtype=str)
@@ -42,7 +52,10 @@ def main():
 
     effectivelyZeroValues = ['0', '0.0', '-', None]
 
-    lo = LiftOver(vcfHG, gnomadHG)
+    try:
+        lo = LiftOver(vcfHG, gnomadHG)
+    except Exception as e:
+        lo = None
 
     notInSubset = open(notInSubsetFileName, 'w')
     inSubset = open(inSubsetFileName, 'w')
@@ -78,26 +91,36 @@ def main():
     inSubset.close()
     notInSubset.close()
 
-def checkMelissaTable(variant, mcDF, lo):
+def checkMelissaTable(variant, mcDF, lo, fileType):
     chrom = variant[0]
     pos = variant[1]
     ref = variant[2]
     alt = variant[3]
 
-    coord = lo.convert_coordinate('chr' + str(chrom), int(pos))
-    if coord is None or len(coord) != 1:
-        return None, None, None
-    try:
-        posIn = int(coord[0][1])
-    except Exception as e:
-        return None, None, posIn
-    row = mcDF[(mcDF['chrom'] == str(chrom)) & (mcDF['pos'] == str(posIn)) & (mcDF['ref'] == ref) & (mcDF['alt'] == alt)]
+    if not lo is None:
+        coord = lo.convert_coordinate('chr' + str(chrom), int(pos))
+        if coord is None or len(coord) != 1:
+            return None, None, None
+        try:
+            pos = int(coord[0][1])
+        except Exception as e:
+            return None, None, pos
+    row = mcDF[(mcDF['chrom'] == str(chrom)) & (mcDF['pos'] == str(pos)) & (mcDF['ref'] == ref) & (mcDF['alt'] == alt)]
     if len(row) == 0:
-        return None, None, posIn
-    exomeDelta = row['exome_ac_hom_delta'].iloc[0]
-    genomeDelta = row['genome_ac_hom_delta'].iloc[0]
+        return None, None, pos
 
-    return exomeDelta, genomeDelta, posIn
+    if fileType == 'homo':
+        exomeDelta = row['exome_ac_hom_delta'].iloc[0]
+        genomeDelta = row['genome_ac_hom_delta'].iloc[0]
+    elif fileType == 'hetero':
+        exomeDelta = row['exome_ac_delta'].iloc[0]
+        genomeDelta = row['genome_ac_delta'].iloc[0]
+    elif fileType == 'both':
+        exomeDelta = row['exome_ac_delta'].iloc[0]
+        genomeDelta = row['genome_ac_delta'].iloc[0]
+    else:
+        return None, None, None
+    return exomeDelta, genomeDelta, pos
 
 
 
