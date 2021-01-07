@@ -23,7 +23,8 @@ their sum.'''
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-v', '--vcfFile', help='vcf input file')
+    parser.add_argument('-f', '--vcfFile', help='vcf input file')
+    parser.add_argument('-a', '--allFile', help='all variants json input file')
     parser.add_argument('-m', '--mcFile', help='melissas gnomad input file')
     parser.add_argument('-d', '--dir', help='output directory')
     parser.add_argument('-i', '--inputVersion', help='hg version of input files')
@@ -34,6 +35,7 @@ def parse_args():
 
 def main():
     vcfFileName = parse_args().vcfFile
+    allFileName = parse_args().allFile
     mcFileName = parse_args().mcFile
     outputDir = parse_args().dir
     vcfHG = parse_args().inputVersion
@@ -46,9 +48,19 @@ def main():
     mcDF = pd.read_csv(mcFileName, delimiter='\t', header=0, dtype=str)
 
     logger.info('reading VCF file ' + vcfFileName)
-    t = time.time()
     vcf = readVCFFile(vcfFileName)
-    logger.info('elapsed time in readVCFFile() ' + str(time.time() - t))
+
+    logger.info('reading data from ' + allFileName)
+    with open(allFileName, 'r') as f:
+        allVarients = json.load(f)
+    f.close()
+    # change keys to proper tuples for ease of search later
+    variantDict = dict()
+    for varType in ['benign', 'pathogenic', 'vus']:
+        for var in allVariants[varType]:
+
+
+    ipvDict = {eval(k): v for k, v in ipv.items()}
 
     effectivelyZeroValues = ['0', '0.0', '-', None]
 
@@ -62,10 +74,29 @@ def main():
     for variant in range(len(vcf['calldata/GT'])):
         c = int(vcf['variants/CHROM'][variant].replace('chr', ''))
         p = int(vcf['variants/POS'][variant])
-        r = str(vcf['variants/REF'][variant])
-        a = str(vcf['variants/ALT'][variant][0])
+        r = vcf['variants/REF'][variant]
+        a = vcf['variants/ALT'][variant][0]
 
-        exomeDelta, genomeDelta, hg = checkMelissaTable((c,p,r,a), mcDF, lo)
+        try:
+            vTuple = (c, p, r, a)
+            #vKey = str(vTuple)
+            v = ipvDict[vTuple]
+            hetLen = len(v["heterozygous individuals"])
+            homLen = len(v["homozygous individuals"])
+            if hetLen != 0 and homLen != 0:
+                variantType = 'both'
+            elif hetLen != 0 and homLen == 0:
+                variantType = 'hetero'
+            elif hetLen == 0 and homLen != 0:
+                variantType = 'homo'
+            else:
+                variantType = None
+        except Exception as e:
+            logger.error('couldnt find ' + str(vTuple)  + str(e))
+            continue
+
+
+        exomeDelta, genomeDelta, hg = checkMelissaTable((c,p,r,a), mcDF, lo, variantType)
         if exomeDelta in effectivelyZeroValues and genomeDelta in effectivelyZeroValues:
             notInSubset.write('(' + str(c) + ',' + str(p) + ',' + str(r) + ',' + str(a)  + ')' + '\n')
         else:
@@ -91,7 +122,7 @@ def main():
     inSubset.close()
     notInSubset.close()
 
-def checkMelissaTable(variant, mcDF, lo, fileType):
+def checkMelissaTable(variant, mcDF, lo, variantType):
     chrom = variant[0]
     pos = variant[1]
     ref = variant[2]
@@ -109,13 +140,13 @@ def checkMelissaTable(variant, mcDF, lo, fileType):
     if len(row) == 0:
         return None, None, pos
 
-    if fileType == 'homo':
+    if variantType == 'homo':
         exomeDelta = row['exome_ac_hom_delta'].iloc[0]
         genomeDelta = row['genome_ac_hom_delta'].iloc[0]
-    elif fileType == 'hetero':
+    elif variantType == 'hetero':
         exomeDelta = row['exome_ac_delta'].iloc[0]
         genomeDelta = row['genome_ac_delta'].iloc[0]
-    elif fileType == 'both':
+    elif variantType == 'both':
         exomeDelta = row['exome_ac_delta'].iloc[0]
         genomeDelta = row['genome_ac_delta'].iloc[0]
     else:

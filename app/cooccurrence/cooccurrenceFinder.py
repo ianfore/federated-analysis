@@ -300,7 +300,8 @@ def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, brcaDF, hgV
             individualsPerVariant[v]['cohortFreq'] = float(len(individualsPerVariant[v]['homozygous individuals']) + \
                 len(individualsPerVariant[v]['heterozygous individuals']) ) / float(cohortSize)
             individualsPerVariant[v]['exonic'] = isExonic(ensemblRelease, c, p)
-
+        else:
+            logger.warning('variant ' + str(v) + ' not in ipv dict?')
     return individualsPerVariant
 
 def getAllVariantsPerClass(vpi):
