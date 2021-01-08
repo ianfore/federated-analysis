@@ -122,6 +122,10 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
     brcaDF, pathogenicVariants, benignVariants, unknownVariants = findVariantsInBRCA(brcaFileName, classStrings, hgVersion)
     logger.info('elapsed time in findVariantsInBRCA() ' + str(time.time() -t))
 
+    logger.info('number of pathogenic variants is ' + str(len(pathogenicVariants)))
+    logger.info('number of benign variants is ' + str(len(benignVariants)))
+    logger.info('number of vus variants is ' + str(len(unknownVariants)))
+
     logger.info('reading VCF file ' + vcfFileName)
     t = time.time()
     vcf = readVCFFile(vcfFileName)
