@@ -128,9 +128,9 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
     logger.info('number of vus variants is ' + str(len(unknownVariants)))
 
     myTout = {'benign': benignVariants, 'pathogenic': pathogenicVariants, 'vus': unknownVariants}
-    logger.info('saving vpi to ' + toutFileName)
+    logger.info('saving all variants to ' + toutFileName)
     with open(toutFileName, 'w') as f:
-        json.dump(myTout, f)
+        json.dump(myTout, f, cls=NpEncoder)
     f.close()
 
 
