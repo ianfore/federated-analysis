@@ -139,19 +139,18 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
         processList.append(p)
     logger.info('joining results from forked threads')
     variantsPerIndividual = dict()
-    individualsPerVariant = dict()
     for i in range(numProcs):
         variantsPerIndividual.update(q.get())
-        individualsPerVariant.update(w.get())
     for i in range(numProcs):
         processList[i].join()
     logger.info('elapsed time in findVariantsPerIndividual() ' + str(time.time() -t))
 
     t = time.time()
     cohortSize = len(variantsPerIndividual)
-    logger.info('cohort size is ' + str(cohortSize))
-    individualsPerVariant = updateIndividualsPerVariant(variantsPerIndividual, individualsPerVariant, vcf, chromosome,
-                                                        brcaDF, hgVersion, ensemblRelease, cohortSize)
+    logger.info('number of samples is ' + str(cohortSize))
+    individualsPerVariant = findIndividualsPerVariant(variantsPerIndividual, vcf, chromosome,brcaDF, hgVersion,
+                                                        ensemblRelease, cohortSize)
+    logger.info('number of records is ' + str(len(individualsPerVariant)))
     logger.info('elapsed time in updateIndividualsPerVariant() ' + str(time.time() -t))
 
     logger.info('saving vpi to ' + vpiFileName)
@@ -208,8 +207,8 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
         f.write(json_dump)
     f.close()
 
-def updateIndividualsPerVariant(variantsPerIndividual, individualsPerVariant, vcf, chromosome, brcaDF, hgVersion,
-                                ensemblRelease, cohortSize):
+def findIndividualsPerVariant(variantsPerIndividual, vcf, chromosome, brcaDF, hgVersion, ensemblRelease, cohortSize):
+    individualsPerVariant = dict()
     for individual in variantsPerIndividual:
         for b in variantsPerIndividual[individual]['benign']:
             v = str((b[0][0], b[0][1], b[0][2], b[0][3]))
@@ -516,7 +515,6 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
      'variants/NMZ', 'variants/NS_NREF', 'variants/QUAL', 'variants/STZ', 'variants/SVM']'''
 
     variantsPerIndividual = dict()
-    individualsPerVariant = dict()
     individuals = list(vcf['samples'])
     n = len(individuals)
     partitionSizes = divide(n, numProcesses)
@@ -565,7 +563,6 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
                     variantsPerIndividual[individuals[i]]['vus'].append(((c, p, r, a),  genotype, seqCenter, study))
 
     q.put(variantsPerIndividual)
-    w.put(individualsPerVariant)
 
 def getGenesForVariant(variant, ensemblRelease, geneOfInterest):
     ensembl = pyensembl.EnsemblRelease(release=ensemblRelease)
