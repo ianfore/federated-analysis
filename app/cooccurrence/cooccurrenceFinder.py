@@ -219,6 +219,8 @@ def findIndividualsPerVariant(variantsPerIndividual, vcf, chromosome, brcaDF, hg
                 individualsPerVariant[v]['heterozygous individuals'].add(individual)
             elif b[1] == '3':
                 individualsPerVariant[v]['homozygous individuals'].add(individual)
+            else:
+                logger.warning('hmm - didnt add this ben ' + v)
         for p in variantsPerIndividual[individual]['pathogenic']:
             v = str((p[0][0], p[0][1], p[0][2], p[0][3]))
             if not v in individualsPerVariant:
@@ -228,6 +230,8 @@ def findIndividualsPerVariant(variantsPerIndividual, vcf, chromosome, brcaDF, hg
                 individualsPerVariant[v]['heterozygous individuals'].add(individual)
             elif p[1] == '3':
                 individualsPerVariant[v]['homozygous individuals'].add(individual)
+            else:
+                logger.warning('hmm - didnt add this path ' + v)
         for vus in variantsPerIndividual[individual]['vus']:
             v = str((vus[0][0], vus[0][1], vus[0][2], vus[0][3]))
             if not v in individualsPerVariant:
@@ -237,6 +241,8 @@ def findIndividualsPerVariant(variantsPerIndividual, vcf, chromosome, brcaDF, hg
                 individualsPerVariant[v]['heterozygous individuals'].add(individual)
             elif vus[1] == '3':
                 individualsPerVariant[v]['homozygous individuals'].add(individual)
+            else:
+                logger.warning('hmm - didnt add this vus ' + v)
     individualsPerVariant = addVariantInfo(individualsPerVariant, vcf, chromosome, ['FIBC_I', 'FIBC_P'], brcaDF,
                                            hgVersion, cohortSize, ensemblRelease)
 
