@@ -54,57 +54,34 @@ class NpDecoder(json.JSONDecoder):
         else:
             return super(NpDecoder, self).default(obj)
 
-def main():
-    # main just parses the CLI and then calls the run() method with appropriate args
-
+def parseArgs():
     parser = argparse.ArgumentParser(usage="cooccurrenceFinder args [options]")
-
     parser.add_argument("--vcf", dest="vcf", help="name of file containing VCF data, default=None", default=None)
-
     parser.add_argument("--ipv", dest="ipv", help="ipv file name, default=ipv.json", default='ipv.json')
-
     parser.add_argument("--vpi", dest="vpi", help="vpi file name, default=vpi.json", default='vpi.json')
-
     parser.add_argument("--out", dest="out", help="output file name, default=out.json", default='out.json')
-
     parser.add_argument("--all", dest="all", help="all vars file name, default=all.json", default='all.json')
-
     parser.add_argument("--anno", dest="anno", help="annotation file name, default=None", default=None)
-
     parser.add_argument("--h", dest="h", help="Human genome version (37 or 38). Default=None", default=None)
-
     parser.add_argument("--e", dest="e", help="Ensembl version - 75 (for 37) or 99 (for 38). Default=None", default=None)
-
     parser.add_argument("--c", dest="c", help="Chromosome of interest. Default=None", default=None)
-
     parser.add_argument("--g", dest="g", help="Gene of interest. Default=None", default=None)
-
     parser.add_argument("--p", dest="p", help="Phased (boolean). Default=False", default='True')
-
     parser.add_argument("--s", dest="s", help="Save variants per individual. Default=True", default='True')
-
     parser.add_argument("--i", dest="i", help="Include pathog vars per VUS in report. Default=True", default='True')
-
     parser.add_argument("--n", dest="n", help="Number of processes. Default=1", default=cpu_count())
-
     parser.add_argument("--b", dest="b", help="BRCA variants file. Default=brca-variants", default=None)
-
     parser.add_argument("--d", dest="d", help="directory containing pyensembl-cache. Default=/var/tmp/pyensembl-cache", default='/var/tmp/pyensembl-cache')
-
     parser.add_argument("--r", dest="r", help="Rare frequency cutoff. Default=0.01", default=0.01)
-
     parser.add_argument("--f", dest="f", help="Topmed freeze. Default=0", default=0)
-
-
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" % defaultLogLevel, default=defaultLogLevel)
+    return parser.parse_args()
 
-    options = parser.parse_args()
-
+def configureLogging(options):
     # Parse the log level
     numeric_level = getattr(logging, options.logLevel.upper(), None)
     if not isinstance(numeric_level, int):
         raise ValueError('Invalid log level: %s' % options.logLevel)
-
     # Setup a logger
     logger.setLevel(numeric_level)
     ch = logging.StreamHandler(sys.stdout)
@@ -114,28 +91,18 @@ def main():
     logger.addHandler(ch)
     logger.debug("Established logger")
 
-    g_options = options.g
-    b_options = options.b
-    v_options = options.vcf
-    ipv_options = options.ipv
-    vpi_options = options.vpi
-    all_options = options.all
-    anno_options = options.anno
-    out_options = options.out
-    c_options = options.c
-    d_options = options.d
-    p_options = bool(eval(options.p))
-    s_options = bool(eval(options.s))
-    h_options = int(options.h)
-    e_options = int(options.e)
-    n_options = int(options.n)
-    r_options = float(options.r)
-    f_options = int(options.f)
+def main():
+    # main just parses the CLI and then calls the run() method with appropriate args
+    options = parseArgs()
+
+    configureLogging(options)
+
     print(options)
 
 
-    run(h_options, e_options, c_options, g_options, p_options, v_options, s_options,
-        n_options, b_options, d_options, r_options, ipv_options, vpi_options, all_options, anno_options, out_options, f_options)
+    run(int(options.h), int(options.e), options.c, options.g, bool(eval(options.p)), options.vcf, bool(eval(options.s)),
+        int(options.n), options.b, options.d, float(options.r), options.ipv, options.vpi, options.all, options.anno,
+        options.out, int(options.f))
 
 def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVarsPerIndivid, numProcs,
         brcaFileName, pyensemblDir, rareCutoff, ipvFileName, vpiFileName, allVariantsFileName, annoFileName,
@@ -180,48 +147,21 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
         processList[i].join()
     logger.info('elapsed time in findVariantsPerIndividual() ' + str(time.time() -t))
 
-
-    for individual in variantsPerIndividual:
-        for b in variantsPerIndividual[individual]['benign']:
-            v = str((b[0][0], b[0][1], b[0][2], b[0][3]))
-            if not v in individualsPerVariant:
-                individualsPerVariant[v] = {'heterozygous individuals': set(),
-                                            'homozygous individuals': set()}
-            if b[1] == '1' or b[1] == '2':
-                individualsPerVariant[v]['heterozygous individuals'].add(individual)
-            elif b[1] == '3':
-                individualsPerVariant[v]['homozygous individuals'].add(individual)
-        for p in variantsPerIndividual[individual]['pathogenic']:
-            v = str((p[0][0], p[0][1], p[0][2], p[0][3]))
-            if not v in individualsPerVariant:
-                individualsPerVariant[v] = {'heterozygous individuals': set(),
-                                            'homozygous individuals': set()}
-            if p[1] == '1' or p[1] == '2':
-                individualsPerVariant[v]['heterozygous individuals'].add(individual)
-            elif p[1] == '3':
-                individualsPerVariant[v]['homozygous individuals'].add(individual)
-        for vus in variantsPerIndividual[individual]['vus']:
-            v = str((vus[0][0], vus[0][1], vus[0][2], vus[0][3]))
-            if not v in individualsPerVariant:
-                individualsPerVariant[v] = {'heterozygous individuals': set(),
-                                            'homozygous individuals': set()}
-            if vus[1] == '1' or vus[1] == '2':
-                individualsPerVariant[v]['heterozygous individuals'].add(individual)
-            elif vus[1] == '3':
-                individualsPerVariant[v]['homozygous individuals'].add(individual)
+    t = time.time()
     cohortSize = len(variantsPerIndividual)
-    individualsPerVariant = addVariantInfo(individualsPerVariant, vcf, chromosome, ['FIBC_I', 'FIBC_P'], brcaDF,
-                                           hgVersion, cohortSize, ensemblRelease)
+    individualsPerVariant = updateIndividualsPerVariant(variantsPerIndividual, individualsPerVariant, vcf, chromosome,
+                                                        brcaDF, hgVersion, ensemblRelease, cohortSize)
+    logger.info('elapsed time in updateIndividualsPerVariant() ' + str(time.time() -t))
 
     logger.info('saving vpi to ' + vpiFileName)
     with open(vpiFileName, 'w') as f:
         json.dump(variantsPerIndividual, f, cls=NpEncoder)
     f.close()
+
     logger.info('saving ipv to ' + ipvFileName)
     with open(ipvFileName, 'w') as f:
         json.dump(individualsPerVariant, f, cls=NpEncoder)
     f.close()
-
 
     logger.info('finding homozygous individuals per vus')
     t = time.time()
@@ -266,6 +206,41 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
     with open(outputFileName, 'w') as f:
         f.write(json_dump)
     f.close()
+
+def updateIndividualsPerVariant(variantsPerIndividual, individualsPerVariant, vcf, chromosome, brcaDF, hgVersion,
+                                ensemblRelease, cohortSize):
+    for individual in variantsPerIndividual:
+        for b in variantsPerIndividual[individual]['benign']:
+            v = str((b[0][0], b[0][1], b[0][2], b[0][3]))
+            if not v in individualsPerVariant:
+                individualsPerVariant[v] = {'heterozygous individuals': set(),
+                                            'homozygous individuals': set()}
+            if b[1] == '1' or b[1] == '2':
+                individualsPerVariant[v]['heterozygous individuals'].add(individual)
+            elif b[1] == '3':
+                individualsPerVariant[v]['homozygous individuals'].add(individual)
+        for p in variantsPerIndividual[individual]['pathogenic']:
+            v = str((p[0][0], p[0][1], p[0][2], p[0][3]))
+            if not v in individualsPerVariant:
+                individualsPerVariant[v] = {'heterozygous individuals': set(),
+                                            'homozygous individuals': set()}
+            if p[1] == '1' or p[1] == '2':
+                individualsPerVariant[v]['heterozygous individuals'].add(individual)
+            elif p[1] == '3':
+                individualsPerVariant[v]['homozygous individuals'].add(individual)
+        for vus in variantsPerIndividual[individual]['vus']:
+            v = str((vus[0][0], vus[0][1], vus[0][2], vus[0][3]))
+            if not v in individualsPerVariant:
+                individualsPerVariant[v] = {'heterozygous individuals': set(),
+                                            'homozygous individuals': set()}
+            if vus[1] == '1' or vus[1] == '2':
+                individualsPerVariant[v]['heterozygous individuals'].add(individual)
+            elif vus[1] == '3':
+                individualsPerVariant[v]['homozygous individuals'].add(individual)
+    individualsPerVariant = addVariantInfo(individualsPerVariant, vcf, chromosome, ['FIBC_I', 'FIBC_P'], brcaDF,
+                                           hgVersion, cohortSize, ensemblRelease)
+
+    return individualsPerVariant
 
 
 def isExonic(ensemblRelease, chrom, pos):
