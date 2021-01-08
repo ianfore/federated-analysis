@@ -168,10 +168,10 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
     homozygousPerVus = countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, gene, rareCutoff)
     logger.info('elapsed time in countHomozygousPerVus() ' + str(time.time() -t))
 
-    logger.info('finding homozygous individuals per benign')
-    t = time.time()
-    homozygousPerBenign = countHomozygousPerBenign(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, gene, rareCutoff)
-    logger.info('elapsed time in countHomozygousPerBenign() ' + str(time.time() - t))
+    #logger.info('finding homozygous individuals per benign')
+    #t = time.time()
+    #homozygousPerBenign = countHomozygousPerBenign(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, gene, rareCutoff)
+    #logger.info('elapsed time in countHomozygousPerBenign() ' + str(time.time() - t))
 
     logger.info('finding individuals per cooc')
     t = time.time()
