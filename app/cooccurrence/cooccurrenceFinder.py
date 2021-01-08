@@ -181,8 +181,6 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
     logger.info('elapsed time in findVariantsPerIndividual() ' + str(time.time() -t))
 
 
-    # find individuals per variant
-    individualsPerVariant = dict()
     for individual in variantsPerIndividual:
         for b in variantsPerIndividual[individual]['benign']:
             v = str((b[0][0], b[0][1], b[0][2], b[0][3]))
@@ -258,7 +256,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
     f.close()
 
     logger.info('putting all the data together per vus')
-    dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, p1, n, k, brcaDF, hgVersion, cohortSize, rareCutoff)
+    dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, p1, n, k, brcaDF, hgVersion, cohortSize)
 
     #data_set = {"cooccurring vus": dataPerVus, "homozygous vus": homozygousPerVus, "homozygous benign": homozygousPerBenign}
     data_set = {"cooccurring vus": dataPerVus, "homozygous vus": homozygousPerVus}
@@ -442,7 +440,7 @@ def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelea
 
     return homozygousPerVus
 
-def calculateLikelihood(pathCoocs, p1, n, k, brcaDF, hgVersion, cohortSize, rareCutoff):
+def calculateLikelihood(pathCoocs, p1, n, k, brcaDF, hgVersion, cohortSize):
 
     # vus coocs data: {(vus1, vus2):[individuals]}
     # "([10, 89624243, 'A', 'G'], [10, 89624304, 'C', 'T')]": ["0000057940", "0000057950"],
@@ -503,10 +501,7 @@ def calculateLikelihood(pathCoocs, p1, n, k, brcaDF, hgVersion, cohortSize, rare
                     'allele frequencies':{'maxPop':maxPop, 'maxPopFreq':maxPopFreq, 'minPop': minPop, 'minPopFreq': minPopFreq,
                                           'cohortFreq':cohortFreq}, 'pathogenic variants': pathVarsPerVus[vus]}
 
-        if (maxPopFreq < rareCutoff and maxPopFreq != 0) or (cohortFreq < rareCutoff and cohortFreq != 0):
-            data['RARE'] = True
-        else:
-            data['RARE'] = False
+
         dataPerVus[str(vus)] = data
 
     return dataPerVus
@@ -560,6 +555,7 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
 
         for variant in range(len(vcf['calldata/GT'])):
             if int(vcf['variants/CHROM'][variant].replace('chr', '')) != int(chromosome):
+                logger.warning('wrong chromosome?')
                 continue
             if 1 in vcf['calldata/GT'][variant][i]:
                 c = int(vcf['variants/CHROM'][variant].replace('chr', ''))
@@ -567,6 +563,7 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
                 r = str(vcf['variants/REF'][variant])
                 a = str(vcf['variants/ALT'][variant][0])
                 if getGenesForVariant([c,p,r,a], ensemblRelease, gene) is None:
+                    logger.warning('no gene for variant? ' + str([c,p,r,a]))
                     continue
 
                 genotype = str(int(str(vcf['calldata/GT'][variant][i][0]) + str(vcf['calldata/GT'][variant][i][1]), 2))
