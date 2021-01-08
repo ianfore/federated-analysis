@@ -74,7 +74,7 @@ def parseArgs():
     parser.add_argument("--d", dest="d", help="directory containing pyensembl-cache. Default=/var/tmp/pyensembl-cache", default='/var/tmp/pyensembl-cache')
     parser.add_argument("--r", dest="r", help="Rare frequency cutoff. Default=0.01", default=0.01)
     parser.add_argument("--f", dest="f", help="Topmed freeze. Default=0", default=0)
-    parser.add_argument("--t", dest="t", help="tout file name. Default=None", default=None)
+    parser.add_argument("--t", dest="tout", help="tout file name. Default=None", default=None)
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" % defaultLogLevel, default=defaultLogLevel)
     return parser.parse_args()
 
