@@ -149,6 +149,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
 
     t = time.time()
     cohortSize = len(variantsPerIndividual)
+    logger.info('cohort size is ' + str(cohortSize))
     individualsPerVariant = updateIndividualsPerVariant(variantsPerIndividual, individualsPerVariant, vcf, chromosome,
                                                         brcaDF, hgVersion, ensemblRelease, cohortSize)
     logger.info('elapsed time in updateIndividualsPerVariant() ' + str(time.time() -t))
