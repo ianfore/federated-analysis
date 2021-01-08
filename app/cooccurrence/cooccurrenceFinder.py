@@ -74,7 +74,7 @@ def parseArgs():
     parser.add_argument("--d", dest="d", help="directory containing pyensembl-cache. Default=/var/tmp/pyensembl-cache", default='/var/tmp/pyensembl-cache')
     parser.add_argument("--r", dest="r", help="Rare frequency cutoff. Default=0.01", default=0.01)
     parser.add_argument("--f", dest="f", help="Topmed freeze. Default=0", default=0)
-    parser.add_argument("--tout", dest="tout", help="tout file name. Default=None", default=None)
+    parser.add_argument("--t", dest="tout", help="tout file name. Default=None", default=None)
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" % defaultLogLevel, default=defaultLogLevel)
     return parser.parse_args()
 
@@ -103,11 +103,11 @@ def main():
 
     run(int(options.h), int(options.e), options.c, options.g, bool(eval(options.p)), options.vcf, bool(eval(options.s)),
         int(options.n), options.b, options.d, float(options.r), options.ipv, options.vpi, options.all, options.anno,
-        options.out, int(options.f))
+        options.out, int(options.f), options.tout)
 
 def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVarsPerIndivid, numProcs,
         brcaFileName, pyensemblDir, rareCutoff, ipvFileName, vpiFileName, allVariantsFileName, annoFileName,
-        outputFileName, freeze):
+        outputFileName, freeze, toutFileName):
 
 
     logger.info('setting pyensembl dir to ' + pyensemblDir)
@@ -130,7 +130,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
     myTout = {'benign': benignVariants, 'pathogenic': pathogenicVariants, 'vus': unknownVariants}
     logger.info('saving vpi to ' + toutFileName)
     with open(toutFileName, 'w') as f:
-        json.dump(variantsPerIndividual, f, cls=NpEncoder)
+        json.dump(myTout, f)
     f.close()
 
 
