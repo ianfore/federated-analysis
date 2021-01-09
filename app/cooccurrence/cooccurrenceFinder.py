@@ -581,6 +581,8 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
                 else:
                     variantsPerIndividual[individuals[i]]['vus'].append(((c, p, r, a),  genotype, seqCenter, study))
 
+            else:
+                logger.warning('0 allele counts for variant ' + str(variant))
     q.put(variantsPerIndividual)
 
 def getGenesForVariant(variant, ensemblRelease, geneOfInterest):
