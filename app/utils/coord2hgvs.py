@@ -36,6 +36,3 @@ class coordinateMapper():
         var_g = hgvs.sequencevariant.SequenceVariant(ac=accessioned_chrom, type='g', posedit = posedit)
         var_c = self.varmapper.g_to_c(var_g,ref_cdna)
         return(str(var_c))
-
-if __name__ == "__main__":
-    main()
