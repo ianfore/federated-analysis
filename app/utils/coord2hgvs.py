@@ -2,6 +2,8 @@ import hgvs.assemblymapper
 import hgvs.dataproviders.uta
 import hgvs.edit, hgvs.posedit
 import hgvs.sequencevariant
+import logging
+
 
 class coordinateMapper():
     def __init__(self, genomeAssembly):
@@ -9,6 +11,10 @@ class coordinateMapper():
         self.hdp = hgvs.dataproviders.uta.connect()
         self.varmapper = hgvs.assemblymapper.AssemblyMapper(self.hdp, assembly_name=self.genomeAssembly,
                                                    alt_aln_method='splign')
+
+        logging.basicConfig()
+        self.logger = logging.getLogger()
+        self.logger.setLevel(logging.WARN)
 
     def translate_to_hgvs(self, vartokens):
         # expected input is a tuple of the form (chrom, pos, ref, alt)
@@ -38,5 +44,6 @@ class coordinateMapper():
             var_g = hgvs.sequencevariant.SequenceVariant(ac=accessioned_chrom, type='g', posedit = posedit)
             var_c = self.varmapper.g_to_c(var_g,ref_cdna)
         except Exception as e:
+            self.logger.warning('exception processing ' + str((chrom, start, end)))
             pass
         return(str(var_c))
