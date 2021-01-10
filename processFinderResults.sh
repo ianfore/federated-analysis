@@ -49,9 +49,15 @@ numHomo=$(wc -l $CHR-homo-sorted.txt|awk '{print $1}')
 # find unique and intersecting counts
 # comm -123 (1 = suppress unique to f1, 2 => suppress unique to f2, 3=>suppress in both)
 
-numOnlyCooc=$(comm -23 $CHR-coocs-sorted.txt $CHR-homo-sorted.txt | wc -l)
+comm -23 $CHR-coocs-sorted.txt $CHR-homo-sorted.txt > $CHR-only-coocs.txt
+numOnlyCooc=$(wc -l $CHR-only-coocs.txt | awk '{print $1}')
 
-numOnlyHomo=$(comm -13 $CHR-coocs-sorted.txt $CHR-homo-sorted.txt | wc -l)
+comm -13 $CHR-coocs-sorted.txt $CHR-homo-sorted.txt > $CHR-only-homo.txt
+numOnlyHomo=$(wc -l $CHR-only-homo.txt | awk '{print $1}')
+
+comm -12 $CHR-homo-sorted.txt $CHR-coocs-sorted.txt  > $CHR-both.txt
+numIntersection=$(wc -l $CHR-both.txt | awk '{print $1}')
+echo "new int = $numIntersection"
 
 ((numIntersection=$numVUS - $numOnlyCooc - $numOnlyHomo))
 
@@ -70,3 +76,6 @@ rm $CHR-coocs.json
 rm $CHR-pretty.json
 rm $CHR-uniq.txt
 rm ${CHR}.txt
+#rm $CHR-only-coocs.txt
+#rm $CHR-only-homo.txt
+#rm $CHR-both.txt
