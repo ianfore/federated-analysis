@@ -208,7 +208,7 @@ def main():
     plt.ylabel('genotype frequency')
     plt.xlim(0,1)
     plt.ylim(0,1)
-    plt.savefig(outputDir + '/f8-observed-hw-dists_' + outputFileName + '.png')
+    plt.savefig(outputDir + '/observed-hw-dists_' + outputFileName + '.png')
     print('gene = ' + gene + ' subset = ' + subset + ' n= ' + str(len(pSq)))
 
     plt.show()

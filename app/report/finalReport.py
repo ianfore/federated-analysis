@@ -3,9 +3,9 @@ import pandas as pd
 import logging
 import hail as hl
 import argparse
-#from app.utils.coord2hgvs import coordinateMapper
+from app.utils.coord2hgvs import coordinateMapper
 
-import hgvs.assemblymapper
+'''import hgvs.assemblymapper
 import hgvs.dataproviders.uta
 import hgvs.edit, hgvs.posedit
 import hgvs.sequencevariant
@@ -42,7 +42,7 @@ class coordinateMapper():
         posedit = hgvs.posedit.PosEdit(pos=iv,edit=edit)
         var_g = hgvs.sequencevariant.SequenceVariant(ac=accessioned_chrom, type='g', posedit = posedit)
         var_c = self.varmapper.g_to_c(var_g,ref_cdna)
-        return(str(var_c))
+        return(str(var_c))'''
 
 logging.basicConfig()
 logger = logging.getLogger()
