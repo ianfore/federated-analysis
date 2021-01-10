@@ -59,7 +59,8 @@ def main():
         heteroList_2 = list(samples_2['hetero'])
 
         if gene == 'both':
-            hweafpQList = list(df_1['HWEAF_P']) + list(df_2['HWEAF_P'])
+            #hweafpQList = list(df_1['HWEAF_P']) + list(df_2['HWEAF_P'])
+            hweafpQList = list(df_1['q']) + list(df_2['q'])
             onesList = [1 for i in range(len(hweafpQList))]
             hweafpPlist = diffList(onesList, hweafpQList)
             pList = list(df_1['p']) + list(df_2['p'])
