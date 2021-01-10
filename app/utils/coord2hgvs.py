@@ -28,11 +28,15 @@ class coordinateMapper():
         else:
             accessioned_chrom = "NC_000013.11"
             ref_cdna = "NM_000059.3"
-        start = hgvs.location.BaseOffsetPosition(base=pos)
-        end = hgvs.location.BaseOffsetPosition(base=pos + len(ref) - 1)
-        iv = hgvs.location.Interval(start=start,end=end)
-        edit = hgvs.edit.NARefAlt(ref=ref,alt=alt)
-        posedit = hgvs.posedit.PosEdit(pos=iv,edit=edit)
-        var_g = hgvs.sequencevariant.SequenceVariant(ac=accessioned_chrom, type='g', posedit = posedit)
-        var_c = self.varmapper.g_to_c(var_g,ref_cdna)
+        var_c = None
+        try:
+            start = hgvs.location.BaseOffsetPosition(base=pos)
+            end = hgvs.location.BaseOffsetPosition(base=pos + len(ref) - 1)
+            iv = hgvs.location.Interval(start=start,end=end)
+            edit = hgvs.edit.NARefAlt(ref=ref,alt=alt)
+            posedit = hgvs.posedit.PosEdit(pos=iv,edit=edit)
+            var_g = hgvs.sequencevariant.SequenceVariant(ac=accessioned_chrom, type='g', posedit = posedit)
+            var_c = self.varmapper.g_to_c(var_g,ref_cdna)
+        except Exception as e:
+            pass
         return(str(var_c))
