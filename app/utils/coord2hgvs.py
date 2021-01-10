@@ -44,6 +44,6 @@ class coordinateMapper():
             var_g = hgvs.sequencevariant.SequenceVariant(ac=accessioned_chrom, type='g', posedit = posedit)
             var_c = self.varmapper.g_to_c(var_g,ref_cdna)
         except Exception as e:
-            self.logger.warning('exception processing ' + str((chrom, start, end)))
+            self.logger.warning('exception processing ' + str((chrom, start, end)) + ' : got ' + str(var_c))
             pass
         return(str(var_c))
