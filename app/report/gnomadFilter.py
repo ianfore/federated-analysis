@@ -124,8 +124,8 @@ def checkMelissaTable(variant, mcDF, lo, fileType):
         exomeDelta = row['exome_ac_delta'].iloc[0]
         genomeDelta = row['genome_ac_delta'].iloc[0]
     elif fileType == 'both':
-        exomeDelta = row['exome_ac_delta'].iloc[0]
-        genomeDelta = row['genome_ac_delta'].iloc[0]
+        exomeDelta = row['exome_ac_delta'].iloc[0] + row['exome_ac_hom_delta'].iloc[0]
+        genomeDelta = row['genome_ac_delta'].iloc[0] + row['genome_ac_hom_delta'].iloc[0]
     else:
         return None, None, None
     return exomeDelta, genomeDelta, pos
