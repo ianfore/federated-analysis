@@ -248,8 +248,8 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
     # determine total number of cases and controls for cohort frequency calculations
     numCases = 0
     numControls = 0
-    for row in pathologyDF:
-        if row['Age at onset']:
+    for i in range(len(pathologyDF)):
+        if pathologyDF.iloc[i]['Age at onset']:
             numCases += 1
         else:
             numControls += 1
