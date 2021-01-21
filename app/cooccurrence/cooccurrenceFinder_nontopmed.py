@@ -57,39 +57,22 @@ def main():
     # main just parses the CLI and then calls the run() method with appropriate args
 
     parser = argparse.ArgumentParser(usage="cooccurrenceFinder args [options]")
-
     parser.add_argument("--vcf", dest="vcf", help="name of file containing VCF data, default=None", default=None)
-
     parser.add_argument("--ipv", dest="ipv", help="ipv file name, default=ipv.json", default='ipv.json')
-
     parser.add_argument("--vpi", dest="vpi", help="vpi file name, default=vpi.json", default='vpi.json')
-
     parser.add_argument("--out", dest="out", help="output file name, default=out.json", default='out.json')
-
     parser.add_argument("--all", dest="all", help="all vars file name, default=all.json", default='all.json')
-
     parser.add_argument("--h", dest="h", help="Human genome version (37 or 38). Default=None", default=None)
-
     parser.add_argument("--e", dest="e", help="Ensembl version - 75 (for 37) or 99 (for 38). Default=None", default=None)
-
     parser.add_argument("--c", dest="c", help="Chromosome of interest. Default=None", default=None)
-
     parser.add_argument("--g", dest="g", help="Gene of interest. Default=None", default=None)
-
     parser.add_argument("--p", dest="p", help="Phased (boolean). Default=False", default='True')
-
-    parser.add_argument("--n", dest="n", help="Number of processes. Default=1", default=cpu_count())
-
+    parser.add_argument("--n", dest="n", help="Number of processes. Default=cpu_count", default=cpu_count())
     parser.add_argument("--b", dest="b", help="BRCA variants file. Default=brca-variants", default=None)
-
     parser.add_argument("--d", dest="d", help="directory containing pyensembl-cache. Default=/var/tmp/pyensembl-cache", default='/var/tmp/pyensembl-cache')
-
     parser.add_argument("--r", dest="r", help="Rare frequency cutoff. Default=0.01", default=0.01)
-
     parser.add_argument("--pf", dest="pf", help="Pathology input file. Default=None", default=None)
-
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" % defaultLogLevel, default=defaultLogLevel)
-
     options = parser.parse_args()
 
     # Parse the log level
@@ -209,15 +192,11 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, numPro
     #f.close()
 
 
-    logger.info('finding homozygous individuals per vus')
+    logger.info('counting zygous individuals per vus')
     t = time.time()
-    homozygousPerVus = countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, gene, rareCutoff)
-    logger.info('elapsed time in countHomozygousPerVus() ' + str(time.time() -t))
+    homozygousPerVus, heterozygousPerVus = countZygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, gene, rareCutoff)
+    logger.info('elapsed time in countZygousPerVus() ' + str(time.time() -t))
 
-    logger.info('finding homozygous individuals per benign')
-    t = time.time()
-    homozygousPerBenign = countHomozygousPerBenign(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, gene, rareCutoff)
-    logger.info('elapsed time in countHomozygousPerBenign() ' + str(time.time() - t))
 
     logger.info('finding individuals per cooc')
     t = time.time()
@@ -244,8 +223,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, numPro
     logger.info('putting all the data together per vus')
     dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, p1, n, k, brcaDF, hgVersion, cohortSize, rareCutoff)
 
-    #data_set = {"cooccurring vus": dataPerVus, "homozygous vus": homozygousPerVus, "homozygous benign": homozygousPerBenign}
-    data_set = {"cooccurring vus": dataPerVus, "homozygous vus": homozygousPerVus}
+    data_set = {"cooccurring vus": dataPerVus, "homozygous vus": homozygousPerVus, "heterozygous vus": heterozygousPerVus}
     json_dump = json.dumps(data_set, cls=NpEncoder)
 
     logger.info('saving final VUS data  to ' + outputFileName)
@@ -442,7 +420,7 @@ def getGnomadData(brcaDF, vus, hgVersion):
 
     return (maxPopulation, maxFrequency, minPopulation, minFrequency)
 
-def countHomozygousPerBenign(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, geneOfInterest, rareCutoff):
+def countZygousPerBenign(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, geneOfInterest, rareCutoff):
     homozygousPerBenign = dict()
 
     for individual in variantsPerIndividual:
@@ -450,18 +428,18 @@ def countHomozygousPerBenign(variantsPerIndividual, brcaDF, hgVersion, ensemblRe
             if (ben[1] == '3') and (getGenesForVariant(ben[0], ensemblRelease, geneOfInterest)):
                 if str(ben[0]) not in homozygousPerBenign:
                     homozygousPerBenign[str(ben[0])] = dict()
-                    homozygousPerBenign[str(ben[0])]['count'] = 0
+                    homozygousPerBenign[str(ben[0])]['nHom'] = 0
                     maxPop, maxPopFreq, minPop, minPopFreq = getGnomadData(brcaDF, ben[0], hgVersion)
                     homozygousPerBenign[str(ben[0])]['maxPop'] = maxPop
                     homozygousPerBenign[str(ben[0])]['maxPopFreq'] = maxPopFreq
                     homozygousPerBenign[str(ben[0])]['minPop'] = minPop
                     homozygousPerBenign[str(ben[0])]['minPopFreq'] = minPopFreq
-                homozygousPerBenign[str(ben[0])]['count'] += 1
+                homozygousPerBenign[str(ben[0])]['nHom'] += 1
 
     cohortSize = len(variantsPerIndividual)
     for ben in homozygousPerBenign:
         maxPopFreq = homozygousPerBenign[ben]['maxPopFreq']
-        cohortFreq = float(homozygousPerBenign[ben]['count'])/ float(cohortSize)
+        cohortFreq = float(homozygousPerBenign[ben]['nHom'])/ float(cohortSize)
         homozygousPerBenign[ben]['cohortFreq'] = float(cohortFreq)
         if cohortFreq < rareCutoff or (maxPopFreq != 0 and maxPopFreq < rareCutoff):
             homozygousPerBenign[ben]['RARE']= True
@@ -472,35 +450,41 @@ def countHomozygousPerBenign(variantsPerIndividual, brcaDF, hgVersion, ensemblRe
     return homozygousPerBenign
 
 
-def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, geneOfInterest, rareCutoff):
+def countZygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, geneOfInterest, rareCutoff):
     homozygousPerVus = dict()
+    heterozygousPerVus = dict()
 
     for individual in variantsPerIndividual:
         for vus in variantsPerIndividual[individual]['vus']:
             if (vus[1] == '3') and (getGenesForVariant(vus[0], ensemblRelease, geneOfInterest)):
                 if str(vus[0]) not in homozygousPerVus:
                     homozygousPerVus[str(vus[0])] = dict()
-                    homozygousPerVus[str(vus[0])]['count'] = 0
+                    homozygousPerVus[str(vus[0])]['nHom'] = 0
                     maxPop, maxPopFreq, minPop, minPopFreq = getGnomadData(brcaDF, vus[0], hgVersion)
                     homozygousPerVus[str(vus[0])]['maxPop'] = maxPop
                     homozygousPerVus[str(vus[0])]['maxPopFreq'] = maxPopFreq
                     homozygousPerVus[str(vus[0])]['minPop'] = minPop
                     homozygousPerVus[str(vus[0])]['minPopFreq'] = minPopFreq
-                homozygousPerVus[str(vus[0])]['count'] += 1
+                homozygousPerVus[str(vus[0])]['nHom'] += 1
+            elif (vus[1] != '0') and (getGenesForVariant(vus[0], ensemblRelease, geneOfInterest)):
+                if str(vus[0]) not in heterozygousPerVus:
+                    heterozygousPerVus[str(vus[0])] = dict()
+                    heterozygousPerVus[str(vus[0])]['nHet'] = 0
+                    maxPop, maxPopFreq, minPop, minPopFreq = getGnomadData(brcaDF, vus[0], hgVersion)
+                    heterozygousPerVus[str(vus[0])]['maxPop'] = maxPop
+                    heterozygousPerVus[str(vus[0])]['maxPopFreq'] = maxPopFreq
+                    heterozygousPerVus[str(vus[0])]['minPop'] = minPop
+                    heterozygousPerVus[str(vus[0])]['minPopFreq'] = minPopFreq
+                heterozygousPerVus[str(vus[0])]['nHom'] += 1
 
     cohortSize = len(variantsPerIndividual)
     for vus in homozygousPerVus:
         #maxPopFreq = homoZygousPerVus[vus][1][1]
         maxPopFreq = homozygousPerVus[vus]['maxPopFreq']
-        cohortFreq = float(homozygousPerVus[vus]['count'])/ float(cohortSize)
+        cohortFreq = float(homozygousPerVus[vus]['nHom'])/ float(cohortSize)
         homozygousPerVus[vus]['cohortFreq'] = float(cohortFreq)
-        if cohortFreq < rareCutoff or (maxPopFreq != 0 and maxPopFreq < rareCutoff):
-            homozygousPerVus[vus]['RARE']= True
-        else:
-            homozygousPerVus[vus]['RARE'] = False
 
-
-    return homozygousPerVus
+    return homozygousPerVus, heterozygousPerVus
 
 def calculateLikelihood(pathCoocs, p1, n, k, brcaDF, hgVersion, cohortSize, rareCutoff):
 
