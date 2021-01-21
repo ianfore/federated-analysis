@@ -245,6 +245,15 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
     #ipvDF = pandas.DataFrame.from_dict(ipv)
     ipvDF = ipv
 
+    # determine total number of cases and controls for cohort frequency calculations
+    numCases = 0
+    numControls = 0
+    for row in pathologyDF:
+        if row['Age at onset']:
+            numCases += 1
+        else:
+            numControls += 1
+
     pathologyPerCoocIndividual = dict()
     for variant in variantsDF['cooccurring vus']:
         for pathogenicVariant in variantsDF['cooccurring vus'][variant]['pathogenic variants']:
@@ -276,6 +285,9 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
                 pathologies['HER2'] = row['HER2'].tolist()
 
                 pathologyPerCoocIndividual[pv]['pathologies'].append(pathologies)
+            pathologyPerCoocIndividual[pv]['caseFreq'] = float(pathologyPerCoocIndividual[pv]['numCases'] )/float(numCases)
+            pathologyPerCoocIndividual[pv]['controlFreq'] = float(pathologyPerCoocIndividual[pv]['numControls'] )/float(numControls)
+
 
     pathologyPerHomoIndividual = dict()
     for variant in variantsDF['homozygous vus']:
@@ -306,6 +318,9 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
             pathologies['HER2'] = row['HER2'].tolist()
 
             pathologyPerHomoIndividual[variant]['pathologies'].append(pathologies)
+        pathologyPerHomoIndividual[variant]['caseFreq'] = float(pathologyPerHomoIndividual[variant]['numCases']) / float(numCases)
+        pathologyPerHomoIndividual[variant]['controlFreq'] = float(pathologyPerHomoIndividual[variant]['numControls']) / float(
+        numControls)
 
     pathologyPerAllIndividuals = dict()
     #pathologyPerAllIndividuals.update(pathologyPerHomoIndividual)
