@@ -178,8 +178,8 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, numPro
             elif vus[1] == '3':
                 individualsPerVariant[v]['homozygous individuals'].add(individual)
     cohortSize = len(variantsPerIndividual)
-    individualsPerVariant = addVariantInfo(individualsPerVariant, vcf, chromosome, ['FIBC_I', 'FIBC_P'], brcaDF,
-                                           hgVersion, cohortSize, ensemblRelease)
+    individualsPerVariant = addVariantInfo(individualsPerVariant, vcf, chromosome, brcaDF, hgVersion, cohortSize,
+                                           ensemblRelease)
 
     # commenting out for biobank japan
     #logger.info('saving vpi to ' + vpiFileName)
@@ -250,7 +250,10 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
         for pathogenicVariant in variantsDF['cooccurring vus'][variant]['pathogenic variants']:
             pv = str(tuple(pathogenicVariant))
             heterozygousIndividuals = ipvDF[pv]['heterozygous individuals']
-            pathologyPerCoocIndividual[pv] = list()
+            pathologyPerCoocIndividual[pv] = dict()
+            pathologyPerCoocIndividual[variant]['pathologies'] = list()
+            pathologyPerCoocIndividual[variant]['numCases'] = 0
+            pathologyPerCoocIndividual[variant]['numControls'] = 0
             pathologies = dict()
             for hi in heterozygousIndividuals:
                 hiInt = int(hi)
@@ -258,8 +261,10 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
                 aao = row['Age at onset'].tolist()
                 if aao:
                     pathologies['Age at onset'] = aao[0]
+                    pathologyPerCoocIndividual[variant]['numCases']  += 1
                 else:
                     pathologies['Age at onset'] = 0.0
+                    pathologyPerCoocIndividual[variant]['numControls'] += 1
                 pathologies['Ovarian cancer history'] = row['Ovarian cancer history'].tolist()
                 pathologies['Bilateral breast cancer'] = row['Bilateral breast cancer'].tolist()
                 pathologies['Tissue type (3 groups)'] = row['Tissue type (3 groups)'].tolist()
@@ -270,12 +275,15 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
                 pathologies['PgR'] = row['PgR'].tolist()
                 pathologies['HER2'] = row['HER2'].tolist()
 
-                pathologyPerCoocIndividual[pv].append(pathologies)
+                pathologyPerCoocIndividual[pv]['pathologies'].append(pathologies)
 
     pathologyPerHomoIndividual = dict()
     for variant in variantsDF['homozygous vus']:
         homozygousIndividuals = ipvDF[variant]['homozygous individuals']
-        pathologyPerHomoIndividual[variant] = list()
+        pathologyPerHomoIndividual[variant] = dict()
+        pathologyPerHomoIndividual[variant]['pathologies'] = list()
+        pathologyPerHomoIndividual[variant]['numCases'] = 0
+        pathologyPerHomoIndividual[variant]['numControls'] = 0
         pathologies = dict()
         for hi in homozygousIndividuals:
             hiInt = int(hi)
@@ -283,8 +291,10 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
             aao = row['Age at onset'].tolist()
             if aao:
                 pathologies['Age at onset'] = aao[0]
+                pathologyPerHomoIndividual[variant]['numCases'] += 1
             else:
                 pathologies['Age at onset'] = 0.0
+                pathologyPerHomoIndividual[variant]['numControls'] += 1
             pathologies['Ovarian cancer history'] = row['Ovarian cancer history'].tolist()
             pathologies['Bilateral breast cancer'] = row['Bilateral breast cancer'].tolist()
             pathologies['Tissue type (3 groups)'] = row['Tissue type (3 groups)'].tolist()
@@ -295,7 +305,7 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
             pathologies['PgR'] = row['PgR'].tolist()
             pathologies['HER2'] = row['HER2'].tolist()
 
-            pathologyPerHomoIndividual[variant].append(pathologies)
+            pathologyPerHomoIndividual[variant]['pathologies'].append(pathologies)
 
     pathologyPerAllIndividuals = dict()
     #pathologyPerAllIndividuals.update(pathologyPerHomoIndividual)
@@ -318,7 +328,7 @@ def isExonic(ensemblRelease, chrom, pos):
         return None
     return len(exons) > 0
 
-def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, brcaDF, hgVersion, cohortSize, ensemblRelease):
+def addVariantInfo(individualsPerVariant, vcf, chromosome, brcaDF, hgVersion, cohortSize, ensemblRelease):
     # add infoList stuff from INFO field
     for variant in range(len(vcf['calldata/GT'])):
         if int(vcf['variants/CHROM'][variant].replace('chr', '')) != int(chromosome):
@@ -329,8 +339,6 @@ def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, brcaDF, hgV
         a = str(vcf['variants/ALT'][variant][0])
         v = str((c,p,r,a))
         if v in individualsPerVariant:
-            '''for info in infoList:
-                individualsPerVariant[v][info] = vcf['variants/' + info][variant]'''
             maxPop, maxFreq, minPop, minFreq = getGnomadData(brcaDF, eval(v), hgVersion)
             individualsPerVariant[v]['maxPop'] = maxPop
             individualsPerVariant[v]['maxFreq'] = maxFreq
