@@ -249,6 +249,8 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
     numCases = 0
     numControls = 0
     for i in range(len(pathologyDF)):
+        print('ao = ' + str(pathologyDF.iloc[i]['Age at onset']))
+        print('type of ao is = ' + str(type(pathologyDF.iloc[i]['Age at onset'])))
         if pathologyDF.iloc[i]['Age at onset']:
             numCases += 1
         else:
