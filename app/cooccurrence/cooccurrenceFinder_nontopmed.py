@@ -251,9 +251,9 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
             pv = str(tuple(pathogenicVariant))
             heterozygousIndividuals = ipvDF[pv]['heterozygous individuals']
             pathologyPerCoocIndividual[pv] = dict()
-            pathologyPerCoocIndividual[variant]['pathologies'] = list()
-            pathologyPerCoocIndividual[variant]['numCases'] = 0
-            pathologyPerCoocIndividual[variant]['numControls'] = 0
+            pathologyPerCoocIndividual[pv]['pathologies'] = list()
+            pathologyPerCoocIndividual[pv]['numCases'] = 0
+            pathologyPerCoocIndividual[pv]['numControls'] = 0
             pathologies = dict()
             for hi in heterozygousIndividuals:
                 hiInt = int(hi)
@@ -261,10 +261,10 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
                 aao = row['Age at onset'].tolist()
                 if aao:
                     pathologies['Age at onset'] = aao[0]
-                    pathologyPerCoocIndividual[variant]['numCases']  += 1
+                    pathologyPerCoocIndividual[pv]['numCases']  += 1
                 else:
                     pathologies['Age at onset'] = 0.0
-                    pathologyPerCoocIndividual[variant]['numControls'] += 1
+                    pathologyPerCoocIndividual[pv]['numControls'] += 1
                 pathologies['Ovarian cancer history'] = row['Ovarian cancer history'].tolist()
                 pathologies['Bilateral breast cancer'] = row['Bilateral breast cancer'].tolist()
                 pathologies['Tissue type (3 groups)'] = row['Tissue type (3 groups)'].tolist()
