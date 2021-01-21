@@ -25,7 +25,18 @@ $ cp <your-vcf-file> federated-analysis/data
 3. Make sure the VCF file has read permissions for the world.
 
 ```console
-$ chmod a+r federated-analysis/data/*.vcf
+$ chmod a+r federated-analysis/data/<your-vcf-file>
+```
+4. Put a copy of the pathology report in the federated-analysis/data directory.
+
+```console
+$ cp <your-pathology-report> federated-analysis/data
+```
+
+5. Make sure the pathology report has read permissions for the world.
+
+```console
+$ chmod a+r federated-analysis/data/<your-pathology-report>
 ```
  
 
@@ -76,7 +87,7 @@ where:
                 "maxPop": null,
                 "maxPopFreq": 0.0,
                 "minPop": null,
-                "minPopFreq": 1.0,
+                "minPopFreq": 0.0,
                 "cohortFreq": 0.0008107669855683476
             },
             "pathogenic variants": [
