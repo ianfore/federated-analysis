@@ -475,15 +475,17 @@ def countZygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, 
                     heterozygousPerVus[str(vus[0])]['maxPopFreq'] = maxPopFreq
                     heterozygousPerVus[str(vus[0])]['minPop'] = minPop
                     heterozygousPerVus[str(vus[0])]['minPopFreq'] = minPopFreq
-                heterozygousPerVus[str(vus[0])]['nHom'] += 1
+                heterozygousPerVus[str(vus[0])]['nHet'] += 1
 
     cohortSize = len(variantsPerIndividual)
     for vus in homozygousPerVus:
         #maxPopFreq = homoZygousPerVus[vus][1][1]
-        maxPopFreq = homozygousPerVus[vus]['maxPopFreq']
         cohortFreq = float(homozygousPerVus[vus]['nHom'])/ float(cohortSize)
         homozygousPerVus[vus]['cohortFreq'] = float(cohortFreq)
-
+    for vus in heterozygousPerVus:
+        #maxPopFreq = homoZygousPerVus[vus][1][1]
+        cohortFreq = float(heterozygousPerVus[vus]['nHet'])/ float(cohortSize)
+        heterozygousPerVus[vus]['cohortFreq'] = float(cohortFreq)
     return homozygousPerVus, heterozygousPerVus
 
 def calculateLikelihood(pathCoocs, p1, n, k, brcaDF, hgVersion, cohortSize, rareCutoff):
