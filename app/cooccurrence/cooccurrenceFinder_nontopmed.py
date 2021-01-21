@@ -285,8 +285,16 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
                 pathologies['HER2'] = row['HER2'].tolist()
 
                 pathologyPerCoocIndividual[pv]['pathologies'].append(pathologies)
-            pathologyPerCoocIndividual[pv]['caseFreq'] = float(pathologyPerCoocIndividual[pv]['numCases'] )/float(numCases)
-            pathologyPerCoocIndividual[pv]['controlFreq'] = float(pathologyPerCoocIndividual[pv]['numControls'] )/float(numControls)
+
+            if numCases == 0:
+                pathologyPerCoocIndividual[pv]['caseFreq'] = 0
+            else:
+                pathologyPerCoocIndividual[pv]['caseFreq'] = float(pathologyPerCoocIndividual[pv]['numCases'] )/float(numCases)
+
+            if numControls == 0:
+                pathologyPerCoocIndividual[pv]['controlFreq'] = 0
+            else:
+                pathologyPerCoocIndividual[pv]['controlFreq'] = float(pathologyPerCoocIndividual[pv]['numControls'] )/float(numControls)
 
 
     pathologyPerHomoIndividual = dict()
@@ -318,8 +326,15 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
             pathologies['HER2'] = row['HER2'].tolist()
 
             pathologyPerHomoIndividual[variant]['pathologies'].append(pathologies)
-        pathologyPerHomoIndividual[variant]['caseFreq'] = float(pathologyPerHomoIndividual[variant]['numCases']) / float(numCases)
-        pathologyPerHomoIndividual[variant]['controlFreq'] = float(pathologyPerHomoIndividual[variant]['numControls']) / float(
+
+        if numCases == 0:
+            pathologyPerHomoIndividual[variant]['caseFreq'] = 0
+        else:
+            pathologyPerHomoIndividual[variant]['caseFreq'] = float(pathologyPerHomoIndividual[variant]['numCases']) / float(numCases)
+        if numControls == 0:
+            pathologyPerHomoIndividual[variant]['controlFreq'] = 0
+        else:
+            pathologyPerHomoIndividual[variant]['controlFreq'] = float(pathologyPerHomoIndividual[variant]['numControls']) / float(
         numControls)
 
     pathologyPerAllIndividuals = dict()
