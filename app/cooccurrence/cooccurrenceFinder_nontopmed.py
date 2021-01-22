@@ -268,7 +268,7 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
                 hiInt = int(hi)
                 row = pathologyDF.loc[pathologyDF['ID'] == hiInt]
                 aao = row['Age at onset'].tolist()
-                print('aao = ' + str(aao))
+                print('aao in hetero = ' + str(aao))
                 if len(aao) == 0:
                     pathologies['Age at onset'] = 0.0
                     pathologyPerCoocIndividual[pv]['numControls'] += 1
@@ -310,6 +310,7 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
             hiInt = int(hi)
             row = pathologyDF.loc[pathologyDF['ID'] == hiInt]
             aao = row['Age at onset'].tolist()
+            print('aao in homo = ' + str(aao))
             if len(aao) == 0:
                 pathologies['Age at onset'] = 0.0
                 pathologyPerHomoIndividual[variant]['numControls'] += 1
