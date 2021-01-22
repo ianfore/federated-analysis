@@ -249,8 +249,6 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
     numCases = 0
     numControls = 0
     for i in range(len(pathologyDF)):
-        print('ao = ')
-        print(pathologyDF.iloc[i]['Age at onset'])
         if pandas.isna(pathologyDF.iloc[i]['Age at onset']):
             numControls += 1
         else:
@@ -270,12 +268,12 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
                 hiInt = int(hi)
                 row = pathologyDF.loc[pathologyDF['ID'] == hiInt]
                 aao = row['Age at onset'].tolist()
-                if aao:
-                    pathologies['Age at onset'] = aao[0]
-                    pathologyPerCoocIndividual[pv]['numCases']  += 1
-                else:
+                if pandas.isna(aao):
                     pathologies['Age at onset'] = 0.0
                     pathologyPerCoocIndividual[pv]['numControls'] += 1
+                else:
+                    pathologies['Age at onset'] = aao[0]
+                    pathologyPerCoocIndividual[pv]['numCases']  += 1
                 pathologies['Ovarian cancer history'] = row['Ovarian cancer history'].tolist()
                 pathologies['Bilateral breast cancer'] = row['Bilateral breast cancer'].tolist()
                 pathologies['Tissue type (3 groups)'] = row['Tissue type (3 groups)'].tolist()
@@ -311,12 +309,12 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
             hiInt = int(hi)
             row = pathologyDF.loc[pathologyDF['ID'] == hiInt]
             aao = row['Age at onset'].tolist()
-            if aao:
-                pathologies['Age at onset'] = aao[0]
-                pathologyPerHomoIndividual[variant]['numCases'] += 1
-            else:
+            if pandas.isna(aao):
                 pathologies['Age at onset'] = 0.0
                 pathologyPerHomoIndividual[variant]['numControls'] += 1
+            else:
+                pathologies['Age at onset'] = aao[0]
+                pathologyPerHomoIndividual[variant]['numCases'] += 1
             pathologies['Ovarian cancer history'] = row['Ovarian cancer history'].tolist()
             pathologies['Bilateral breast cancer'] = row['Bilateral breast cancer'].tolist()
             pathologies['Tissue type (3 groups)'] = row['Tissue type (3 groups)'].tolist()
