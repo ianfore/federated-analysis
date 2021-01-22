@@ -249,6 +249,7 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
     numCases = 0
     numControls = 0
     for i in range(len(pathologyDF)):
+        x = pathologyDF.iloc[i]['Age at onset']
         if pandas.isna(pathologyDF.iloc[i]['Age at onset']):
             numControls += 1
         else:
