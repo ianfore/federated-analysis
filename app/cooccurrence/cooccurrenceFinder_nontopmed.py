@@ -264,8 +264,9 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
             pathologyPerCoocIndividual[pv]['pathologies'] = list()
             pathologyPerCoocIndividual[pv]['numCases'] = 0
             pathologyPerCoocIndividual[pv]['numControls'] = 0
-            pathologies = dict()
+            #pathologies = dict()
             for hi in heterozygousIndividuals:
+                pathologies = dict()
                 hiInt = int(hi)
                 row = pathologyDF.loc[pathologyDF['ID'] == hiInt]
                 aao = row['Age at onset'].tolist()
