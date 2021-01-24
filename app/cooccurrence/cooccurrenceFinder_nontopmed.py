@@ -254,6 +254,7 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
             numControls += 1
         else:
             numCases += 1
+    numTotal = numCases + numControls
 
     pathologyPerCoocIndividual = dict()
     for variant in variantsDF['cooccurring vus']:
@@ -288,15 +289,10 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
 
                 pathologyPerCoocIndividual[pv]['pathologies'].append(pathologies)
 
-            if numCases == 0:
-                pathologyPerCoocIndividual[pv]['caseFreq'] = 0
-            else:
-                pathologyPerCoocIndividual[pv]['caseFreq'] = float(pathologyPerCoocIndividual[pv]['numCases'] )/float(numCases)
 
-            if numControls == 0:
-                pathologyPerCoocIndividual[pv]['controlFreq'] = 0
-            else:
-                pathologyPerCoocIndividual[pv]['controlFreq'] = float(pathologyPerCoocIndividual[pv]['numControls'] )/float(numControls)
+            pathologyPerCoocIndividual[pv]['caseFreq'] = float(pathologyPerCoocIndividual[pv]['numCases'] )/float(numTotal)
+
+            pathologyPerCoocIndividual[pv]['controlFreq'] = float(pathologyPerCoocIndividual[pv]['numControls'] )/float(numTotal)
 
 
     pathologyPerHomoIndividual = dict()
