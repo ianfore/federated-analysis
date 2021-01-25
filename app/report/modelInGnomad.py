@@ -12,24 +12,21 @@ from sklearn.svm import SVC
 
 
 def main():
-    if len(sys.argv) != 5:
-        print('input-dir output-dir test_pct normalize')
+    if len(sys.argv) != 6:
+        print('brca1_report.tsv brca2_report.tsv output-dir test_pct normalize')
         sys.exit(1)
 
-    inputDir =sys.argv[1]
-    outputDir = sys.argv[2]
-    test_pct = float(sys.argv[3])
-    normalize = bool(sys.argv[4])
+    brca1Report =sys.argv[1]
+    brca2Report = sys.argv[2]
+    outputDir = sys.argv[3]
+    test_pct = float(sys.argv[4])
+    normalize = bool(sys.argv[5])
 
     le = preprocessing.LabelEncoder()
 
-    print('inputDir = ' + inputDir)
-    print('outputdir = ' + outputDir)
-    print('test % = ' + str(test_pct))
-
-    # build model based on f5 copd
-    df1 = pd.read_csv(inputDir + '/F5/REPORT/f5_chr17_brca1_copdhmb_report.tsv', sep='\t')
-    df2 = pd.read_csv(inputDir + '/F5/REPORT/f5_chr13_brca2_copdhmb_report.tsv', sep='\t')
+    # build model based on reports
+    df1 = pd.read_csv(brca1Report, sep='\t')
+    df2 = pd.read_csv(brca2Report, sep='\t')
     dfAll = pd.concat([df1, df2], axis=0)
 
     #features = ['popFreq', 'AF', 'hail_hweafp', 'chisquare', 'class']
@@ -40,8 +37,6 @@ def main():
     #model_2_dt = buildModel(df2, features, tree.DecisionTreeClassifier(max_depth=2), test_pct)
 
     #runMe(features, le, df1, normalize, test_pct)
-
-
 
     model_1_rf = buildModel(df1, features, RandomForestClassifier(n_estimators=10), test_pct, normalize, le)
     model_2_rf = buildModel(df2, features, RandomForestClassifier(n_estimators=10), test_pct, normalize, le)
@@ -59,19 +54,19 @@ def main():
     f.close()
 
     # predict for f8 gru + hmb
-    brca1_f8_report_DF = pd.read_csv(inputDir + '/F8/EGG/f8_chr17_brca1_gruhmb_report.tsv', header=0, sep='\t')
-    brca2_f8_report_DF = pd.read_csv(inputDir + '/F8/EGG/f8_chr13_brca2_gruhmb_report.tsv', header=0, sep='\t')
-    brca_all_f8_report_DF = pd.concat([brca1_f8_report_DF, brca2_f8_report_DF], axis=0)
+    brca1_report_DF = pd.read_csv(brca1Report, header=0, sep='\t')
+    brca2_report_DF = pd.read_csv(brca2Report, header=0, sep='\t')
+    brca_all_report_DF = pd.concat([brca1_report_DF, brca2_report_DF], axis=0)
 
-    brca1_f8_predictions = getPredictions(brca1_f8_report_DF, model_1_rf, features, normalize, le)
-    brca2_f8_predictions = getPredictions(brca2_f8_report_DF, model_2_rf, features, normalize, le)
-    brca_all_f8_predictions = getPredictions(brca_all_f8_report_DF, model_2_rf, features, normalize, le)
+    brca1_f8_predictions = getPredictions(brca1_report_DF, model_1_rf, features, normalize, le)
+    brca2_f8_predictions = getPredictions(brca2_report_DF, model_2_rf, features, normalize, le)
+    brca_all_f8_predictions = getPredictions(brca_all_report_DF, model_2_rf, features, normalize, le)
 
 
     # save to disk
-    brca1_f8_predictions.to_csv(outputDir + '/F8/EGG/f8_chr17_brca1_predictions_report.tsv', sep='\t')
-    brca2_f8_predictions.to_csv(outputDir + '/F8/EGG/f8_chr13_brca2_predictions_report.tsv', sep='\t')
-    brca_all_f8_predictions.to_csv(outputDir + '/F8/EGG/f8_all_predictions_report.tsv', sep='\t')
+    brca1_f8_predictions.to_csv(outputDir + '/chr17_brca1_predictions_report.tsv', sep='\t')
+    brca2_f8_predictions.to_csv(outputDir + '/chr13_brca2_predictions_report.tsv', sep='\t')
+    brca_all_f8_predictions.to_csv(outputDir + '/all_predictions_report.tsv', sep='\t')
 
     #brca1_f8_predictions = pd.read_csv(inputDir + '/F8/EGG/f8_chr17_brca1_predictions_report.tsv', header=0, sep='\t')
     #brca2_f8_predictions = pd.read_csv(inputDir + '/F8/EGG/f8_chr13_brca2_predictions_report.tsv', header=0, sep='\t')
@@ -83,9 +78,9 @@ def main():
     brca2_in = brca2_f8_predictions.loc[(brca2_f8_predictions['gnomadPrediction'] == True)]['variant']
     brca_all_in = brca_all_f8_predictions.loc[(brca_all_f8_predictions['gnomadPrediction'] == True)]['variant']
 
-    brca1_in.to_csv(outputDir + '/F8/EGG/brca1_in.txt', index=False, header=0)
-    brca2_in.to_csv(outputDir + '/F8/EGG/brca2_in.txt', index=False, header=0)
-    brca_all_in.to_csv(outputDir + '/F8/EGG/brca_all_in.txt', index=False, header=0)
+    brca1_in.to_csv(outputDir + '/brca1_in.txt', index=False, header=0)
+    brca2_in.to_csv(outputDir + '/brca2_in.txt', index=False, header=0)
+    brca_all_in.to_csv(outputDir + '/brca_all_in.txt', index=False, header=0)
 
 
 def runMe(features, le, df, normalize, testPctg):
