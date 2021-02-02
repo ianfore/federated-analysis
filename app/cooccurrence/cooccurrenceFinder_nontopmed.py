@@ -139,10 +139,8 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, numPro
         processList.append(p)
     logger.info('joining results from forked threads')
     variantsPerIndividual = dict()
-    individualsPerVariant = dict()
     for i in range(numProcs):
         variantsPerIndividual.update(q.get())
-        individualsPerVariant.update(w.get())
     for i in range(numProcs):
         processList[i].join()
     logger.info('elapsed time in findVariantsPerIndividual() ' + str(time.time() -t))
@@ -194,7 +192,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, numPro
 
     logger.info('counting zygous individuals per vus')
     t = time.time()
-    homozygousPerVus = countZygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, gene)
+    zygousPerVus = countZygousPerVus(variantsPerIndividual, brcaDF, hgVersion)
     logger.info('elapsed time in countZygousPerVus() ' + str(time.time() -t))
 
 
@@ -215,16 +213,21 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, numPro
     numBenign = len(set(allVariants['benign']))
     p1 =  0.5 * numBenign / cohortSize
     logger.info('saving all variants to ' + allVariantsFileName)
-    json_dump = json.dumps(allVariants, cls=NpEncoder)
+    json_dump = json.dumps(allVariants, cls=NpEncoder, indent=4, sort_keys=True)
     with open(allVariantsFileName, 'w') as f:
         f.write(json_dump)
     f.close()
 
     logger.info('putting all the data together per vus')
-    dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, p1, n, k, brcaDF, hgVersion, cohortSize, rareCutoff)
+    dataPerCooc = calculateLikelihood(individualsPerPathogenicCooccurrence, p1, n, k, brcaDF, hgVersion, cohortSize, rareCutoff)
 
-    data_set = {"cooccurring vus": dataPerVus, "homozygous vus": homozygousPerVus}
-    json_dump = json.dumps(data_set, cls=NpEncoder)
+    homozygousPerVus = dict()
+    for hv in zygousPerVus:
+        if zygousPerVus[hv]['nHom'] != 0:
+            homozygousPerVus[hv] = zygousPerVus[hv]
+
+    data_set = {"cooccurring vus": dataPerCooc, "homozygous vus": homozygousPerVus}
+    json_dump = json.dumps(data_set, cls=NpEncoder, indent=4, sort_keys=True)
 
     logger.info('saving final VUS data  to ' + outputFileName)
     with open(outputFileName, 'w') as f:
@@ -238,9 +241,6 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, numPro
 def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
     logger.info('reading data from ' + pathologyFile)
     pathologyDF = pandas.read_csv(pathologyFile, sep='\t', header=0)
-
-    #variantsDF = pandas.DataFrame.from_dict(data_set)
-    variantsDF = data_set
 
     #ipvDF = pandas.DataFrame.from_dict(ipv)
     ipvDF = ipv
@@ -257,8 +257,8 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
     numTotal = numCases + numControls
 
     pathologyPerCoocIndividual = dict()
-    for variant in variantsDF['cooccurring vus']:
-        for pathogenicVariant in variantsDF['cooccurring vus'][variant]['pathogenic variants']:
+    for variant in data_set['cooccurring vus']:
+        for pathogenicVariant in data_set['cooccurring vus'][variant]['pathogenic variants']:
             pv = str(tuple(pathogenicVariant))
             heterozygousIndividuals = ipvDF[pv]['heterozygous individuals']
             pathologyPerCoocIndividual[pv] = dict()
@@ -286,17 +286,15 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
                 pathologies['ER'] = row['ER'].tolist()
                 pathologies['PgR'] = row['PgR'].tolist()
                 pathologies['HER2'] = row['HER2'].tolist()
-
                 pathologyPerCoocIndividual[pv]['pathologies'].append(pathologies)
 
-
-            pathologyPerCoocIndividual[pv]['caseFreq'] = float(pathologyPerCoocIndividual[pv]['numCases'] )/float(numTotal)
-
-            pathologyPerCoocIndividual[pv]['controlFreq'] = float(pathologyPerCoocIndividual[pv]['numControls'] )/float(numTotal)
-
+            pathologyPerCoocIndividual[pv]['caseFreq'] = float(pathologyPerCoocIndividual[pv]['numCases'] )/float(numCases)
+            pathologyPerCoocIndividual[pv]['controlFreq'] = float(pathologyPerCoocIndividual[pv]['numControls'] )/float(numControls)
+            numCohort = pathologyPerCoocIndividual[pv]['numCases']  + pathologyPerCoocIndividual[pv]['numControls']
+            pathologyPerCoocIndividual[pv]['cohortFreq'] = float(numCohort )/float(numTotal)
 
     pathologyPerHomoIndividual = dict()
-    for variant in variantsDF['homozygous vus']:
+    for variant in data_set['homozygous vus']:
         homozygousIndividuals = ipvDF[variant]['homozygous individuals']
         pathologyPerHomoIndividual[variant] = dict()
         pathologyPerHomoIndividual[variant]['pathologies'] = list()
@@ -325,19 +323,21 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
 
             pathologyPerHomoIndividual[variant]['pathologies'].append(pathologies)
 
-        if numCases == 0:
+        if pathologyPerHomoIndividual[variant]['numCases'] == 0:
             pathologyPerHomoIndividual[variant]['caseFreq'] = 0
         else:
             pathologyPerHomoIndividual[variant]['caseFreq'] = float(pathologyPerHomoIndividual[variant]['numCases']) / float(numCases)
-        if numControls == 0:
+        if pathologyPerHomoIndividual[variant]['numControls']  == 0:
             pathologyPerHomoIndividual[variant]['controlFreq'] = 0
         else:
-            pathologyPerHomoIndividual[variant]['controlFreq'] = float(pathologyPerHomoIndividual[variant]['numControls']) / float(
-        numControls)
+            pathologyPerHomoIndividual[variant]['controlFreq'] = float(pathologyPerHomoIndividual[variant]['numControls']) / float(numControls)
+
+        pathologyPerHomoIndividual[variant]['caseFreq'] = float(pathologyPerHomoIndividual[variant]['numCases']) / float(numCases)
+        pathologyPerHomoIndividual[variant]['controlFreq'] = float(pathologyPerHomoIndividual[variant]['numControls']) / float(numControls)
+        numCohort = pathologyPerHomoIndividual[variant]['numCases'] + pathologyPerHomoIndividual[variant]['numControls']
+        pathologyPerHomoIndividual[variant]['cohortFreq'] = float(numCohort) / float(numTotal)
 
     pathologyPerAllIndividuals = dict()
-    #pathologyPerAllIndividuals.update(pathologyPerHomoIndividual)
-    #pathologyPerAllIndividuals.update(pathologyPerCoocIndividual)
     pathologyPerAllIndividuals['homozygous'] = pathologyPerHomoIndividual
     pathologyPerAllIndividuals['cooccurring'] = pathologyPerCoocIndividual
 
@@ -457,30 +457,33 @@ def getGnomadData(brcaDF, vus, hgVersion):
     return (maxPopulation, maxFrequency, minPopulation, minFrequency)
 
 
-def countZygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, geneOfInterest):
-    homozygousPerVus = dict()
+def countZygousPerVus(variantsPerIndividual, brcaDF, hgVersion):
+    zygousPerVus = dict()
 
     for individual in variantsPerIndividual:
         for vus in variantsPerIndividual[individual]['vus']:
-            if (vus[1] == '3') and (getGenesForVariant(vus[0], ensemblRelease, geneOfInterest)):
-                if str(vus[0]) not in homozygousPerVus:
-                    homozygousPerVus[str(vus[0])] = dict()
-                    homozygousPerVus[str(vus[0])]['nHom'] = 0
-                    homozygousPerVus[str(vus[0])]['nHet'] = 0
-                    maxPop, maxPopFreq, minPop, minPopFreq = getGnomadData(brcaDF, vus[0], hgVersion)
-                    homozygousPerVus[str(vus[0])]['maxPop'] = maxPop
-                    homozygousPerVus[str(vus[0])]['maxPopFreq'] = maxPopFreq
-                homozygousPerVus[str(vus[0])]['nHom'] += 1
-                for vus2 in variantsPerIndividual[individual]['vus']:
-                    if vus2[1] == '1' or vus2[1] == '2':
-                        homozygousPerVus[str(vus[0])]['nHet'] += 1
+            v = vus[0]
+            if str(v) not in zygousPerVus:
+                zygousPerVus[str(v)] = dict()
+                zygousPerVus[str(v)]['nHom'] = 0
+                zygousPerVus[str(v)]['nHet'] = 0
+                maxPop, maxPopFreq, minPop, minPopFreq = getGnomadData(brcaDF, v, hgVersion)
+                zygousPerVus[str(v)]['maxPop'] = maxPop
+                zygousPerVus[str(v)]['maxPopFreq'] = maxPopFreq
+            if vus[1] == '3':
+                zygousPerVus[str(v)]['nHom'] += 1
+            else:
+                zygousPerVus[str(v)]['nHet'] += 1
 
     cohortSize = len(variantsPerIndividual)
-    for vus in homozygousPerVus:
-        cohortFreq = float(homozygousPerVus[vus]['nHom'])/ float(cohortSize)
-        homozygousPerVus[vus]['cohortFreq'] = float(cohortFreq)
+    for vus in zygousPerVus:
+        homCohortFreq = float(zygousPerVus[vus]['nHom'])/ float(cohortSize)
+        zygousPerVus[vus]['homCohortFreq'] = homCohortFreq
+        hetCohortFreq = float(zygousPerVus[vus]['nHet'])/ float(cohortSize)
+        zygousPerVus[vus]['hetCohortFreq'] = hetCohortFreq
+        zygousPerVus[vus]['cohortFreq'] = homCohortFreq + hetCohortFreq
 
-    return homozygousPerVus
+    return zygousPerVus
 
 def calculateLikelihood(pathCoocs, p1, n, k, brcaDF, hgVersion, cohortSize, rareCutoff):
 
@@ -580,7 +583,6 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
      'variants/NMZ', 'variants/NS_NREF', 'variants/QUAL', 'variants/STZ', 'variants/SVM']'''
 
     variantsPerIndividual = dict()
-    individualsPerVariant = dict()
     individuals = list(vcf['samples'])
     n = len(individuals)
     partitionSizes = divide(n, numProcesses)
@@ -614,7 +616,6 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
                     variantsPerIndividual[individuals[i]]['vus'].append(((c, p, r, a),  genotype))
 
     q.put(variantsPerIndividual)
-    w.put(individualsPerVariant)
 
 def getGenesForVariant(variant, ensemblRelease, geneOfInterest):
     ensembl = pyensembl.EnsemblRelease(release=ensemblRelease)

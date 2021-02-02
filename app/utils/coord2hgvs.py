@@ -6,6 +6,7 @@ import logging
 
 
 class coordinateMapper():
+    # genomeAssembly = 'GRCh38' or 'GRCh37'
     def __init__(self, genomeAssembly):
         self.genomeAssembly = genomeAssembly
         self.hdp = hgvs.dataproviders.uta.connect()
