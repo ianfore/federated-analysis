@@ -61,32 +61,25 @@ To run the co-occurrence analysis, perform the following steps:
 $ cd federated-analysis/
 ```
 
-2. Run the runMe_nontopmed.sh script four times as follows:
+2. Run the runMe_nontopmed.sh script two times as follows:
 
 ```console
-$ ./runMe_nontopmed.sh -v cases-only-BreastCancer.vcf -c 13 -g BRCA2 -m casesOnly -p pathology.tsv
+$ ./runMe_nontopmed.sh -v cases-only.vcf -m casesOnly -p pathology.tsv
 
-$ ./runMe_nontopmed.sh -v cases-only-BreastCancer.vcf -c 17 -g BRCA1 -m casesOnly -p shuffle.tsv
-
-$ ./runMe_nontopmed.sh -v controls-only-BreastCancer.vcf -c 13 -g BRCA2 -m controlsOnly 
-
-$ ./runMe_nontopmed.sh -v controls-only-BreastCancer.vcf -c 17 -g BRCA1 -m controlsOnly 
+$ ./runMe_nontopmed.sh -v controls-only.vcf -m controlsOnly 
 ```
 
 where:
-* cases-only-BreastCancer.vcf is the name of the VCF file in the federated-analysis/data directory which contains only case sample variants.
+* cases-only.vcf is the name of the VCF file in the federated-analysis/data directory which contains only case sample variants.
 
-* controls-only-BreastCancer.vcf is the name of the VCF file in the federated-analysis/data directory which contains only control sample variants.
+* controls-only.vcf is the name of the VCF file in the federated-analysis/data directory which contains only control sample variants.
 
-* 13 or 17 is the chromosome to filter in the VCF file
-
-* BRCA2 or BRCA1 is the name of the gene of interest on the chromosome of interest
+* pathology.tsv is the name of the pathology report located in the federated-analysis/data directory
 
 * controlsOnly is a flag to tell the container that the VCF is a controls-only VCF
 
 * casesOnly is a flag to tell the container that the VCF is a cases-only VCF
 
-* pathology.tsv is the name of the pathology report located in the federated-analysis/data directory
 
 
 3. This will generate reports in federated-analysis/data called `13-out-casesOnly.json`, `13-out-controlsOnly.json`, `17-out-casesOnly.json`, and `17-out-controlsOnly.json` which contain a list of VUS, each in the following format:

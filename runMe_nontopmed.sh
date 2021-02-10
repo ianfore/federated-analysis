@@ -11,11 +11,11 @@ if [ $# -eq 0 ]
 then
 	echo "usage: $0 <vcf-file> analyze"
 	echo "OR"
-	echo "$0 -v <input-vcf-filename> -c <chromosome-of-interest> -g <gene-of-interest>  -m controlsOnly" 
-	echo "example: $0 -v breastcancer.vcf -c 13 -g BRCA2 -m controlsOnly" 
+	echo "$0 -v <input-vcf-filename> -m controlsOnly" 
+	echo "example: $0 -v breastcancer.vcf -m controlsOnly" 
 	echo "OR"
-	echo "$0 -v <input-vcf-filename> -c <chromosome-of-interest> -g <gene-of-interest>  -m casesOnly -p <pathology-report>" 
-	echo "example: $0 -v breastcancer.vcf -c 13 -g BRCA2 -m casesOnly -p pathology.tsv" 
+	echo "$0 -v <input-vcf-filename> -m casesOnly -p <pathology-report>" 
+	echo "example: $0 -v breastcancer.vcf -m casesOnly -p pathology.tsv" 
 	exit 1
 	
 
@@ -25,31 +25,23 @@ then
 	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 -w / --user=`id -u`:`id -g` -v ${APP_PATH}/pathology:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data ${PATHOLOGY_DOCKER_IMAGE_NAME} /usr/bin/python3 /app/dataAnalyzer.py /config/conf.json 
 	exit 0
 
-elif [ $# -eq 8 ]
+elif [ $# -eq 4 ]
 then
-	while getopts ":v:c:g:m:" opt
+	while getopts ":v:m:" opt
 	do
 		case $opt in
 		v) VCF_FILE=/data/$OPTARG
-		;;
-		c) CHROM=$OPTARG
-		;;
-		g) GENE=$OPTARG
 		;;
 		m) MODE=$OPTARG
 		;;
 		esac
 	done
 	echo "vcf = " $VCF_FILE
-	echo "chrom = " $CHROM
-	echo "gene = " $GENE
 	echo "mode = " $MODE
 	HG_VERSION=37
 	ENSEMBL_RELEASE=75
 	PHASED=False
         BRCA_VARS=/data/brca-variants.tsv
-	ALL_FILE=/data/${CHROM}-all-controlsOnly.json
-	OUTPUT_FILE=/data/${CHROM}-out-controlsOnly.json
 
 	if [ "$MODE" == "casesOnly" ]
 	then
@@ -63,19 +55,21 @@ then
 
 	docker build -t ${COOCCUR_DOCKER_IMAGE_NAME} - < docker/cooccurrence/Dockerfile
 
-	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 --user=`id -u`:`id -g` -v ${APP_PATH}/cooccurrence:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${COOCCUR_DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder_nontopmed.py --vcf $VCF_FILE --out $OUTPUT_FILE --h $HG_VERSION --e $ENSEMBL_RELEASE --c $CHROM --g $GENE --p $PHASED --b $BRCA_VARS --all $ALL_FILE --controlsOnly
+	ALL_FILE=/data/13-all-controlsOnly.json
+	OUTPUT_FILE=/data/13-out-controlsOnly.json
+	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 --user=`id -u`:`id -g` -v ${APP_PATH}/cooccurrence:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${COOCCUR_DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder_nontopmed.py --vcf $VCF_FILE --out $OUTPUT_FILE --h $HG_VERSION --e $ENSEMBL_RELEASE --c 13 --g BRCA2 --p $PHASED --b $BRCA_VARS --all $ALL_FILE --controlsOnly
+
+	ALL_FILE=/data/17-all-controlsOnly.json
+	OUTPUT_FILE=/data/17-out-controlsOnly.json
+	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 --user=`id -u`:`id -g` -v ${APP_PATH}/cooccurrence:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${COOCCUR_DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder_nontopmed.py --vcf $VCF_FILE --out $OUTPUT_FILE --h $HG_VERSION --e $ENSEMBL_RELEASE --c 17 --g BRCA1 --p $PHASED --b $BRCA_VARS --all $ALL_FILE --controlsOnly
 
 
-elif [ $# -eq 10 ]
+elif [ $# -eq 6 ]
 then
-	while getopts ":v:c:g:m:p:" opt
+	while getopts ":v:m:p:" opt
 	do
 		case $opt in
 		v) VCF_FILE=/data/$OPTARG
-		;;
-		c) CHROM=$OPTARG
-		;;
-		g) GENE=$OPTARG
 		;;
 		m) MODE=$OPTARG
 		;;
@@ -87,8 +81,6 @@ then
 	ENSEMBL_RELEASE=75
 	PHASED=False
         BRCA_VARS=/data/brca-variants.tsv
-	ALL_FILE=/data/${CHROM}-all-casesOnly.json
-	OUTPUT_FILE=/data/${CHROM}-out-casesOnly.json
 
 	if [ "$MODE" == "controlsOnly" ]
 	then
@@ -102,7 +94,13 @@ then
 
 	docker build -t ${COOCCUR_DOCKER_IMAGE_NAME} - < docker/cooccurrence/Dockerfile
 
-	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 --user=`id -u`:`id -g` -v ${APP_PATH}/cooccurrence:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${COOCCUR_DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder_nontopmed.py --vcf $VCF_FILE --out $OUTPUT_FILE --h $HG_VERSION --e $ENSEMBL_RELEASE --c $CHROM --g $GENE --p $PHASED --b $BRCA_VARS --all $ALL_FILE --pf $PATHOLOGY_FILE --casesOnly
+	ALL_FILE=/data/13-all-casesOnly.json
+	OUTPUT_FILE=/data/13-out-casesOnly.json
+	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 --user=`id -u`:`id -g` -v ${APP_PATH}/cooccurrence:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${COOCCUR_DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder_nontopmed.py --vcf $VCF_FILE --out $OUTPUT_FILE --h $HG_VERSION --e $ENSEMBL_RELEASE --c 13 --g BRCA2 --p $PHASED --b $BRCA_VARS --all $ALL_FILE --pf $PATHOLOGY_FILE --casesOnly
+
+	ALL_FILE=/data/17-all-casesOnly.json
+	OUTPUT_FILE=/data/17-out-casesOnly.json
+	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 --user=`id -u`:`id -g` -v ${APP_PATH}/cooccurrence:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${COOCCUR_DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder_nontopmed.py --vcf $VCF_FILE --out $OUTPUT_FILE --h $HG_VERSION --e $ENSEMBL_RELEASE --c 17 --g BRCA1 --p $PHASED --b $BRCA_VARS --all $ALL_FILE --pf $PATHOLOGY_FILE --casesOnly
 
 else
 	echo "wrong usage"
