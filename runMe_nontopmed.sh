@@ -11,11 +11,11 @@ if [ $# -eq 0 ]
 then
 	echo "usage: $0 <vcf-file> analyze"
 	echo "OR"
-	echo "$0 <input-vcf-filename> <chromosome-of-interest> <gene-of-interest>  controlsOnly" 
-	echo "example: $0 breastcancer.vcf 13 BRCA2 controlsOnly" 
+	echo "$0 -v <input-vcf-filename> -c <chromosome-of-interest> -g <gene-of-interest>  -m controlsOnly" 
+	echo "example: $0 -v breastcancer.vcf -c 13 -g BRCA2 -m controlsOnly" 
 	echo "OR"
-	echo "$0 <input-vcf-filename> <chromosome-of-interest> <gene-of-interest>  casesOnly <pathology-report>" 
-	echo "example: $0 breastcancer.vcf 13 BRCA2 casesOnly pathology.tsv" 
+	echo "$0 -v <input-vcf-filename> -c <chromosome-of-interest> -g <gene-of-interest>  -m casesOnly -p <pathology-report>" 
+	echo "example: $0 -v breastcancer.vcf -c 13 -g BRCA2 -m casesOnly -p pathology.tsv" 
 	exit 1
 	
 
@@ -25,12 +25,25 @@ then
 	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 -w / --user=`id -u`:`id -g` -v ${APP_PATH}/pathology:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data ${PATHOLOGY_DOCKER_IMAGE_NAME} /usr/bin/python3 /app/dataAnalyzer.py /config/conf.json 
 	exit 0
 
-elif [ $# -eq 4 ]
+elif [ $# -eq 8 ]
 then
-	VCF_FILE=/data/$1
-	CHROM=$2
-	GENE=$3
-	CASES_OR_CONTROLS=$4
+	while getopts ":v:c:g:m:" opt
+	do
+		case $opt in
+		v) VCF_FILE=/data/$OPTARG
+		;;
+		c) CHROM=$OPTARG
+		;;
+		g) GENE=$OPTARG
+		;;
+		m) MODE=$OPTARG
+		;;
+		esac
+	done
+	echo "vcf = " $VCF_FILE
+	echo "chrom = " $CHROM
+	echo "gene = " $GENE
+	echo "mode = " $MODE
 	HG_VERSION=37
 	ENSEMBL_RELEASE=75
 	PHASED=False
@@ -38,11 +51,11 @@ then
 	ALL_FILE=/data/${CHROM}-all-controlsOnly.json
 	OUTPUT_FILE=/data/${CHROM}-out-controlsOnly.json
 
-	if [ "$CASES_OR_CONTROLS" == "casesOnly" ]
+	if [ "$MODE" == "casesOnly" ]
 	then
 		echo "you must provide a pathology file when running casesOnly"
 		exit 1
-	elif [ "$CASES_OR_CONTROLS" != "controlsOnly" ]
+	elif [ "$MODE" != "controlsOnly" ]
 	then
 		echo "must use controlsOnly when not providing a pathology file"
 		exit 1
@@ -53,13 +66,23 @@ then
 	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 --user=`id -u`:`id -g` -v ${APP_PATH}/cooccurrence:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${COOCCUR_DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder_nontopmed.py --vcf $VCF_FILE --out $OUTPUT_FILE --h $HG_VERSION --e $ENSEMBL_RELEASE --c $CHROM --g $GENE --p $PHASED --b $BRCA_VARS --all $ALL_FILE --controlsOnly
 
 
-elif [ $# -eq 5 ]
+elif [ $# -eq 10 ]
 then
-	VCF_FILE=/data/$1
-	CHROM=$2
-	GENE=$3
-	CASES_OR_CONTROLS=$4
-	PATHOLOGY_FILE=/data/$5
+	while getopts ":v:c:g:m:p:" opt
+	do
+		case $opt in
+		v) VCF_FILE=/data/$OPTARG
+		;;
+		c) CHROM=$OPTARG
+		;;
+		g) GENE=$OPTARG
+		;;
+		m) MODE=$OPTARG
+		;;
+		p) PATHOLOGY_FILE=/data/$OPTARG
+		;;
+		esac
+	done
 	HG_VERSION=37
 	ENSEMBL_RELEASE=75
 	PHASED=False
@@ -67,11 +90,11 @@ then
 	ALL_FILE=/data/${CHROM}-all-casesOnly.json
 	OUTPUT_FILE=/data/${CHROM}-out-casesOnly.json
 
-	if [ "$CASES_OR_CONTROLS" == "controlsOnly" ]
+	if [ "$MODE" == "controlsOnly" ]
 	then
 		echo "do not provide a pathology file when running controlsOnly"
 		exit 1
-	elif [ "$CASES_OR_CONTROLS" != "casesOnly" ]
+	elif [ "$MODE" != "casesOnly" ]
 	then
 		echo "must use casesOnly when providing a pathology file"
 		exit 1
