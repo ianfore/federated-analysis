@@ -71,9 +71,25 @@ def parseArgs():
     parser.add_argument("--r", dest="r", help="Rare frequency cutoff. Default=0.01", default=0.01)
     parser.add_argument("--pf", dest="pf", help="Pathology input file. Default=None", default=None)
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" % defaultLogLevel, default=defaultLogLevel)
-    parser.add_argument("--co", dest="co", help="Control only. Default=True", default=True)
+    parser.add_argument("--controlsOnly", dest="controlsOnly", help="vcf has only control samples. Default=False", default=False, action='store_true')
+    parser.add_argument("--casesOnly", dest="casesOnly", help="vcf has only case samples. Default=False", default=False, action='store_true')
 
-    return parser.parse_args()
+    options = parser.parse_args()
+    co = options.controlsOnly
+    ca = options.casesOnly
+    if co and ca:
+        print('incorrect usage: only one of controlsOnly and casesOnly may be True, not both')
+        sys.exit(1)
+
+    elif co and not options.pf is None:
+        print('incorrect usage: do not provide a pathology file when running as controlsOnly')
+        sys.exit(1)
+
+    elif ca and options.pf is None:
+        print('incorrect usage: you must provide a pathology file when running as casesOnly')
+        sys.exit(1)
+
+    return options
 
 def configureLogger(logLevel):
     # Parse the log level
@@ -118,7 +134,8 @@ def run(options):
     allVariantsFileName = options.all
     outputFileName = options.out
     pathologyFile = options.pf
-    controlOnly = bool(eval(options.co))
+    controlsOnly = options.controlsOnly
+    casesOnly = options.casesOnly
 
     logger.info('setting pyensembl dir to ' + pyensemblDir)
     os.environ['PYENSEMBL_CACHE_DIR'] = '/var/tmp/pyensembl-cache'
@@ -238,7 +255,7 @@ def run(options):
         f.write(json_dump)
     f.close()
 
-    if not controlOnly and pathologyFile:
+    if casesOnly and not controlsOnly:
         logger.info('intersecting variants with pathology data')
         intersectionFile = '/data/' + str(chromosome) + '-intersection.json'
         intersectPathology(pathologyFile, data_set, individualsPerVariant, intersectionFile )
