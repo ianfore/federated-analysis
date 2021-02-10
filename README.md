@@ -27,16 +27,25 @@ $ cp <your-cases-only-vcf-file> federated-analysis/data
 ```console
 $ chmod a+r federated-analysis/data/<your-cases-only-vcf-file>
 ```
+4. Put a copy of the controls-only VCF file in the federated-analysis/data directory.
 
-4. Repeat steps 2. and 3. for the controls-only VCF file.
+```console
+$ cp <your-controls-only-vcf-file> federated-analysis/data
+```
 
-5. Put a copy of the pathology report in the federated-analysis/data directory.
+5. Make sure the controls-only VCF file has read permissions for the world.
+
+```console
+$ chmod a+r federated-analysis/data/<your-controls-only-vcf-file>
+```
+
+6. Put a copy of the pathology report in the federated-analysis/data directory.
 
 ```console
 $ cp <your-pathology-report> federated-analysis/data
 ```
 
-6. Make sure the pathology report has read permissions for the world.
+7. Make sure the pathology report has read permissions for the world.
 
 ```console
 $ chmod a+r federated-analysis/data/<your-pathology-report>
