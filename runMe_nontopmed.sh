@@ -35,8 +35,8 @@ then
 	ENSEMBL_RELEASE=75
 	PHASED=False
         BRCA_VARS=/data/brca-variants.tsv
-	ALL_FILE=/data/${CHROM}-all.json
-	OUTPUT_FILE=/data/${CHROM}-out.json
+	ALL_FILE=/data/${CHROM}-all-controlsOnly.json
+	OUTPUT_FILE=/data/${CHROM}-out-controlsOnly.json
 
 	if [ "$CASES_OR_CONTROLS" == "casesOnly" ]
 	then
@@ -64,8 +64,8 @@ then
 	ENSEMBL_RELEASE=75
 	PHASED=False
         BRCA_VARS=/data/brca-variants.tsv
-	ALL_FILE=/data/${CHROM}-all.json
-	OUTPUT_FILE=/data/${CHROM}-out.json
+	ALL_FILE=/data/${CHROM}-all-casesOnly.json
+	OUTPUT_FILE=/data/${CHROM}-out-casesOnly.json
 
 	if [ "$CASES_OR_CONTROLS" == "controlsOnly" ]
 	then

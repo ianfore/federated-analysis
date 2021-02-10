@@ -49,30 +49,28 @@ To run the co-occurrence analysis, perform the following steps:
 $ cd federated-analysis/
 ```
 
-2. Run the runMe_nontopmed.sh script as follows:
+2. Run the runMe_nontopmed.sh script four times as follows:
 
 ```console
-$ ./runMe_nontopmed.sh BreastCancer.shuffle.vcf 37 75 13 False BRCA2 shuffle.tsv
+$ ./runMe_nontopmed.sh BreastCancer.shuffle.vcf 13 False BRCA2 casesOnly shuffle.tsv
 
-$ ./runMe_nontopmed.sh BreastCancer.shuffle.vcf 37 75 17 False BRCA1 shuffle.tsv
+$ ./runMe_nontopmed.sh BreastCancer.shuffle.vcf 17 False BRCA1 casesOnly shuffle.tsv
+
+$ ./runMe_nontopmed.sh BreastCancer.shuffle.vcf 13 False BRCA2 controlsOnly 
+
+$ ./runMe_nontopmed.sh BreastCancer.shuffle.vcf 17 False BRCA1 controlsOnly 
 ```
 
 where:
 * BreastCancer.shuffle.vcf is the name of the VCF file in the federated-analysis/data directory
 
-* 38 is the version of the human genome for the coordinates in the VCF file (37 is also supported)
-
-* 99 is the build of ensembl for retrieving gene names for the coordinates (use 75 for hg37)
-
 * 13 (or 17) is the chromosome to filter in the VCF file
-
-* True is a boolean value for whether the VCF data is phased (True) or not (False)
 
 * BRCA2 (or BRCA1) is the name of the gene of interest on the chromosome of interest
 
 * shuffle.tsv is the name of the pathology report located in the federated-analysis/data directory
 
-3. This will generate a report in federated-analysis/data called `13-out.json` (and `17-out.json`) which contains a list of VUS, each in the following format:
+3. This will generate reports in federated-analysis/data called `13-out-casesOnly.json`, `13-out-controlsOnly.json`, `17-out-casesOnly.json`, and `17-out-controlsOnly.json` which contain a list of VUS, each in the following format:
 
 ```json
 "(13, 32911164, 'T', 'A')": {
@@ -97,14 +95,13 @@ where:
                     "TAAAC",
                     "T"
                 ]
-            ],
-            "RARE": true
+            ]
 
 ```
 
-5. This will create 2 JSON files called `13-intersection.json` and `17-intersection.json` in the federated-analysis/data directory which intersect the pathology report with the co-occurrence results.
+5. This will also create 2 JSON files called `13-intersection.json` and `17-intersection.json` in the federated-analysis/data directory which intersect the pathology report with the co-occurrence results when run in `casesOnly` mode.
 
-6. This will also create some ancillary files in the federated-analysis/data directory called `13-all.json` and `17-all.json` .
+6. This will also create some ancillary files in the federated-analysis/data directory called `13-all-casesOnly.json`, `13-all-controlsOnly.json`, `17-all-controlsOnly.json`, and `17-all-casesOnly.json` .
 
 
 # Pathology statistics
