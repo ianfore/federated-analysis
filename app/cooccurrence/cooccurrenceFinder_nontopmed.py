@@ -13,7 +13,7 @@ from multiprocessing import Process, Queue, cpu_count
 
 
 logger = logging.getLogger()
-defaultLogLevel = "DEBUG"
+defaultLogLevel = "INFO"
 
 logger.info('setting pyensembl dir to /var/tmp/pyensembl-cache')
 os.environ['PYENSEMBL_CACHE_DIR'] = '/var/tmp/pyensembl-cache'
@@ -53,9 +53,7 @@ class NpDecoder(json.JSONDecoder):
         else:
             return super(NpDecoder, self).default(obj)
 
-def main():
-    # main just parses the CLI and then calls the run() method with appropriate args
-
+def parseArgs():
     parser = argparse.ArgumentParser(usage="cooccurrenceFinder args [options]")
     parser.add_argument("--vcf", dest="vcf", help="name of file containing VCF data, default=None", default=None)
     parser.add_argument("--ipv", dest="ipv", help="ipv file name, default=ipv.json", default='ipv.json')
@@ -73,13 +71,15 @@ def main():
     parser.add_argument("--r", dest="r", help="Rare frequency cutoff. Default=0.01", default=0.01)
     parser.add_argument("--pf", dest="pf", help="Pathology input file. Default=None", default=None)
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" % defaultLogLevel, default=defaultLogLevel)
-    options = parser.parse_args()
+    parser.add_argument("--co", dest="co", help="Control only. Default=True", default=True)
 
+    return parser.parse_args()
+
+def configureLogger(logLevel):
     # Parse the log level
-    numeric_level = getattr(logging, options.logLevel.upper(), None)
+    numeric_level = getattr(logging, logLevel.upper(), None)
     if not isinstance(numeric_level, int):
-        raise ValueError('Invalid log level: %s' % options.logLevel)
-
+        raise ValueError('Invalid log level: %s' % logLevel)
     # Setup a logger
     logger.setLevel(numeric_level)
     ch = logging.StreamHandler(sys.stdout)
@@ -89,30 +89,36 @@ def main():
     logger.addHandler(ch)
     logger.debug("Established logger")
 
-    g_options = options.g
-    b_options = options.b
-    v_options = options.vcf
-    ipv_options = options.ipv
-    vpi_options = options.vpi
-    all_options = options.all
-    out_options = options.out
-    c_options = options.c
-    d_options = options.d
-    p_options = bool(eval(options.p))
-    h_options = int(options.h)
-    e_options = int(options.e)
-    n_options = int(options.n)
-    r_options = float(options.r)
-    pf_options = options.pf
+
+def main():
+    # main just parses the CLI and then calls the run() method with appropriate args
+
+    options = parseArgs()
+
+    configureLogger(options.logLevel)
 
     print(options)
 
+    run(options)
 
-    run(h_options, e_options, c_options, g_options, p_options, v_options, n_options, b_options, d_options, r_options,
-        ipv_options, vpi_options, all_options, out_options, pf_options)
+def run(options):
 
-def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, numProcs,
-        brcaFileName, pyensemblDir, rareCutoff, ipvFileName, vpiFileName, allVariantsFileName, outputFileName, pathologyFile):
+    hgVersion = int(options.h)
+    ensemblRelease = int(options.e)
+    chromosome = options.c
+    gene = options.g
+    phased = bool(eval(options.p))
+    vcfFileName = options.vcf
+    numProcs = int(options.n)
+    brcaFileName = options.b
+    pyensemblDir = options.d
+    rareCutoff = options.r
+    ipvFileName = options.ipv
+    vpiFileName = options.vpi
+    allVariantsFileName = options.all
+    outputFileName = options.out
+    pathologyFile = options.pf
+    controlOnly = bool(eval(options.co))
 
     logger.info('setting pyensembl dir to ' + pyensemblDir)
     os.environ['PYENSEMBL_CACHE_DIR'] = '/var/tmp/pyensembl-cache'
@@ -130,10 +136,9 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, numPro
     logger.info('finding variants per individual in ' + vcfFileName)
     t = time.time()
     q = Queue()
-    w = Queue()
     processList = list()
     for i in range(numProcs):
-        p = Process(target=findVarsPerIndividual, args=(q, w, vcf, benignVariants, pathogenicVariants, chromosome, gene,
+        p = Process(target=findVarsPerIndividual, args=(q, vcf, benignVariants, pathogenicVariants, chromosome, gene,
                                                         ensemblRelease, i, numProcs, ))
         p.start()
         processList.append(p)
@@ -189,12 +194,10 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, numPro
     #    json.dump(individualsPerVariant, f, cls=NpEncoder)
     #f.close()
 
-
     logger.info('counting zygous individuals per vus')
     t = time.time()
     zygousPerVus = countZygousPerVus(variantsPerIndividual, brcaDF, hgVersion)
     logger.info('elapsed time in countZygousPerVus() ' + str(time.time() -t))
-
 
     logger.info('finding individuals per cooc')
     t = time.time()
@@ -226,7 +229,8 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, numPro
         if zygousPerVus[hv]['nHom'] != 0:
             homozygousPerVus[hv] = zygousPerVus[hv]
 
-    data_set = {"cooccurring vus": dataPerCooc, "homozygous vus": homozygousPerVus}
+    data_set = {"cooccurring vus": dataPerCooc, "homozygous vus": homozygousPerVus,
+                "cohortSize": cohortSize}
     json_dump = json.dumps(data_set, cls=NpEncoder, indent=4, sort_keys=True)
 
     logger.info('saving final VUS data  to ' + outputFileName)
@@ -234,27 +238,28 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, numPro
         f.write(json_dump)
     f.close()
 
-    logger.info('intersecting variants with pathology data')
-    intersectionFile = '/data/' + str(chromosome) + '-intersection.json'
-    intersectPathology(pathologyFile, data_set, individualsPerVariant, intersectionFile )
+    if not controlOnly and pathologyFile:
+        logger.info('intersecting variants with pathology data')
+        intersectionFile = '/data/' + str(chromosome) + '-intersection.json'
+        intersectPathology(pathologyFile, data_set, individualsPerVariant, intersectionFile )
 
-def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
+def intersectPathology(pathologyFile, data_set, ipvDF, intersectFile):
     logger.info('reading data from ' + pathologyFile)
     pathologyDF = pandas.read_csv(pathologyFile, sep='\t', header=0)
 
-    #ipvDF = pandas.DataFrame.from_dict(ipv)
-    ipvDF = ipv
-
     # determine total number of cases and controls for cohort frequency calculations
     numCases = 0
-    numControls = 0
+    numSpecialCases = 0
     for i in range(len(pathologyDF)):
-        x = pathologyDF.iloc[i]['Age at onset']
         if pandas.isna(pathologyDF.iloc[i]['Age at onset']):
-            numControls += 1
+            numSpecialCases += 1
         else:
             numCases += 1
-    numTotal = numCases + numControls
+    numTotalCases = numCases + numSpecialCases
+    print('numCases = ' + str(numCases))
+    print('numSpecialCases = ' + str(numSpecialCases))
+
+    numMissing = 0
 
     pathologyPerCoocIndividual = dict()
     for variant in data_set['cooccurring vus']:
@@ -264,16 +269,18 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
             pathologyPerCoocIndividual[pv] = dict()
             pathologyPerCoocIndividual[pv]['pathologies'] = list()
             pathologyPerCoocIndividual[pv]['numCases'] = 0
-            pathologyPerCoocIndividual[pv]['numControls'] = 0
-            #pathologies = dict()
+            pathologyPerCoocIndividual[pv]['numSpecialCases'] = 0
             for hi in heterozygousIndividuals:
                 pathologies = dict()
                 hiInt = int(hi)
                 row = pathologyDF.loc[pathologyDF['ID'] == hiInt]
+                if len(row) == 0:
+                    logger.warning('no pathology record for sample ' + hi)
+                    numMissing += 1
                 aao = row['Age at onset'].tolist()
                 if len(aao) == 0 or pandas.isna(aao[0]):
                     pathologies['Age at onset'] = 0.0
-                    pathologyPerCoocIndividual[pv]['numControls'] += 1
+                    pathologyPerCoocIndividual[pv]['numSpecialCases'] += 1
                 else:
                     pathologies['Age at onset'] = aao[0]
                     pathologyPerCoocIndividual[pv]['numCases']  += 1
@@ -288,10 +295,9 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
                 pathologies['HER2'] = row['HER2'].tolist()
                 pathologyPerCoocIndividual[pv]['pathologies'].append(pathologies)
 
-            pathologyPerCoocIndividual[pv]['caseFreq'] = float(pathologyPerCoocIndividual[pv]['numCases'] )/float(numCases)
-            pathologyPerCoocIndividual[pv]['controlFreq'] = float(pathologyPerCoocIndividual[pv]['numControls'] )/float(numControls)
-            numCohort = pathologyPerCoocIndividual[pv]['numCases']  + pathologyPerCoocIndividual[pv]['numControls']
-            pathologyPerCoocIndividual[pv]['cohortFreq'] = float(numCohort )/float(numTotal)
+            pathologyPerCoocIndividual[pv]['caseFreq'] = float(pathologyPerCoocIndividual[pv]['numCases'] )/float(numTotalCases)
+            pathologyPerCoocIndividual[pv]['specialCaseFreq'] = float(pathologyPerCoocIndividual[pv]['numSpecialCases'] )/float(numTotalCases)
+
 
     pathologyPerHomoIndividual = dict()
     for variant in data_set['homozygous vus']:
@@ -299,15 +305,18 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
         pathologyPerHomoIndividual[variant] = dict()
         pathologyPerHomoIndividual[variant]['pathologies'] = list()
         pathologyPerHomoIndividual[variant]['numCases'] = 0
-        pathologyPerHomoIndividual[variant]['numControls'] = 0
+        pathologyPerHomoIndividual[variant]['numSpecialCases'] = 0
         for hi in homozygousIndividuals:
             pathologies = dict()
             hiInt = int(hi)
             row = pathologyDF.loc[pathologyDF['ID'] == hiInt]
+            if len(row) == 0:
+                logger.warning('no pathology record for sample ' + hi)
+                numMissing += 1
             aao = row['Age at onset'].tolist()
             if len(aao) == 0 or pandas.isna(aao[0]):
                 pathologies['Age at onset'] = 0.0
-                pathologyPerHomoIndividual[variant]['numControls'] += 1
+                pathologyPerHomoIndividual[variant]['numSpecialCases'] += 1
             else:
                 pathologies['Age at onset'] = aao[0]
                 pathologyPerHomoIndividual[variant]['numCases'] += 1
@@ -320,26 +329,18 @@ def intersectPathology(pathologyFile, data_set, ipv, intersectFile ):
             pathologies['ER'] = row['ER'].tolist()
             pathologies['PgR'] = row['PgR'].tolist()
             pathologies['HER2'] = row['HER2'].tolist()
-
             pathologyPerHomoIndividual[variant]['pathologies'].append(pathologies)
 
-        if pathologyPerHomoIndividual[variant]['numCases'] == 0:
-            pathologyPerHomoIndividual[variant]['caseFreq'] = 0
-        else:
-            pathologyPerHomoIndividual[variant]['caseFreq'] = float(pathologyPerHomoIndividual[variant]['numCases']) / float(numCases)
-        if pathologyPerHomoIndividual[variant]['numControls']  == 0:
-            pathologyPerHomoIndividual[variant]['controlFreq'] = 0
-        else:
-            pathologyPerHomoIndividual[variant]['controlFreq'] = float(pathologyPerHomoIndividual[variant]['numControls']) / float(numControls)
+        pathologyPerHomoIndividual[variant]['caseFreq'] = float(pathologyPerHomoIndividual[variant]['numCases']) / float(numTotalCases)
+        pathologyPerHomoIndividual[variant]['specialCaseFreq'] = float(pathologyPerHomoIndividual[variant]['numSpecialCases']) / float(numTotalCases)
 
-        pathologyPerHomoIndividual[variant]['caseFreq'] = float(pathologyPerHomoIndividual[variant]['numCases']) / float(numCases)
-        pathologyPerHomoIndividual[variant]['controlFreq'] = float(pathologyPerHomoIndividual[variant]['numControls']) / float(numControls)
-        numCohort = pathologyPerHomoIndividual[variant]['numCases'] + pathologyPerHomoIndividual[variant]['numControls']
-        pathologyPerHomoIndividual[variant]['cohortFreq'] = float(numCohort) / float(numTotal)
 
     pathologyPerAllIndividuals = dict()
     pathologyPerAllIndividuals['homozygous'] = pathologyPerHomoIndividual
     pathologyPerAllIndividuals['cooccurring'] = pathologyPerCoocIndividual
+    pathologyPerAllIndividuals['numCases'] = numCases
+    pathologyPerAllIndividuals['numSpecialCases'] = numSpecialCases
+    pathologyPerAllIndividuals['numMissing'] = numMissing
 
     json_dump = json.dumps(pathologyPerAllIndividuals, indent=4, sort_keys=True)
     with open(intersectFile, 'w') as f:
@@ -360,6 +361,7 @@ def addVariantInfo(individualsPerVariant, vcf, chromosome, brcaDF, hgVersion, co
     # add infoList stuff from INFO field
     for variant in range(len(vcf['calldata/GT'])):
         if int(vcf['variants/CHROM'][variant].replace('chr', '')) != int(chromosome):
+            logger.debug('chromosome in dict?: ' + str(int(vcf['variants/CHROM'][variant].replace('chr', ''))))
             continue
         c = int(vcf['variants/CHROM'][variant].replace('chr', ''))
         p = int(vcf['variants/POS'][variant])
@@ -375,6 +377,8 @@ def addVariantInfo(individualsPerVariant, vcf, chromosome, brcaDF, hgVersion, co
             individualsPerVariant[v]['cohortFreq'] = float(len(individualsPerVariant[v]['homozygous individuals']) + \
                 len(individualsPerVariant[v]['heterozygous individuals']) ) / float(cohortSize)
             individualsPerVariant[v]['exonic'] = isExonic(ensemblRelease, c, p)
+        else:
+            logger.debug('variant not in ipv dict?: ' + str(v))
 
     return individualsPerVariant
 
@@ -573,7 +577,7 @@ def getStartAndEnd(partitionSizes, threadID):
 
     return start, end
 
-def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromosome, gene, ensemblRelease,
+def findVarsPerIndividual(q, vcf, benignVariants, pathogenicVariants, chromosome, gene, ensemblRelease,
                           threadID, numProcesses):
     '''infoFields = ['variants/ABE', 'variants/ABZ', 'variants/AC', 'variants/AF',
      'variants/AN', 'variants/ANN', 'variants/AVGDP', 'variants/BETA_IF', 'variants/BQZ',
@@ -597,6 +601,7 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
 
         for variant in range(len(vcf['calldata/GT'])):
             if int(vcf['variants/CHROM'][variant].replace('chr', '')) != int(chromosome):
+                logger.debug('chromosome in dict?: ' + str(int(vcf['variants/CHROM'][variant].replace('chr', ''))))
                 continue
             if 1 in vcf['calldata/GT'][variant][i]:
                 c = int(vcf['variants/CHROM'][variant].replace('chr', ''))
@@ -604,6 +609,7 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
                 r = str(vcf['variants/REF'][variant])
                 a = str(vcf['variants/ALT'][variant][0])
                 if getGenesForVariant([c,p,r,a], ensemblRelease, gene) is None:
+                    logger.debug('no gene for variant: ' + str([c, p, r, a]))
                     continue
 
                 genotype = str(int(str(vcf['calldata/GT'][variant][i][0]) + str(vcf['calldata/GT'][variant][i][1]), 2))
