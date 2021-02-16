@@ -162,6 +162,8 @@ def getVariants(transcript, gene, dataset, reference):
         exonic_set.add(json.dumps(l, sort_keys=True))
     intronic_set = set()
     intronic_variants_non_topmed = gene_to_region_variants(gene, dataset, reference)
+    for l in intronic_variants_non_topmed:
+        intronic_set.add(json.dumps(l, sort_keys=True))
     combined_set = exonic_set | intronic_set
     return combined_set
 
