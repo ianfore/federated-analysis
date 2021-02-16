@@ -164,7 +164,16 @@ def getVariants(transcript, gene, dataset, reference):
     intronic_variants_non_topmed = gene_to_region_variants(gene, dataset, reference)
     for l in intronic_variants_non_topmed:
         intronic_set.add(json.dumps(l, sort_keys=True))
+    with open('/tmp/exonic.txt', 'w') as f:
+        f.write(str(exonic_set))
+    f.close()
+    with open('/tmp/intronic.txt', 'w') as f:
+        f.write(str(intronic_set))
+    f.close()
     combined_set = exonic_set | intronic_set
+    with open('/tmp/combined.txt', 'w') as f:
+        f.write(str(combined_set))
+    f.close()
     return combined_set
 
 def convertSetToDict(mySet):
