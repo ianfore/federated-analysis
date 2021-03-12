@@ -1,6 +1,6 @@
 import json
-import sys
 import logging
+import argparse
 
 logging.basicConfig()
 logger = logging.getLogger()
@@ -13,13 +13,13 @@ def writeHeader(f):
     f.write('\n')
 
 def main():
-    if(len(sys.argv) != 3):
-        print('usage: input-out.json output-out.json')
-        sys.exit(1)
-
-    inputFileName = sys.argv[1]
-    outputFileName = sys.argv[2]
-
+    parser = argparse.ArgumentParser(usage="prep4bayesDel --i input-json --o output-vcf")
+    parser.add_argument("--i", dest="input", help="input json file", default=None)
+    parser.add_argument("--o", dest="output", help="output vcf file", default=None)
+    options = parser.parse_args()
+    inputFileName = options.input
+    outputFileName = options.output
+    
     logger.info('reading ' + inputFileName)
     with open(inputFileName, 'r') as f:
         inputDict = json.load(f)
