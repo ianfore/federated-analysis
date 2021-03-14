@@ -48,7 +48,7 @@ def main():
         else:
             variant2samplesDict[variant]['homo'] = gen3.intersection(homoSamples)[0]
 
-    print(variant2samplesDict)
+    #print(variant2samplesDict)
 
 
 
