@@ -26,7 +26,7 @@ def main():
         chrom = int(variantArray[0])
         pos = int(variantArray[1])
         ref = str(variantArray[2])
-        alt = str(variantArray[3].strip())
+        alt = str(variantArray[3].replace('\n', ''))
         variantString = str((chrom, pos, ref, alt))
         print(variantString)
 
