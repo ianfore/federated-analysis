@@ -77,9 +77,7 @@ def main():
                 reads[nuc] = 0
             reads[nuc] += 1
 
-    print('ref = ' + ref)
-    print('alt = ' + alt)
-    print('reads = ' + str(reads))
+    print(variant + ':' + str(reads))
 
 
 if __name__ == "__main__":
