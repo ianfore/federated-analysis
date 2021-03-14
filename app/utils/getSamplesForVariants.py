@@ -37,7 +37,7 @@ def main():
         alt = str(variantArray[3].replace('\n', ''))
         variantString = str((chrom, pos, ref, alt))
 
-        variant2samplesDict[variant] = dict()
+        variant2samplesDict[variantString] = dict()
         # now get the samples for the variant from ipv
         print(variantString)
         homoSamples = set(ipv[variantString]['homozygous individuals'])
