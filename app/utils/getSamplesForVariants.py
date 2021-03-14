@@ -23,10 +23,10 @@ def main():
     for variant in variants:
         variant = variant.replace('(', '').replace(')', '')
         variantArray = variant.split(',')
-        chrom = variantArray[0]
-        pos = variantArray[1]
+        chrom = int(variantArray[0])
+        pos = int(variantArray[1])
         ref = str(variantArray[2])
-        alt = str(variantArray[3])
+        alt = str(variantArray[3].rstrip())
         variantString = str((chrom, pos, ref, alt))
         print(variantString)
 
