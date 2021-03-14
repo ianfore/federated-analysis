@@ -19,7 +19,7 @@ def main():
     options = parser.parse_args()
     inputFileName = options.input
     outputFileName = options.output
-    
+
     logger.info('reading ' + inputFileName)
     with open(inputFileName, 'r') as f:
         inputDict = json.load(f)
