@@ -39,6 +39,7 @@ def main():
 
         variant2samplesDict[variant] = dict()
         # now get the samples for the variant from ipv
+        print(variantString)
         homoSamples = set(ipv[variantString]['homozygous individuals'])
         if len(homoSamples) == 0:
             variant2samplesDict[variant]['homo'] = None
