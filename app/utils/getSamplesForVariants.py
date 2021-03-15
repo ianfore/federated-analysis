@@ -25,8 +25,8 @@ def main():
     gen3File = open(gen3FileName)
     gen3 = set(gen3File.readlines())
     gen3File.close()
-
-    print('gen3 = ' + str(gen3))
+    for i in range(len(gen3)):
+        gen3[i] = gen3[i].replace('\n', '')
 
     variant2samplesDict = dict()
 
