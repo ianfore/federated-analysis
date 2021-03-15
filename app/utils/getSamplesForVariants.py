@@ -51,7 +51,7 @@ def main():
             sample = list(gen3.intersection(homoSamples))[0]
             v = 'chr' + str(chrom) + ':' + str(pos) + ':' + ref + ':' + alt
             r = 'chr' + str(chrom) + ':' + str(pos - 100) + '-' + str(pos+100)
-            outputFile.write(sample + '\t' + v + '\t' + r)
+            outputFile.write(sample + '\t' + v + '\t' + r + '\n')
             continue
 
         heteroSamples = set(ipv[variantString]['heterozygous individuals'])
@@ -63,7 +63,7 @@ def main():
             sample = list(gen3.intersection(heteroSamples))[0]
             v = 'chr' + str(chrom) + ':' + str(pos) + ':' + ref + ':' + alt
             r = 'chr' + str(chrom) + ':' + str(pos - 100) + '-' + str(pos + 100)
-            outputFile.write(sample + '\t' + v + '\t' + r)
+            outputFile.write(sample + '\t' + v + '\t' + r + '\n')
 
     outputFile.close()
     #print(variant2samplesDict)
