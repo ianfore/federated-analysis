@@ -44,10 +44,7 @@ def main():
 
         # now get the samples for the variant from ipv
 
-        print(variantString)
         homoSamples = set(ipv[variantString]['homozygous individuals'])
-        print('homs = ' + str(homoSamples))
-        print(gen3.intersection(homoSamples))
         if len(homoSamples) == 0:
             variant2samplesDict[variantString]['homo'] = None
             print('no homo samples')
@@ -55,11 +52,9 @@ def main():
             print('no gen3 samples')
             variant2samplesDict[variantString]['homo'] = None
         else:
-            variant2samplesDict[variantString]['homo'] = gen3.intersection(homoSamples)[0]
+            variant2samplesDict[variantString]['homo'] = list(gen3.intersection(homoSamples))[0]
 
         heteroSamples = set(ipv[variantString]['heterozygous individuals'])
-        print('hets = ' + str(heteroSamples))
-        print(gen3.intersection(heteroSamples))
         if len(heteroSamples) == 0:
             variant2samplesDict[variantString]['het'] = None
             print('no het samples')
@@ -67,7 +62,7 @@ def main():
             print('no gen3 samples')
             variant2samplesDict[variantString]['het'] = None
         else:
-            variant2samplesDict[variantString]['het'] = gen3.intersection(heteroSamples)[0]
+            variant2samplesDict[variantString]['het'] = list(gen3.intersection(heteroSamples))[0]
 
     print(variant2samplesDict)
 
