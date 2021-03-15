@@ -23,10 +23,11 @@ def main():
     f.close()
 
     gen3File = open(gen3FileName)
-    gen3 = set(gen3File.readlines())
+    gen3 = gen3File.readlines()
     gen3File.close()
     for i in range(len(gen3)):
         gen3[i] = gen3[i].replace('\n', '')
+    gen3 = set(gen3)
 
     variant2samplesDict = dict()
 
