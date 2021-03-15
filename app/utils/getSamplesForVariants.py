@@ -7,7 +7,7 @@ def main():
     parser.add_argument("--v", dest="variantFileName", help="variant file name", default=None)
     parser.add_argument("--i", dest="ipvFileName", help="ipv file name", default=None)
     parser.add_argument("--g", dest="gen3FileName", help="gen3 file name", default=None)
-    parser.add_argument("--o", dest="outputFileName", help="output file name", default=None)
+    parser.add_argument("--o", dest="outputFileName", help="output tsv file name", default=None)
     options = parser.parse_args()
     variantFileName = options.variantFileName
     ipvFileName = options.ipvFileName
@@ -29,7 +29,8 @@ def main():
         gen3[i] = gen3[i].replace('\n', '')
     gen3 = set(gen3)
 
-    variant2samplesDict = dict()
+    outputFile = open(outputFileName, 'w')
+    # NWD825720       chr13:32329240:G:A      chr13:32329140-32329340
 
     for variant in variants:
         variant = variant.replace('(', '').replace(')', '')
@@ -40,31 +41,34 @@ def main():
         alt = str(variantArray[3].replace('\n', ''))
         variantString = str((chrom, pos, ref, alt))
 
-        variant2samplesDict[variantString] = dict()
-
         # now get the samples for the variant from ipv
-
         homoSamples = set(ipv[variantString]['homozygous individuals'])
         if len(homoSamples) == 0:
-            variant2samplesDict[variantString]['homo'] = None
-            print('no homo samples')
+            pass
         elif len(gen3.intersection(homoSamples)) == 0:
-            print('no gen3 samples')
-            variant2samplesDict[variantString]['homo'] = None
+            pass
         else:
-            variant2samplesDict[variantString]['homo'] = list(gen3.intersection(homoSamples))[0]
+            sample = list(gen3.intersection(homoSamples))[0]
+            v = 'chr' + str(chrom) + ':' + str(pos) + ':' + ref + ':' + alt
+            r = 'chr' + str(chrom) + ':' + str(pos - 100) + '-' + str(pos+100)
+            outputFile.write(sample + '\t' + v + '\t' + r)
+            continue
 
         heteroSamples = set(ipv[variantString]['heterozygous individuals'])
         if len(heteroSamples) == 0:
-            variant2samplesDict[variantString]['het'] = None
-            print('no het samples')
+            continue
         elif len(gen3.intersection(heteroSamples)) == 0:
-            print('no gen3 samples')
-            variant2samplesDict[variantString]['het'] = None
+            continue
         else:
-            variant2samplesDict[variantString]['het'] = list(gen3.intersection(heteroSamples))[0]
+            sample = list(gen3.intersection(heteroSamples))[0]
+            v = 'chr' + str(chrom) + ':' + str(pos) + ':' + ref + ':' + alt
+            r = 'chr' + str(chrom) + ':' + str(pos - 100) + '-' + str(pos + 100)
+            outputFile.write(sample + '\t' + v + '\t' + r)
 
-    print(variant2samplesDict)
+    outputFile.close()
+    #print(variant2samplesDict)
+
+
 
 
 
