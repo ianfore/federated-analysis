@@ -26,6 +26,8 @@ def main():
     gen3 = set(gen3File.readlines())
     gen3File.close()
 
+    print('gen3 = ' + str(gen3))
+
     variant2samplesDict = dict()
 
     for variant in variants:
