@@ -385,7 +385,7 @@ def countHomozygousPerBenign(variantsPerIndividual, brcaDF, hgVersion, ensemblRe
                 if str(ben[0]) not in homozygousPerBenign:
                     homozygousPerBenign[str(ben[0])] = dict()
                     homozygousPerBenign[str(ben[0])]['count'] = 0
-                    maxPop, maxPopFreq, minPop, minPopFreq = getGnomadData(brcaDF, ben[0], hgVersion)
+                    maxPop, maxPopFreq, minPop, minPopFreq, allPopFreq = getGnomadData(brcaDF, ben[0], hgVersion)
                     homozygousPerBenign[str(ben[0])]['maxPop'] = maxPop
                     homozygousPerBenign[str(ben[0])]['maxPopFreq'] = maxPopFreq
                     homozygousPerBenign[str(ben[0])]['minPop'] = minPop
@@ -415,7 +415,7 @@ def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelea
                 if str(vus[0]) not in homozygousPerVus:
                     homozygousPerVus[str(vus[0])] = dict()
                     homozygousPerVus[str(vus[0])]['count'] = 0
-                    maxPop, maxPopFreq, minPop, minPopFreq = getGnomadData(brcaDF, vus[0], hgVersion)
+                    maxPop, maxPopFreq, minPop, minPopFreq, allPopFreq = getGnomadData(brcaDF, vus[0], hgVersion)
                     homozygousPerVus[str(vus[0])]['maxPop'] = maxPop
                     homozygousPerVus[str(vus[0])]['maxPopFreq'] = maxPopFreq
                     homozygousPerVus[str(vus[0])]['minPop'] = minPop
@@ -491,7 +491,7 @@ def calculateLikelihood(pathCoocs, p1, n, k, brcaDF, hgVersion, cohortSize):
         else:
             logger.error("unknown chromosome: " + str(vus[0]))
             continue
-        maxPop, maxPopFreq, minPop, minPopFreq = getGnomadData(brcaDF, vus, hgVersion)
+        maxPop, maxPopFreq, minPop, minPopFreq, allPopFreq = getGnomadData(brcaDF, vus, hgVersion)
         cohortFreq = float(n[vus]) / float(cohortSize)
         data = {'likelihood data': {'p1':p1, 'p2':p2, 'n':n[vus], 'k':k[vus], 'likelihood':likelihoodRatios[vus]},
                     'allele frequencies':{'maxPop':maxPop, 'maxPopFreq':maxPopFreq, 'minPop': minPop, 'minPopFreq': minPopFreq,
