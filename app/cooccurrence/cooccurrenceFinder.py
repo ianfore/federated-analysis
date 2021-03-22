@@ -284,7 +284,7 @@ def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, brcaDF, hgV
         if v in individualsPerVariant:
             '''for info in infoList:
                 individualsPerVariant[v][info] = vcf['variants/' + info][variant]'''
-            maxPop, maxFreq, minPop, minFreq = getGnomadData(brcaDF, eval(v), hgVersion)
+            maxPop, maxFreq, minPop, minFreq, allPopFreq = getGnomadData(brcaDF, eval(v), hgVersion)
             individualsPerVariant[v]['maxPop'] = maxPop
             individualsPerVariant[v]['maxFreq'] = maxFreq
             individualsPerVariant[v]['minPop'] = minPop
@@ -357,6 +357,7 @@ def getGnomadData(brcaDF, vus, hgVersion):
     maxPopulation = None
     minFrequency = 1.0
     minPopulation = None
+    allPopFreq = dict()
     for af in alleleFrequencies:
         freq=0.0
         alleleFreqList = brcaDF[brcaDF[coordinateColumnBase + str(hgVersion)] == hgString][af].tolist()
@@ -371,8 +372,9 @@ def getGnomadData(brcaDF, vus, hgVersion):
             if freq < minFrequency:
                 minFrequency = freq
                 minPopulation = af
+            allPopFreq[af] = freq
 
-    return (maxPopulation, maxFrequency, minPopulation, minFrequency)
+    return maxPopulation, maxFrequency, minPopulation, minFrequency, allPopFreq
 
 def countHomozygousPerBenign(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, geneOfInterest, rareCutoff):
     homozygousPerBenign = dict()

@@ -3,7 +3,7 @@ import argparse
 
 
 def main():
-    parser = argparse.ArgumentParser(usage="getSamplesForReads")
+    parser = argparse.ArgumentParser(usage="generateRangeFileForTera")
     parser.add_argument("--v", dest="variantFileName", help="variant file name", default=None)
     parser.add_argument("--i", dest="ipvFileName", help="ipv file name", default=None)
     parser.add_argument("--g", dest="gen3FileName", help="gen3 file name", default=None)
@@ -67,12 +67,6 @@ def main():
 
     outputFile.close()
     #print(variant2samplesDict)
-
-
-
-
-
-
 
 if __name__ == "__main__":
     main()
