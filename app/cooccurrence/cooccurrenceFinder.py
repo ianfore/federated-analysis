@@ -374,7 +374,7 @@ def getGnomadData(brcaDF, vus, hgVersion):
                 minPopulation = af
             allPopFreq[af] = freq
 
-    return maxPopulation, maxFrequency, minPopulation, minFrequency, allPopFreq
+    return (maxPopulation, maxFrequency, minPopulation, minFrequency, allPopFreq)
 
 def countHomozygousPerBenign(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, geneOfInterest, rareCutoff):
     homozygousPerBenign = dict()
