@@ -194,6 +194,36 @@ def writeToOutputFile(myDict, outputFile):
             f.write('\n')
     f.close()
 
+def writeTopmedNonTopmed(b1tm, b1ntm, b2tm, b2ntm):
+    # write brca1-topmed
+    b1tmFile = 'brca1-topmed-variants.txt'
+    f=open(b1tmFile, 'w')
+    for v in b1tm:
+        f.write(v + '\n')
+    f.close()
+
+    # write brca1-nontopmed
+    b1ntmFile = 'brca1-nontopmed-variants.txt'
+    f = open(b1ntmFile, 'w')
+    for v in b1ntm:
+        f.write(v + '\n')
+    f.close()
+
+    # write brca2-topmed
+    b2tmFile = 'brca2-topmed-variants.txt'
+    f = open(b2tmFile, 'w')
+    for v in b2tm:
+        f.write(v + '\n')
+    f.close()
+
+    # write brca2-nontopmed
+    b2ntmFile = 'brca2-nontopmed-variants.txt'
+    f = open(b2ntmFile, 'w')
+    for v in b2ntm:
+        f.write(v + '\n')
+    f.close()
+
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-o', '--output', help='output file base name')
@@ -227,8 +257,8 @@ def main():
     brca2_variants_non_topmed = getVariants(brca2_transcript, brca2_gene, non_topmed_dataset, reference_genome)
     b2_nontopmed_dict = convertSetToDict(brca2_variants_non_topmed)
     brca2_variants_topmed = getVariants(brca2_transcript, brca2_gene, full_dataset, reference_genome)
-    brca2_topmed_dict = convertSetToDict(brca2_variants_topmed)
-    b2_deltas = getDeltas(brca2_topmed_dict, b2_nontopmed_dict)
+    b2_topmed_dict = convertSetToDict(brca2_variants_topmed)
+    b2_deltas = getDeltas(b2_topmed_dict, b2_nontopmed_dict)
 
     # put brca1 and brca2 results into single dictionary
     deltas = dict()
@@ -237,6 +267,10 @@ def main():
 
     # write dictionary to output
     writeToOutputFile(deltas, outputFile)
+
+    # write brca1-topmed, brca1-non-topmed, brca2-topmed, and brca2-non-topmed to files
+    writeTopmedNonTopmed(brca1_variants_topmed, brca1_variants_non_topmed,
+                         brca2_variants_topmed, brca2_variants_non_topmed)
 
 if __name__ == "__main__":
     main()
