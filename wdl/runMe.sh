@@ -1,22 +1,28 @@
 #!/bin/bash
 
-DATA_DIR=/private/groups/patenlab/jcasalet/TOPMED_WORKDIR/DATA/BROAD/13/GNOMAD/MC
+
+DATA_DIR=/private/groups/patenlab/jcasalet/TOPMED_WORKDIR/DATA/PUB/MANDY/BROAD/13/AMR
+CHROM=13
+GENE=BRCA2
+VCF_FILENAME=f8_chr13_brca2_amr-broad.vcf
+
 TOP_DIR=/private/groups/patenlab/jcasalet/federated-analysis
 PYTHON_SCRIPT=${TOP_DIR}/app/cooccurrence/cooccurrenceFinder.py
-
 miniwdl cromwell /private/groups/patenlab/jcasalet/WDL/myVusCooccur.wdl \
 PYTHON_SCRIPT=${PYTHON_SCRIPT} \
-VCF_FILE=${DATA_DIR}/NOTINSUBSET/broad_chr13_brca2_notinsubset.vcf \
+VCF_FILE=${DATA_DIR}/$VCF_FILENAME \
+ANNO_FILE=${DATA_DIR}/freeze8_sample_annot_2020-07-07.txt \
 BRCA_FILE=${TOP_DIR}/data/brca-variants.tsv \
-OUTPUT_FILENAME=13-out.json \
-ALL_FILENAME=13-all.json \
-VPI_FILENAME=13-vpi.json \
-IPV_FILENAME=13-ipv.json \
+OUTPUT_FILENAME=${CHROM}-out.json \
+ALL_FILENAME=${CHROM}-all.json \
+VPI_FILENAME=${CHROM}-vpi.json \
+IPV_FILENAME=${CHROM}-ipv.json \
+TOUT_FILENAME=${CHROM}-tout.json \
 HG_VERSION=38 \
 FREEZE=8 \
 ENSEMBL_RELEASE=99 \
 PHASED=True \
-CHROM=13 \
-GENE=BRCA2 \
+CHROM=$CHROM \
+GENE=$GENE \
 NUM_CORES=$(grep -c processor /proc/cpuinfo) \
 -c /private/groups/patenlab/jcasalet/WDL/cromwell.local.conf 
