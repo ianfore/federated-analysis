@@ -900,7 +900,11 @@ def binPlot(theList, binSize, xlabel, ylabel, dtype, sigDigs, binList, outputDir
                     bins.append(dtype(round(0.5 * (lhs + rhs), sigDigs)))
                 break
 
-    binMax = binList[len(binList)-1]
+    binList = list(binList)
+    if len(binList) > 0:
+        binMax = binList[len(binList)-1]
+    else:
+        binMax = 0
     listMax = max(theList)
     for element in theList:
         if element > binMax:
