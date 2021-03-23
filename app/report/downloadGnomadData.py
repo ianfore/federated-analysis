@@ -158,12 +158,12 @@ def getDeltas(full_variant_data, subset_variant_data):
 def getVariants(transcript, gene, dataset, reference):
     exonic_set = set()
     exonic_variants_non_topmed = transcript_to_variants(transcript, dataset, reference)
-    if len(exonic_variants_non_topmed) != 0:
+    if not exonic_variants_non_topmed is None and (exonic_variants_non_topmed) != 0:
         for l in exonic_variants_non_topmed:
             exonic_set.add(json.dumps(l, sort_keys=True))
     intronic_set = set()
     intronic_variants_non_topmed = gene_to_region_variants(gene, dataset, reference)
-    if len(intronic_variants_non_topmed) != 0:
+    if not intronic_variants_non_topmed is None and (intronic_variants_non_topmed) != 0:
         for l in intronic_variants_non_topmed:
             intronic_set.add(json.dumps(l, sort_keys=True))
 
