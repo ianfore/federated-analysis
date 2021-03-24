@@ -71,7 +71,7 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
         for key in topmedKeys:
             topmedDict[key].append(variantsDict[variant][key])
         for key in nontopmedKeys:
-            nontopmedDict.append([variant][key])
+            nontopmedDict[key].append(variantsDict[variant][key])
 
     n=len(topmedDict[topmedKeys[0]])
 
