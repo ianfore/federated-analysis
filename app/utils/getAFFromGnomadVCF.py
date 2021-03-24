@@ -91,10 +91,10 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
     nontopmedList.sort()
     topmedCDF = list()
     nontopmedCDF = list()
-    for n in lineNumbers:
-        num = sum(map(lambda x: x < n, topmedList))
+    for l in lineNumbers:
+        num = sum(map(lambda x: x < l, topmedList))
         topmedCDF.append(float(num)/float(n))
-        num = sum(map(lambda x: x < n, nontopmedList))
+        num = sum(map(lambda x: x < l, nontopmedList))
         topmedCDF.append(float(num) / float(n))
 
     plt.xlim(0, 1)
