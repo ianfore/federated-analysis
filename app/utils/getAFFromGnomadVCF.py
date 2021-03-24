@@ -36,7 +36,7 @@ def main():
                 print(key)
                 if key in keys:
                     value = field.split('=')[1]
-                    variantsDict.iloc[i][key] = value
+                    variantsDict[str(i) + key] = value
 
     with open(outputFileName, 'w') as f:
         json.dump(variantsDict, f)
