@@ -76,7 +76,7 @@ def plotProbability(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
     plt.scatter(nontopmedList, topmedList, marker='.', color='black')
     plt.ylabel('topmed AF', fontsize=18)
     plt.xlabel('nontopmed AF', fontsize=18)
-    plt.title(graphFileName)
+    plt.title(graphFileName + ' (n=' + str(len(topmedList)) + ')')
 
     plt.savefig(graphFileName + '.png')
     #plt.show()
