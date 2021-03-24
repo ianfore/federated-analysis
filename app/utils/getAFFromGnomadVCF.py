@@ -29,18 +29,18 @@ def main():
             'AF-non_topmed-nfe', 'AF-nfe']
     for i in range(len(vcfDF)):
         fields = vcfDF.iloc[i]['INFO'].split(';')
-        chrom = vcfDF.iloc[i]['#CHROM']
+        chrom = vcfDF.iloc[i]['#CHROM'].split('chr')[1]
         pos = vcfDF.iloc[i]['POS']
         ref = vcfDF.iloc[i]['REF']
         alt = vcfDF.iloc[i]['ALT']
-        mykey = "(" + chrom + ", " + pos + ", " + ref + ", " + alt + ")"
+        mykey = "(" + chrom + ", " + pos + ", '" + ref + "', '" + alt + "')"
         variantsDict[mykey] = dict()
         for field in fields:
             if '=' in field:
                 key = field.split('=')[0]
                 if key in keys:
                     value = field.split('=')[1]
-                    variantsDict[mykey][str(i) + str(key)] = str(value)
+                    variantsDict[mykey][key] = value
 
     with open(outputFileName, 'w') as f:
         json.dump(variantsDict, f)
