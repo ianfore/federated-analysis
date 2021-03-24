@@ -47,7 +47,7 @@ def main():
             if '=' in field:
                 key = field.split('=')[0]
                 if key in keys:
-                    value = field.split('=')[1]
+                    value = float(field.split('=')[1])
                     variantsDict[mykey][key] = value
 
     logger.info('saving allele freqs')
@@ -74,9 +74,9 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
         nontopmedDict[key] = list()
     for variant in variantsDict:
         for key in topmedKeys:
-            topmedDict[key].append(float(variantsDict[variant][key]))
+            topmedDict[key].append(variantsDict[variant][key])
         for key in nontopmedKeys:
-            nontopmedDict[key].append(float(variantsDict[variant][key]))
+            nontopmedDict[key].append(variantsDict[variant][key])
 
     n=len(topmedDict[topmedKeys[0]])
 
