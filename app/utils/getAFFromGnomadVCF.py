@@ -2,6 +2,7 @@ import pandas as pd
 import logging
 import argparse
 import json
+import matplotlib as plt
 
 
 logging.basicConfig()
@@ -24,9 +25,10 @@ def main():
     logger.info('finding variants from ' + vcfFileName)
     vcfDF = pd.read_csv(vcfFileName, delimiter='\t', header=0, dtype=str)
     variantsDict = dict()
+    topmedKeys = ['AF-afr', 'AF-amr', 'AF-nfe']
+    nontopmedKeys = ['AF-non_topmed-afr', 'AF-non_topmed-amr', 'AF-non_topmed-nfe']
+    keys = topmedKeys + nontopmedKeys
 
-    keys = ['AF-non_topmed-afr', 'AF-afr', 'AF-non_topmed-amr', 'AF-amr',
-            'AF-non_topmed-nfe', 'AF-nfe']
     for i in range(len(vcfDF)):
         fields = vcfDF.iloc[i]['INFO'].split(';')
         chrom = vcfDF.iloc[i]['#CHROM'].split('chr')[1]
@@ -44,12 +46,36 @@ def main():
 
     with open(outputFileName, 'w') as f:
         json.dump(variantsDict, f)
-
     f.close()
 
+    plotProbability(variantsDict, topmedKeys, nontopmedKeys)
 
+def plotProbability(variantsDict, topmedKeys, nontopmedKeys):
 
+    topmedKeys.sort()
+    nontopmedKeys.sort()
+    topmedList = list()
+    nontopmedList = list()
+    for variant in variantsDict:
+        topmedSum = 0
+        nontopmedSum = 0
+        for key in topmedKeys:
+            topmedSum += float(variantsDict[variant][key])
+        topmedList.append(topmedSum)
+        for key in nontopmedKeys:
+            nontopmedSum += float(variantsDict[variant][key])
+        nontopmedList.append(nontopmedSum)
 
+    plt.xlim(0, 1)
+    plt.ylim(0, 1)
+    plt.plot(nontopmedList, topmedList, marker='.', color='red')
+    plt.ylabel('topmed AF', fontsize=18)
+    plt.xlabel('nontopmed AF', fontsize=18)
+    plt.title('nontopmed vs topmed AF')
+
+    plt.savefig('qq.png')
+    #plt.show()
+    plt.close()
 
 
 if __name__ == "__main__":
