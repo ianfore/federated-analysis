@@ -25,13 +25,16 @@ def main():
     vcfDF = pd.read_csv(vcfFileName, delimiter='\t', header=0, dtype=str)
     variantsDict = dict()
 
+    keys = ['AF-non_topmed-afr', 'AF-afr', 'AF-non_topmed-amr', 'AF-amr',
+            'AF-non_topmed-nfe', 'AF-nfe',]
     for i in vcfDF.iterrows():
         fields = vcfDF.iloc[i]['INFO'][21].split(';')
         for field in fields:
             if '=' in field:
                 key = field.split('=')[0]
-                value = field.split('=')[1]
-                variantsDict.iloc[i][key] = value
+                if key in keys:
+                    value = field.split('=')[1]
+                    variantsDict.iloc[i][key] = value
 
     with open(outputFileName, 'w') as f:
         json.dump(variantsDict)
