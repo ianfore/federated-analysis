@@ -30,15 +30,12 @@ def main():
     for i in range(len(vcfDF)):
         fields = vcfDF.iloc[i]['INFO'].split(';')
         chrom = vcfDF.iloc[i]['#CHROM']
-        print(chrom)
         variantsDict[chrom] = dict()
         for field in fields:
             if '=' in field:
                 key = field.split('=')[0]
-                print(key)
                 if key in keys:
                     value = field.split('=')[1]
-                    print(str(value))
                     variantsDict[str(chrom)][str(i) + str(key)] = str(value)
 
     with open(outputFileName, 'w') as f:
