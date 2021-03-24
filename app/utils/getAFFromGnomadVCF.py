@@ -29,6 +29,7 @@ def main():
             'AF-non_topmed-nfe', 'AF-nfe']
     for i in range(len(vcfDF)):
         fields = vcfDF.iloc[i]['INFO'][21].split(';')
+        print(fields)
         for field in fields:
             if '=' in field:
                 print(field)
