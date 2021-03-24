@@ -2,8 +2,7 @@ import pandas as pd
 import logging
 import argparse
 import json
-import matplotlib as plt
-
+import matplotlib.pyplot as plt
 
 logging.basicConfig()
 logger = logging.getLogger()
@@ -29,6 +28,7 @@ def main():
     nontopmedKeys = ['AF-non_topmed-afr', 'AF-non_topmed-amr', 'AF-non_topmed-nfe']
     keys = topmedKeys + nontopmedKeys
 
+    logger.info('getting allele freqs')
     for i in range(len(vcfDF)):
         fields = vcfDF.iloc[i]['INFO'].split(';')
         chrom = vcfDF.iloc[i]['#CHROM'].split('chr')[1]
@@ -44,10 +44,12 @@ def main():
                     value = field.split('=')[1]
                     variantsDict[mykey][key] = value
 
+    logger.info('saving allele freqs')
     with open(outputFileName, 'w') as f:
         json.dump(variantsDict, f)
     f.close()
 
+    logger.info('plotting allele freqs')
     plotProbability(variantsDict, topmedKeys, nontopmedKeys)
 
 def plotProbability(variantsDict, topmedKeys, nontopmedKeys):
