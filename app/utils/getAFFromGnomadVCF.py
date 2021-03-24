@@ -97,6 +97,10 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
         num = sum(map(lambda x: x < l, nontopmedList))
         topmedCDF.append(float(num) / float(n))
 
+    print('len topmed cdf = ' + str(len(topmedCDF)))
+    print('len nontopmed cdf = ' + str(len(nontopmedCDF)))
+    print('len linenumbers  = ' + str(len(lineNumbers)))
+
     plt.xlim(0, 1)
     plt.ylim(0, 1)
     plt.scatter(lineNumbers, topmedCDF, marker='.', color='blue')
