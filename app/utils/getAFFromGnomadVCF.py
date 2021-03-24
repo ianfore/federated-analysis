@@ -37,7 +37,7 @@ def main():
                     variantsDict.iloc[i][key] = value
 
     with open(outputFileName, 'w') as f:
-        json.dump(variantsDict)
+        json.dump(variantsDict, f)
 
     f.close()
 
