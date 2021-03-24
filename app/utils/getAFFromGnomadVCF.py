@@ -4,6 +4,7 @@ import argparse
 import json
 import matplotlib.pyplot as plt
 import numpy
+import scipy
 
 logging.basicConfig()
 logger = logging.getLogger()
@@ -106,6 +107,11 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
     plt.title(graphFileName + ' CDF ' + ' (n=' + str(n) + ')')
     plt.savefig(graphFileName + '-cdf.png')
     plt.close()
+
+    # run KS test
+
+    ksTest = scipy.stats.ks_2samp(topmedCDF, nontopmedCDF)
+    print('ksTest = ' + str(ksTest))
 
 if __name__ == "__main__":
     main()
