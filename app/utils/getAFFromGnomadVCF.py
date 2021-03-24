@@ -26,12 +26,13 @@ def main():
     variantsDict = dict()
 
     keys = ['AF-non_topmed-afr', 'AF-afr', 'AF-non_topmed-amr', 'AF-amr',
-            'AF-non_topmed-nfe', 'AF-nfe',]
+            'AF-non_topmed-nfe', 'AF-nfe']
     for i in range(len(vcfDF)):
         fields = vcfDF.iloc[i]['INFO'][21].split(';')
         for field in fields:
             if '=' in field:
                 key = field.split('=')[0]
+                print(key)
                 if key in keys:
                     value = field.split('=')[1]
                     variantsDict.iloc[i][key] = value
