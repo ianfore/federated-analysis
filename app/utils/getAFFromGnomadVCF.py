@@ -29,12 +29,14 @@ def main():
             'AF-non_topmed-nfe', 'AF-nfe']
     for i in range(len(vcfDF)):
         fields = vcfDF.iloc[i]['INFO'].split(';')
+        chrom = vcfDF.iloc[i]['#CHROM']
+        variantsDict[chrom] = dict
         for field in fields:
             if '=' in field:
                 key = field.split('=')[0]
                 if key in keys:
                     value = field.split('=')[1]
-                    variantsDict[str(i) + key] = value
+                    variantsDict[chrom][str(i) + key] = value
 
     with open(outputFileName, 'w') as f:
         json.dump(variantsDict, f)
