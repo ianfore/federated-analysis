@@ -35,6 +35,7 @@ def main():
         for field in fields:
             if '=' in field:
                 key = field.split('=')[0]
+                print(key)
                 if key in keys:
                     value = field.split('=')[1]
                     print(str(value))
