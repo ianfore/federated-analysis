@@ -31,9 +31,7 @@ def main():
         fields = vcfDF.iloc[i]['INFO'].split(';')
         for field in fields:
             if '=' in field:
-                print(field)
                 key = field.split('=')[0]
-                print(key)
                 if key in keys:
                     value = field.split('=')[1]
                     variantsDict[str(i) + key] = value
