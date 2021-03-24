@@ -95,6 +95,17 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
         plt.savefig(graphFileName + tmkey + '_' + ntmkey + '-qq.png')
         plt.close()
 
+        lowerLimit = 0
+        upperLimit = 1
+        plt.xlim(lowerLimit, upperLimit)
+        bins = numpy.arange(lowerLimit, upperLimit, 0.1)
+        plt.hist([nontopmedList, topmedList], label=['topmed', 'nontopmed'], density=True, range=(0, 1), bins=bins)
+        plt.xlabel('AF')
+        plt.ylabel('count')
+        plt.title(graphFileName + ' PDF ' + ' (n=' + str(n) + ')')
+        plt.savefig(graphFileName + '-pdf.png')
+        plt.close()
+
     # plot CDF
     '''topmedList.sort()
     nontopmedList.sort()
@@ -122,6 +133,8 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
     print('ksTest on CDF = ' + str(ksTest))
     ksTest = ks_2samp(topmedList, nontopmedList)
     print('ksTest on raw data = ' + str(ksTest))'''
+
+
 
 if __name__ == "__main__":
     main()
