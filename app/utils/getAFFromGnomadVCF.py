@@ -54,10 +54,11 @@ def main():
     f.close()
 
     logger.info('plotting allele freqs')
-    plotProbability(variantsDict, topmedKeys, nontopmedKeys, graphFileName)
+    plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName)
 
-def plotProbability(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
+def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
 
+    # plot 'Q-Q'
     lineNumbers = numpy.arange(0, 1, 0.01)
     topmedKeys.sort()
     nontopmedKeys.sort()
@@ -73,18 +74,38 @@ def plotProbability(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
             nontopmedSum += float(variantsDict[variant][key])
         nontopmedList.append(nontopmedSum)
 
+    n=len(topmedList)
+
     plt.xlim(0, 1)
     plt.ylim(0, 1)
     plt.scatter(nontopmedList, topmedList, marker='.', color='black')
     plt.scatter(lineNumbers, lineNumbers, marker='.', color='red')
     plt.ylabel('topmed AF', fontsize=18)
     plt.xlabel('nontopmed AF', fontsize=18)
-    plt.title(graphFileName + ' (n=' + str(len(topmedList)) + ')')
-
-    plt.savefig(graphFileName + '.png')
-    #plt.show()
+    plt.title(graphFileName + ' (n=' + str(n) + ')')
+    plt.savefig(graphFileName + '-qq.png')
     plt.close()
 
+    # plot CDF
+    topmedList.sort()
+    nontopmedList.sort()
+    topmedCDF = list()
+    nontopmedCDF = list()
+    for n in lineNumbers:
+        num = sum(map(lambda x: x < n, topmedList))
+        topmedCDF.append(float(num)/float(n))
+        num = sum(map(lambda x: x < n, nontopmedList))
+        topmedCDF.append(float(num) / float(n))
+
+    plt.xlim(0, 1)
+    plt.ylim(0, 1)
+    plt.scatter(lineNumbers, topmedCDF, marker='.', color='blue')
+    plt.scatter(lineNumbers, nontopmedCDF, market='.', color='green')
+    plt.ylabel('cumulative %')
+    plt.xlabel('AF')
+    plt.title(graphFileName + ' (n=' + str(n) + ')')
+    plt.savefig(graphFileName + '-cdf.png')
+    plt.close()
 
 if __name__ == "__main__":
     main()
