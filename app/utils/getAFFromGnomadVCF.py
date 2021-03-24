@@ -95,7 +95,7 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
         num = sum(map(lambda x: x < l, topmedList))
         topmedCDF.append(float(num)/float(n))
         num = sum(map(lambda x: x < l, nontopmedList))
-        topmedCDF.append(float(num) / float(n))
+        nontopmedCDF.append(float(num) / float(n))
 
     print('len topmed cdf = ' + str(len(topmedCDF)))
     print('len nontopmed cdf = ' + str(len(nontopmedCDF)))
