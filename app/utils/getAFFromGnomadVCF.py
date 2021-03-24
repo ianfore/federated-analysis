@@ -103,7 +103,7 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
     plt.scatter(lineNumbers, nontopmedCDF, marker='.', color='red')
     plt.ylabel('cumulative %')
     plt.xlabel('AF')
-    plt.title(graphFileName + ' CDF ' + (n=' + str(n) + ')')
+    plt.title(graphFileName + ' CDF ' + ' (n=' + str(n) + ')')
     plt.savefig(graphFileName + '-cdf.png')
     plt.close()
 
