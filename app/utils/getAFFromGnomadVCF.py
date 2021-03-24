@@ -23,16 +23,15 @@ def main():
 
     logger.info('finding variants from ' + vcfFileName)
     vcfDF = pd.read_csv(vcfFileName, delimiter='\t', header=0, dtype=str)
-
-    fields = vcfDF['INFO'][21].split(';')
-
     variantsDict = dict()
 
-    for field in fields:
-        if '=' in field:
-            key = field.split('=')[0]
-            value = field.split('=')[1]
-            variantsDict[key] = value
+    for i in vcfDF.iterrows():
+        fields = vcfDF.iloc[i]['INFO'][21].split(';')
+        for field in fields:
+            if '=' in field:
+                key = field.split('=')[0]
+                value = field.split('=')[1]
+                variantsDict.iloc[i][key] = value
 
     with open(outputFileName, 'w') as f:
         json.dump(variantsDict)
