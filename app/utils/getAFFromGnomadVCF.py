@@ -12,14 +12,17 @@ logger.setLevel(logging.DEBUG)
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-v', '--vcf', help='vcf input file')
-    parser.add_argument('-o', '--output', help='json output file')
+    parser.add_argument('-j', '--json', help='json output file')
+    parser.add_argument('-g', '--graph', help='graph output file')
     options = parser.parse_args()
     return options
 
 
 def main():
     vcfFileName = parse_args().vcf
-    outputFileName = parse_args().output
+    outputFileName = parse_args().json
+    graphFileName = parse_args().graph
+
 
     logger.info('finding variants from ' + vcfFileName)
     vcfDF = pd.read_csv(vcfFileName, delimiter='\t', header=0, dtype=str)
@@ -50,9 +53,9 @@ def main():
     f.close()
 
     logger.info('plotting allele freqs')
-    plotProbability(variantsDict, topmedKeys, nontopmedKeys)
+    plotProbability(variantsDict, topmedKeys, nontopmedKeys, graphFileName)
 
-def plotProbability(variantsDict, topmedKeys, nontopmedKeys):
+def plotProbability(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
 
     topmedKeys.sort()
     nontopmedKeys.sort()
@@ -70,12 +73,12 @@ def plotProbability(variantsDict, topmedKeys, nontopmedKeys):
 
     plt.xlim(0, 1)
     plt.ylim(0, 1)
-    plt.scatter(nontopmedList, topmedList, marker='.', color='red')
+    plt.scatter(nontopmedList, topmedList, marker='.', color='black')
     plt.ylabel('topmed AF', fontsize=18)
     plt.xlabel('nontopmed AF', fontsize=18)
-    plt.title('nontopmed vs topmed AF')
+    plt.title(graphFileName)
 
-    plt.savefig('qq.png')
+    plt.savefig(graphFileName + '.png')
     #plt.show()
     plt.close()
 
