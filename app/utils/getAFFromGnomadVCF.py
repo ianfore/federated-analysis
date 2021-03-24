@@ -30,7 +30,11 @@ def main():
     for i in range(len(vcfDF)):
         fields = vcfDF.iloc[i]['INFO'].split(';')
         chrom = vcfDF.iloc[i]['#CHROM']
-        variantsDict[chrom] = dict()
+        pos = vcfDF.iloc[i]['POS']
+        ref = vcfDF.iloc[i]['REF']
+        alt = vcfDF.iloc[i]['ALT']
+        mykey = "(" + chrom + ", " + pos + ", " + ref + ", " + alt + ")"
+        variantsDict[mykey] = dict()
         for field in fields:
             if '=' in field:
                 key = field.split('=')[0]
