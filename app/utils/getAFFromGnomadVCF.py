@@ -93,7 +93,7 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
         plt.ylabel('topmed AF', fontsize=18)
         plt.xlabel('nontopmed AF', fontsize=18)
         plt.title(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_QQ_' + ' n=' + str(n))
-        plt.savefig(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_QQ_' + ' n=' + str(n).png)
+        plt.savefig(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_QQ_' + ' n=' + str(n) + '.png')
         plt.close()
 
         # plot PDF
@@ -105,7 +105,7 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
         plt.xlabel('AF')
         plt.ylabel('count')
         plt.title(graphFileName + '_' + tmkey + '_vs_' + ntmkey + 'PDF' + ' n=' + str(n))
-        plt.savefig(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_PDF_' + ' n=' + str(n).png)
+        plt.savefig(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_PDF_' + ' n=' + str(n) + '.png')
         plt.close()
 
         # plot CDF
@@ -126,7 +126,7 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
         plt.ylabel('cumulative %')
         plt.xlabel('AF')
         plt.title(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_CDF_' + ' n=' + str(n))
-        plt.savefig(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_CDF_' + ' n=' + str(n).png)
+        plt.savefig(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_CDF_' + ' n=' + str(n) + '.png')
         plt.close()
 
         # run KS test
