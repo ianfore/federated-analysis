@@ -96,7 +96,7 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
         plt.close()
 
     # plot CDF
-    topmedList.sort()
+    '''topmedList.sort()
     nontopmedList.sort()
     topmedCDF = list()
     nontopmedCDF = list()
@@ -121,7 +121,7 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
     ksTest = ks_2samp(topmedCDF, nontopmedCDF)
     print('ksTest on CDF = ' + str(ksTest))
     ksTest = ks_2samp(topmedList, nontopmedList)
-    print('ksTest on raw data = ' + str(ksTest))
+    print('ksTest on raw data = ' + str(ksTest))'''
 
 if __name__ == "__main__":
     main()
