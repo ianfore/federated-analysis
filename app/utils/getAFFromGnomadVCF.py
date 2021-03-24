@@ -39,7 +39,7 @@ def main():
                 if key in keys:
                     value = field.split('=')[1]
                     print(str(value))
-                    variantsDict[chrom][str(i) + key] = str(value)
+                    variantsDict[str(chrom)][str(i) + str(key)] = str(value)
 
     with open(outputFileName, 'w') as f:
         json.dump(variantsDict, f)
