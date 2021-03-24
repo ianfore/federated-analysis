@@ -3,6 +3,7 @@ import logging
 import argparse
 import json
 import matplotlib.pyplot as plt
+import numpy
 
 logging.basicConfig()
 logger = logging.getLogger()
@@ -57,6 +58,7 @@ def main():
 
 def plotProbability(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
 
+    lineNumbers = numpy.arange(0, 1, 0.01)
     topmedKeys.sort()
     nontopmedKeys.sort()
     topmedList = list()
@@ -74,6 +76,7 @@ def plotProbability(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
     plt.xlim(0, 1)
     plt.ylim(0, 1)
     plt.scatter(nontopmedList, topmedList, marker='.', color='black')
+    plt.scatter(lineNumbers, lineNumbers, marker='.', color='red')
     plt.ylabel('topmed AF', fontsize=18)
     plt.xlabel('nontopmed AF', fontsize=18)
     plt.title(graphFileName + ' (n=' + str(len(topmedList)) + ')')
