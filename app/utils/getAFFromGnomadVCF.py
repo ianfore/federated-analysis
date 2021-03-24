@@ -122,35 +122,14 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
         plt.xlabel('AF')
         plt.ylabel('count')
         plt.title(graphFileName + '_' + tmkey + '_vs_' + ntmkey + 'PDF' + ' n=' + str(n))
+        plt.legend(loc="upper right")
         plt.savefig(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_PDF_' + '_n=' + str(n) + '.png')
         plt.close()
 
-        # plot CDF
-        logntmList.sort()
-        logtmList.sort()
-        topmedCDF = list()
-        nontopmedCDF = list()
-        for l in lineNumbers:
-            num = sum(map(lambda x: x < l, logtmList))
-            topmedCDF.append(float(num)/float(n))
-            num = sum(map(lambda x: x < l, logntmList))
-            nontopmedCDF.append(float(num) / float(n))
-
-        plt.xlim(lowerLimit, upperLimit)
-        plt.ylim(0, 1)
-        plt.scatter(lineNumbers, topmedCDF, marker='.', color='black')
-        plt.scatter(lineNumbers, nontopmedCDF, marker='.', color='red')
-        plt.ylabel('cumulative %')
-        plt.xlabel('AF')
-        plt.title(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_CDF_' + ' n=' + str(n))
-        plt.savefig(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_CDF_' + '_n=' + str(n) + '.png')
-        plt.close()
 
         # run KS test
-        ksTest = ks_2samp(topmedCDF, nontopmedCDF)
-        print('ksTest on CDF = ' + str(ksTest))
         ksTest = ks_2samp(topmedList, nontopmedList)
-        print('ksTest on raw data = ' + str(ksTest))
+        print('ksTest = ' + str(ksTest))
 
 
 
