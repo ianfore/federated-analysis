@@ -4,7 +4,7 @@ import argparse
 import json
 import matplotlib.pyplot as plt
 import numpy
-import scipy
+from scipy.stats import ks_2samp
 
 logging.basicConfig()
 logger = logging.getLogger()
@@ -110,7 +110,7 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
 
     # run KS test
 
-    ksTest = scipy.stats.ks_2samp(topmedCDF, nontopmedCDF)
+    ksTest = ks_2samp(topmedCDF, nontopmedCDF)
     print('ksTest = ' + str(ksTest))
 
 if __name__ == "__main__":
