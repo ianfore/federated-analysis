@@ -31,7 +31,7 @@ def main():
         fields = vcfDF.iloc[i]['INFO'].split(';')
         chrom = vcfDF.iloc[i]['#CHROM']
         print(chrom)
-        variantsDict[chrom] = dict
+        variantsDict[chrom] = dict()
         for field in fields:
             if '=' in field:
                 key = field.split('=')[0]
