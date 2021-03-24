@@ -5,6 +5,7 @@ import json
 import matplotlib.pyplot as plt
 import numpy
 from scipy.stats import ks_2samp
+import math
 
 logging.basicConfig()
 logger = logging.getLogger()
@@ -87,8 +88,9 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
         tmkey = topmedKeys[i]
         ntmkey = nontopmedKeys[i]
         ntmlist = nontopmedDict[ntmkey]
-        nontopmedList = [x for ]
-        topmedList = topmedDict[tmkey]
+        nontopmedList = [math.log(x) for x in ntmlist]
+        tmlist = topmedDict[tmkey]
+        topmedList = [math.log(x) for x in tmlist]
         plt.scatter(nontopmedList, topmedList, marker='.', color='black')
         plt.scatter(lineNumbers, lineNumbers, marker='.', color='red')
         plt.ylabel('topmed AF', fontsize=18)
