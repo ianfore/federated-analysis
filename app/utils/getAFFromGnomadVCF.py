@@ -61,31 +61,37 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
 
     # plot 'Q-Q'
     lineNumbers = numpy.arange(0, 1, 0.01)
+    topmedDict = dict()
+    nontopmedDict = dict()
+    for key in topmedKeys:
+        topmedDict[key] = list()
+    for key in nontopmedKeys:
+        nontopmedDict[key] = list()
+    for variant in variantsDict:
+        for key in topmedKeys:
+            topmedDict[key].append(variantsDict[variant][key])
+        for key in nontopmedKeys:
+            nontopmedDict.append([variant][key])
+
+    n=len(topmedDict[topmedKeys[0]])
+
     topmedKeys.sort()
     nontopmedKeys.sort()
-    topmedList = list()
-    nontopmedList = list()
-    for variant in variantsDict:
-        topmedSum = 0
-        nontopmedSum = 0
-        for key in topmedKeys:
-            topmedSum += float(variantsDict[variant][key])
-        topmedList.append(topmedSum)
-        for key in nontopmedKeys:
-            nontopmedSum += float(variantsDict[variant][key])
-        nontopmedList.append(nontopmedSum)
 
-    n=len(topmedList)
-
-    plt.xlim(0, 1)
-    plt.ylim(0, 1)
-    plt.scatter(nontopmedList, topmedList, marker='.', color='black')
-    plt.scatter(lineNumbers, lineNumbers, marker='.', color='red')
-    plt.ylabel('topmed AF', fontsize=18)
-    plt.xlabel('nontopmed AF', fontsize=18)
-    plt.title(graphFileName + ' QQ ' + ' (n=' + str(n) + ')')
-    plt.savefig(graphFileName + '-qq.png')
-    plt.close()
+    for i in range(len(topmedKeys)):
+        plt.xlim(0, 1)
+        plt.ylim(0, 1)
+        tmkey = topmedKeys[i]
+        ntmkey = nontopmedKeys[i]
+        nontopmedList = nontopmedDict[tmkey]
+        topmedList = topmedDict[ntmkey]
+        plt.scatter(nontopmedList, topmedList, marker='.', color='black')
+        plt.scatter(lineNumbers, lineNumbers, marker='.', color='red')
+        plt.ylabel('topmed AF', fontsize=18)
+        plt.xlabel('nontopmed AF', fontsize=18)
+        plt.title(graphFileName + ' ' + tmkey + ' vs ' + ntmkey + ' QQ ' + ' (n=' + str(n) + ')')
+        plt.savefig(graphFileName + tmkey + '_' + ntmkey + '-qq.png')
+        plt.close()
 
     # plot CDF
     topmedList.sort()
