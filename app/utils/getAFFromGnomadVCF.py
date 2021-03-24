@@ -31,6 +31,7 @@ def main():
         fields = vcfDF.iloc[i]['INFO'][21].split(';')
         for field in fields:
             if '=' in field:
+                print(field)
                 key = field.split('=')[0]
                 print(key)
                 if key in keys:
