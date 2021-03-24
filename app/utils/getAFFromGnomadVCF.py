@@ -29,6 +29,7 @@ def main():
             'AF-non_topmed-nfe', 'AF-nfe']
     for i in range(len(vcfDF)):
         fields = vcfDF.iloc[i]['INFO'].split(';')
+        print(chrom)
         chrom = vcfDF.iloc[i]['#CHROM']
         variantsDict[chrom] = dict
         for field in fields:
