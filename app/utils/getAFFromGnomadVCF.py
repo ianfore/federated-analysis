@@ -129,7 +129,7 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
 
         # run KS test
         ksTest = ks_2samp(topmedList, nontopmedList)
-        print('ksTest = ' + str(ksTest))
+        print('ksTest for ' + tmkey + ' vs ' + ntmkey + ' : ' + str(ksTest))
 
 
 
