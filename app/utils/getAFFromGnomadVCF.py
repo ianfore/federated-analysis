@@ -111,7 +111,9 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
     # run KS test
 
     ksTest = ks_2samp(topmedCDF, nontopmedCDF)
-    print('ksTest = ' + str(ksTest))
+    print('ksTest on CDF = ' + str(ksTest))
+    ksTest = ks_2samp(topmedList, nontopmedList)
+    print('ksTest on raw data = ' + str(ksTest))
 
 if __name__ == "__main__":
     main()
