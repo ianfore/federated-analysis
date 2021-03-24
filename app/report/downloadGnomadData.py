@@ -34,11 +34,13 @@ def transcript_to_variants(transcript_id, dataset, reference_genome):
                             ac
                             an
                             ac_hom
+                            af
                         }
                         genome {
                             ac
                             an
                             ac_hom
+                            af
                         }
             
           }                                                                     
@@ -80,11 +82,13 @@ def coords_to_variants(chrom, start, stop, dataset_id, reference_genome):
                             ac
                             an
                             ac_hom
+                            af
                         }
                         genome {
                             ac
                             an
                             ac_hom
+                            af
                         }
                     }
                 }
@@ -194,30 +198,30 @@ def writeToOutputFile(myDict, outputFile):
             f.write('\n')
     f.close()
 
-def writeTopmedNonTopmed(b1tm, b1ntm, b2tm, b2ntm):
+def writeTopmedNonTopmed(b1tm, b1ntm, b2tm, b2ntm, output):
     # write brca1-topmed
-    b1tmFile = 'brca1-topmed-variants.txt'
+    b1tmFile = output + '_brca1-topmed-variants.txt'
     f=open(b1tmFile, 'w')
     for v in b1tm:
         f.write(v + '\n')
     f.close()
 
     # write brca1-nontopmed
-    b1ntmFile = 'brca1-nontopmed-variants.txt'
+    b1ntmFile = output + '_brca1-nontopmed-variants.txt'
     f = open(b1ntmFile, 'w')
     for v in b1ntm:
         f.write(v + '\n')
     f.close()
 
     # write brca2-topmed
-    b2tmFile = 'brca2-topmed-variants.txt'
+    b2tmFile = output + '_brca2-topmed-variants.txt'
     f = open(b2tmFile, 'w')
     for v in b2tm:
         f.write(v + '\n')
     f.close()
 
     # write brca2-nontopmed
-    b2ntmFile = 'brca2-nontopmed-variants.txt'
+    b2ntmFile = output + '_brca2-nontopmed-variants.txt'
     f = open(b2ntmFile, 'w')
     for v in b2ntm:
         f.write(v + '\n')
@@ -270,7 +274,7 @@ def main():
 
     # write brca1-topmed, brca1-non-topmed, brca2-topmed, and brca2-non-topmed to files
     writeTopmedNonTopmed(brca1_variants_topmed, brca1_variants_non_topmed,
-                         brca2_variants_topmed, brca2_variants_non_topmed)
+                         brca2_variants_topmed, brca2_variants_non_topmed, parse_args().output)
 
 if __name__ == "__main__":
     main()
