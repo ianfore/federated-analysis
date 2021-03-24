@@ -102,8 +102,8 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
 
     plt.xlim(0, 1)
     plt.ylim(0, 1)
-    plt.scatter(lineNumbers, topmedCDF, marker='.', color='blue')
-    plt.scatter(lineNumbers, nontopmedCDF, marker='.', color='green')
+    plt.scatter(lineNumbers, topmedCDF, marker='.', color='black')
+    plt.scatter(lineNumbers, nontopmedCDF, marker='.', color='red')
     plt.ylabel('cumulative %')
     plt.xlabel('AF')
     plt.title(graphFileName + ' (n=' + str(n) + ')')
