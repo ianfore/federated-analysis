@@ -87,10 +87,7 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
         plt.ylim(0, 1)
         tmkey = topmedKeys[i]
         ntmkey = nontopmedKeys[i]
-        #ntmlist = nontopmedDict[ntmkey]
-        #nontopmedList = [math.log(x) for x in ntmlist]
-        #tmlist = topmedDict[tmkey]
-        #topmedList = [math.log(x) for x in tmlist]
+
         nontopmedList = nontopmedDict[ntmkey]
         topmedList = topmedDict[tmkey]
         plt.scatter(nontopmedList, topmedList, marker='.', color='black')
@@ -102,11 +99,14 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
         plt.close()
 
         # plot PDF
-        lowerLimit = 0
-        upperLimit = 1
+        logntmList = [math.log(x) for x in nontopmedList]
+        logtmList = [math.log(x) for x in topmedList]
+        lowerLimit = min(logntmList + logtmList)
+        upperLimit = max(logntmList + logtmList)
         plt.xlim(lowerLimit, upperLimit)
-        bins = numpy.arange(lowerLimit, upperLimit, 0.01)
-        plt.hist([nontopmedList, topmedList], label=['topmed', 'nontopmed'], density=True, range=(0, 1), bins=bins)
+        bins = numpy.arange(lowerLimit, upperLimit)
+        #plt.hist([logntmList, logtmList], label=['log-topmed', 'log-nontopmed'], range=(0,1), density=True, bins=bins)
+        plt.hist([logntmList, logtmList], label=['log-topmed', 'log-nontopmed'], density=True, bins=bins)
         plt.xlabel('AF')
         plt.ylabel('count')
         plt.title(graphFileName + '_' + tmkey + '_vs_' + ntmkey + 'PDF' + ' n=' + str(n))
@@ -114,17 +114,17 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
         plt.close()
 
         # plot CDF
-        topmedList.sort()
-        nontopmedList.sort()
+        logntmList.sort()
+        logtmList.sort()
         topmedCDF = list()
         nontopmedCDF = list()
         for l in lineNumbers:
-            num = sum(map(lambda x: x < l, topmedList))
+            num = sum(map(lambda x: x < l, logtmList))
             topmedCDF.append(float(num)/float(n))
-            num = sum(map(lambda x: x < l, nontopmedList))
+            num = sum(map(lambda x: x < l, logntmList))
             nontopmedCDF.append(float(num) / float(n))
 
-        plt.xlim(0, 1)
+        plt.xlim(lowerLimit, upperLimit)
         plt.ylim(0, 1)
         plt.scatter(lineNumbers, topmedCDF, marker='.', color='black')
         plt.scatter(lineNumbers, nontopmedCDF, marker='.', color='red')
