@@ -70,7 +70,7 @@ def plotProbability(variantsDict, topmedKeys, nontopmedKeys):
 
     plt.xlim(0, 1)
     plt.ylim(0, 1)
-    plt.plot(nontopmedList, topmedList, marker='.', color='red')
+    plt.scatter(nontopmedList, topmedList, marker='.', color='red')
     plt.ylabel('topmed AF', fontsize=18)
     plt.xlabel('nontopmed AF', fontsize=18)
     plt.title('nontopmed vs topmed AF')
