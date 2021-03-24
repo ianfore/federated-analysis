@@ -86,9 +86,7 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
         tmkey = topmedKeys[i]
         ntmkey = nontopmedKeys[i]
         nontopmedList = nontopmedDict[ntmkey]
-        print('nontopmed list for key ' + ntmkey + ' ' + str(nontopmedList))
         topmedList = topmedDict[tmkey]
-        print('topmed list for key ' + tmkey + ' ' + str(topmedList))
         plt.scatter(nontopmedList, topmedList, marker='.', color='black')
         plt.scatter(lineNumbers, lineNumbers, marker='.', color='red')
         plt.ylabel('topmed AF', fontsize=18)
