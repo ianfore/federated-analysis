@@ -81,6 +81,7 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
 
 
     for i in range(len(topmedKeys)):
+        # plot scatter
         plt.xlim(0, 1)
         plt.ylim(0, 1)
         tmkey = topmedKeys[i]
@@ -95,10 +96,11 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
         plt.savefig(graphFileName + tmkey + '_' + ntmkey + '-qq.png')
         plt.close()
 
+        # plot PDF
         lowerLimit = 0
         upperLimit = 1
         plt.xlim(lowerLimit, upperLimit)
-        bins = numpy.arange(lowerLimit, upperLimit, 0.1)
+        bins = numpy.arange(lowerLimit, upperLimit, 0.01)
         plt.hist([nontopmedList, topmedList], label=['topmed', 'nontopmed'], density=True, range=(0, 1), bins=bins)
         plt.xlabel('AF')
         plt.ylabel('count')
@@ -106,33 +108,32 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
         plt.savefig(graphFileName + '-pdf.png')
         plt.close()
 
-    # plot CDF
-    '''topmedList.sort()
-    nontopmedList.sort()
-    topmedCDF = list()
-    nontopmedCDF = list()
-    for l in lineNumbers:
-        num = sum(map(lambda x: x < l, topmedList))
-        topmedCDF.append(float(num)/float(n))
-        num = sum(map(lambda x: x < l, nontopmedList))
-        nontopmedCDF.append(float(num) / float(n))
+        # plot CDF
+        topmedList.sort()
+        nontopmedList.sort()
+        topmedCDF = list()
+        nontopmedCDF = list()
+        for l in lineNumbers:
+            num = sum(map(lambda x: x < l, topmedList))
+            topmedCDF.append(float(num)/float(n))
+            num = sum(map(lambda x: x < l, nontopmedList))
+            nontopmedCDF.append(float(num) / float(n))
 
-    plt.xlim(0, 1)
-    plt.ylim(0, 1)
-    plt.scatter(lineNumbers, topmedCDF, marker='.', color='black')
-    plt.scatter(lineNumbers, nontopmedCDF, marker='.', color='red')
-    plt.ylabel('cumulative %')
-    plt.xlabel('AF')
-    plt.title(graphFileName + ' CDF ' + ' (n=' + str(n) + ')')
-    plt.savefig(graphFileName + '-cdf.png')
-    plt.close()
+        plt.xlim(0, 1)
+        plt.ylim(0, 1)
+        plt.scatter(lineNumbers, topmedCDF, marker='.', color='black')
+        plt.scatter(lineNumbers, nontopmedCDF, marker='.', color='red')
+        plt.ylabel('cumulative %')
+        plt.xlabel('AF')
+        plt.title(graphFileName + ' CDF ' + ' (n=' + str(n) + ')')
+        plt.savefig(graphFileName + '-cdf.png')
+        plt.close()
 
-    # run KS test
-
-    ksTest = ks_2samp(topmedCDF, nontopmedCDF)
-    print('ksTest on CDF = ' + str(ksTest))
-    ksTest = ks_2samp(topmedList, nontopmedList)
-    print('ksTest on raw data = ' + str(ksTest))'''
+        # run KS test
+        ksTest = ks_2samp(topmedCDF, nontopmedCDF)
+        print('ksTest on CDF = ' + str(ksTest))
+        ksTest = ks_2samp(topmedList, nontopmedList)
+        print('ksTest on raw data = ' + str(ksTest))
 
 
 
