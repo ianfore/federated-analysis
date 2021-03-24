@@ -63,6 +63,10 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
     lineNumbers = numpy.arange(0, 1, 0.01)
     topmedDict = dict()
     nontopmedDict = dict()
+
+    topmedKeys.sort()
+    nontopmedKeys.sort()
+
     for key in topmedKeys:
         topmedDict[key] = list()
     for key in nontopmedKeys:
@@ -75,8 +79,6 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
 
     n=len(topmedDict[topmedKeys[0]])
 
-    topmedKeys.sort()
-    nontopmedKeys.sort()
 
     for i in range(len(topmedKeys)):
         plt.xlim(0, 1)
@@ -86,7 +88,7 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
         nontopmedList = nontopmedDict[ntmkey]
         topmedList = topmedDict[tmkey]
         plt.scatter(nontopmedList, topmedList, marker='.', color='black')
-        plt.scatter(lineNumbers, lineNumbers, marker='.', color='red')
+        #plt.scatter(lineNumbers, lineNumbers, marker='.', color='red')
         plt.ylabel('topmed AF', fontsize=18)
         plt.xlabel('nontopmed AF', fontsize=18)
         plt.title(graphFileName + ' ' + tmkey + ' vs ' + ntmkey + ' QQ ' + ' (n=' + str(n) + ')')
