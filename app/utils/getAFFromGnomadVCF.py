@@ -28,9 +28,7 @@ def main():
     keys = ['AF-non_topmed-afr', 'AF-afr', 'AF-non_topmed-amr', 'AF-amr',
             'AF-non_topmed-nfe', 'AF-nfe']
     for i in range(len(vcfDF)):
-        print(vcfDF.iloc[i]['INFO'])
-        fields = vcfDF.iloc[i]['INFO'][21].split(';')
-        print(fields)
+        fields = vcfDF.iloc[i]['INFO'].split(';')
         for field in fields:
             if '=' in field:
                 print(field)
