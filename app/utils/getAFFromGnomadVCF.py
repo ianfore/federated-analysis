@@ -92,8 +92,8 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
         plt.scatter(lineNumbers, lineNumbers, marker='.', color='red')
         plt.ylabel('topmed AF', fontsize=18)
         plt.xlabel('nontopmed AF', fontsize=18)
-        plt.title(graphFileName + ' ' + tmkey + ' vs ' + ntmkey + ' QQ ' + ' (n=' + str(n) + ')')
-        plt.savefig(graphFileName + tmkey + '_' + ntmkey + '-qq.png')
+        plt.title(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_QQ_' + ' n=' + str(n))
+        plt.savefig(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_QQ_' + ' n=' + str(n).png)
         plt.close()
 
         # plot PDF
@@ -104,8 +104,8 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
         plt.hist([nontopmedList, topmedList], label=['topmed', 'nontopmed'], density=True, range=(0, 1), bins=bins)
         plt.xlabel('AF')
         plt.ylabel('count')
-        plt.title(graphFileName + ' PDF ' + ' (n=' + str(n) + ')')
-        plt.savefig(graphFileName + '-pdf.png')
+        plt.title(graphFileName + '_' + tmkey + '_vs_' + ntmkey + 'PDF' + ' n=' + str(n))
+        plt.savefig(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_PDF_' + ' n=' + str(n).png)
         plt.close()
 
         # plot CDF
@@ -125,8 +125,8 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
         plt.scatter(lineNumbers, nontopmedCDF, marker='.', color='red')
         plt.ylabel('cumulative %')
         plt.xlabel('AF')
-        plt.title(graphFileName + ' CDF ' + ' (n=' + str(n) + ')')
-        plt.savefig(graphFileName + '-cdf.png')
+        plt.title(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_CDF_' + ' n=' + str(n))
+        plt.savefig(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_CDF_' + ' n=' + str(n).png)
         plt.close()
 
         # run KS test
