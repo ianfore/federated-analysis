@@ -99,7 +99,12 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
         plt.close()
 
         # plot PDF
-        logntmList = [math.log(x) for x in nontopmedList]
+        logntmList = list()
+        for i in range(len(nontopmedList)):
+            print(nontopmedList[i])
+            x = math.log(nontopmedList[i])
+            print(x)
+            logntmList.append(x)
         logtmList = [math.log(x) for x in topmedList]
         lowerLimit = min(logntmList + logtmList)
         upperLimit = max(logntmList + logtmList)
