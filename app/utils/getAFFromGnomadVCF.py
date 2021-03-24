@@ -82,7 +82,7 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
     plt.scatter(lineNumbers, lineNumbers, marker='.', color='red')
     plt.ylabel('topmed AF', fontsize=18)
     plt.xlabel('nontopmed AF', fontsize=18)
-    plt.title(graphFileName + ' (n=' + str(n) + ')')
+    plt.title(graphFileName + ' QQ ' + ' (n=' + str(n) + ')')
     plt.savefig(graphFileName + '-qq.png')
     plt.close()
 
@@ -97,16 +97,13 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
         num = sum(map(lambda x: x < l, nontopmedList))
         nontopmedCDF.append(float(num) / float(n))
 
-    print(topmedList)
-    print(topmedCDF)
-
     plt.xlim(0, 1)
     plt.ylim(0, 1)
     plt.scatter(lineNumbers, topmedCDF, marker='.', color='black')
     plt.scatter(lineNumbers, nontopmedCDF, marker='.', color='red')
     plt.ylabel('cumulative %')
     plt.xlabel('AF')
-    plt.title(graphFileName + ' (n=' + str(n) + ')')
+    plt.title(graphFileName + ' CDF ' + (n=' + str(n) + ')')
     plt.savefig(graphFileName + '-cdf.png')
     plt.close()
 
