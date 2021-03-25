@@ -105,14 +105,14 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
             if nontopmedList[i] == 0:
                 logntmList.append(0.0)
             else:
-                logntmList.append(math.log(nontopmedList[i]))
+                logntmList.append(math.log(nontopmedList[i], 10))
 
         logtmList = list()
         for i in range(len(topmedList)):
             if topmedList[i] == 0:
                 logtmList.append(0.0)
             else:
-                logtmList.append(math.log(topmedList[i]))
+                logtmList.append(math.log(topmedList[i], 10))
 
         lowerLimit = min(logntmList + logtmList)
         upperLimit = max(logntmList + logtmList)
