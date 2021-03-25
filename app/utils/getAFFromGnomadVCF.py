@@ -30,8 +30,9 @@ def main():
     logger.info('finding variants from ' + vcfFileName)
     vcfDF = pd.read_csv(vcfFileName, delimiter='\t', header=0, dtype=str)
     variantsDict = dict()
-    topmedKeys = ['AF-afr', 'AF-amr', 'AF-nfe']
-    nontopmedKeys = ['AF-non_topmed-afr', 'AF-non_topmed-amr', 'AF-non_topmed-nfe']
+    topmedKeys = ['AF-afr', 'AF-amr', 'AF-nfe', 'AF-eas', 'AF-sas', 'AF-oth']
+    nontopmedKeys = ['AF-non_topmed-afr', 'AF-non_topmed-amr', 'AF-non_topmed-nfe',
+                     'AF-non_topmed-eas', 'AF-non_topmed-sas', 'AF-non_topmed-oth']
     keys = topmedKeys + nontopmedKeys
 
     logger.info('getting allele freqs')
