@@ -116,8 +116,9 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
 
         lowerLimit = min(logntmList + logtmList)
         upperLimit = max(logntmList + logtmList)
+        binSize = (upperLimit - lowerLimit) / 10
         plt.xlim(lowerLimit, upperLimit)
-        bins = numpy.arange(lowerLimit, upperLimit)
+        bins = numpy.arange(lowerLimit, upperLimit, binSize)
         #plt.hist([logntmList, logtmList], label=['log-topmed', 'log-nontopmed'], range=(0,1), density=True, bins=bins)
         plt.hist([logntmList, logtmList], label=['log-topmed', 'log-nontopmed'], density=True, bins=bins)
         plt.xlabel('AF')
