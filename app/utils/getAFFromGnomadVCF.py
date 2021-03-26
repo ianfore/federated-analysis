@@ -62,7 +62,8 @@ def main():
 def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
 
     # plot 'Q-Q'
-    lineNumbers = numpy.arange(0, 1, 0.01)
+    #lineNumbers = numpy.arange(0, 1, 0.01)
+
     topmedDict = dict()
     nontopmedDict = dict()
 
@@ -84,22 +85,13 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
 
     for i in range(len(topmedKeys)):
         # plot scatter
-        plt.xlim(0, 1)
-        plt.ylim(0, 1)
+        #plt.xlim(0, 1)
+        #plt.ylim(0, 1)
         tmkey = topmedKeys[i]
         ntmkey = nontopmedKeys[i]
 
         nontopmedList = nontopmedDict[ntmkey]
         topmedList = topmedDict[tmkey]
-        plt.scatter(nontopmedList, topmedList, marker='.', color='black')
-        plt.scatter(lineNumbers, lineNumbers, marker='.', color='red')
-        plt.ylabel('topmed AF', fontsize=18)
-        plt.xlabel('nontopmed AF', fontsize=18)
-        plt.title(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_QQ_' + ' n=' + str(n))
-        plt.savefig(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_QQ_' + '_n=' + str(n) + '.png')
-        plt.close()
-
-        # plot PDF
         logntmList = list()
         for i in range(len(nontopmedList)):
             if nontopmedList[i] == 0:
@@ -113,6 +105,20 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
                 logtmList.append(0.0)
             else:
                 logtmList.append(math.log(topmedList[i], 10))
+
+        lowerBound = min([min(logntmList), min(logtmList)])
+        upperBound = max([max(logntmList), max(logtmList)])
+        lineNumbers = numpy.arange(lowerBound, upperBound, 0.1)
+        plt.scatter(logntmList, logtmList, marker='.', color='black')
+        plt.scatter(lineNumbers, lineNumbers, marker='.', color='red')
+        plt.ylabel('topmed AF', fontsize=18)
+        plt.xlabel('nontopmed AF', fontsize=18)
+        plt.title(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_QQ_' + ' n=' + str(n))
+        plt.savefig(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_QQ_' + '_n=' + str(n) + '.png')
+        plt.close()
+
+        # plot PDF
+
 
         lowerLimit = min(logntmList + logtmList)
         upperLimit = max(logntmList + logtmList)
