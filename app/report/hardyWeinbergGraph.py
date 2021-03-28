@@ -104,7 +104,7 @@ def main():
             haList = divideList(homoAltList, totalList)
             hList = divideList(heteroList, totalList)
         else:
-            print('brca1-report.tsv brca2-report.tsv output-dir all|homo brca1|brca2|both')
+            print('brca1-report.tsv brca2-report.tsv output-dir all|vus brca1|brca2|both')
             sys.exit(1)
     elif subset == 'all':
         homoAltList_1 = list(df_1['homo_alt'])

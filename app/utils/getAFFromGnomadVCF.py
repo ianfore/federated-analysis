@@ -60,10 +60,7 @@ def main():
     plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName)
 
 def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
-
-    # plot 'Q-Q'
-    #lineNumbers = numpy.arange(0, 1, 0.01)
-
+    # create dict for topmed and non-topmed
     topmedDict = dict()
     nontopmedDict = dict()
 
@@ -85,8 +82,7 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
 
     for i in range(len(topmedKeys)):
         # plot scatter
-        #plt.xlim(0, 1)
-        #plt.ylim(0, 1)
+
         tmkey = topmedKeys[i]
         ntmkey = nontopmedKeys[i]
 
@@ -113,19 +109,16 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
         plt.scatter(lineNumbers, lineNumbers, marker='.', color='red')
         plt.ylabel('log10(topmed AF)', fontsize=18)
         plt.xlabel('log10(nontopmed AF)', fontsize=18)
-        plt.title(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_QQ_' + ' n=' + str(n))
-        plt.savefig(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_QQ_' + '_n=' + str(n) + '.png')
+        plt.title(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_scatter_' + ' n=' + str(n))
+        plt.savefig(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_scatter_' + '_n=' + str(n) + '.png')
         plt.close()
 
         # plot PDF
-
-
         lowerLimit = min(logntmList + logtmList)
         upperLimit = max(logntmList + logtmList)
         binSize = (upperLimit - lowerLimit) / 10
         plt.xlim(lowerLimit, upperLimit)
         bins = numpy.arange(lowerLimit, upperLimit, binSize)
-        #plt.hist([logntmList, logtmList], label=['log-topmed', 'log-nontopmed'], range=(0,1), density=True, bins=bins)
         plt.hist([logntmList, logtmList], label=['log10(topmed AF)', 'log10(nontopmed AF)'], density=True, bins=bins)
         plt.xlabel('log10(AF)')
         plt.ylabel('count')
