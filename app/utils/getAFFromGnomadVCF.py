@@ -63,17 +63,20 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
     # create dict for topmed and non-topmed
     topmedDict = dict()
     nontopmedDict = dict()
+    justTopmedDict = dict()
 
     topmedKeys.sort()
     nontopmedKeys.sort()
 
     for key in topmedKeys:
         topmedDict[key] = list()
+        justTopmedDict[key] = list()
     for key in nontopmedKeys:
         nontopmedDict[key] = list()
     for variant in variantsDict:
         for key in topmedKeys:
             topmedDict[key].append(variantsDict[variant][key])
+            justTopmedDict[key].append(variantsDict[variant][key])
         for key in nontopmedKeys:
             nontopmedDict[key].append(variantsDict[variant][key])
 
@@ -88,6 +91,7 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
 
         nontopmedList = nontopmedDict[ntmkey]
         topmedList = topmedDict[tmkey]
+        justTopmedList = justTopmedDict[tmkey]
         logntmList = list()
         for i in range(len(nontopmedList)):
             if nontopmedList[i] == 0:
@@ -96,21 +100,37 @@ def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
                 logntmList.append(math.log(nontopmedList[i], 10))
 
         logtmList = list()
+        logjusttmList = list()
         for i in range(len(topmedList)):
             if topmedList[i] == 0:
                 logtmList.append(0.0)
+                logjusttmList.append(0.0)
             else:
                 logtmList.append(math.log(topmedList[i], 10))
+                logjusttmList.append(math.log(topmedList[i], 10))
 
         lowerBound = min([min(logntmList), min(logtmList)])
         upperBound = max([max(logntmList), max(logtmList)])
+        lowerBoundJTM = min([min(logntmList), min(logjusttmList)])
+        upperBoundJTM = max([max(logntmList), max(logjusttmList)])
         lineNumbers = numpy.arange(lowerBound, upperBound, 0.1)
+
+        # plot all
         plt.scatter(logntmList, logtmList, marker='.', color='black')
         plt.scatter(lineNumbers, lineNumbers, marker='.', color='red')
         plt.ylabel('log10(topmed AF)', fontsize=18)
         plt.xlabel('log10(nontopmed AF)', fontsize=18)
         plt.title(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_scatter_' + ' n=' + str(n))
         plt.savefig(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_scatter_' + '_n=' + str(n) + '.png')
+        plt.close()
+
+        # plot just topmed
+        plt.scatter(logntmList, logjusttmList, marker='.', color='black')
+        plt.scatter(lineNumbers, lineNumbers, marker='.', color='red')
+        plt.ylabel('log10(justtopmed AF)', fontsize=18)
+        plt.xlabel('log10(nontopmed AF)', fontsize=18)
+        plt.title(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_scatter_justtm_' + ' n=' + str(n))
+        plt.savefig(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_scatter_justtm_' + '_n=' + str(n) + '.png')
         plt.close()
 
         # plot PDF
