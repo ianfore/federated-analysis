@@ -30,6 +30,7 @@ def main():
     logger.info('finding variants from ' + vcfFileName)
     vcfDF = pd.read_csv(vcfFileName, delimiter='\t', header=0, dtype=str)
     variantsDict = dict()
+    # pull AF, AC, and AN and figure out how to deal with this!
     topmedKeys = ['AF-afr', 'AF-amr', 'AF-nfe', 'AF-fin', 'AF-eas', 'AF-sas']
     nontopmedKeys = ['AF-non_topmed-afr', 'AF-non_topmed-amr', 'AF-non_topmed-nfe',
                      'AF-non_topmed-fin', 'AF-non_topmed-eas', 'AF-non_topmed-sas']
