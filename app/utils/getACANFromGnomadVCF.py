@@ -84,6 +84,7 @@ def getTopmedAlleleFreqs(vcfDF, allVariants):
             ntmACKey = 'AC-non_topmed-' + e
             ntmANKey = 'AN-non_topmed-' + e
             ntmAC = allVariants[v][ntmACKey]
+            # odd hack that sometimes AN and/or AC not in VCF for certain variants
             if not ntmANKey in allVariants[v]:
                 allVariants[v][afKey] = 0.0
             else:
@@ -142,6 +143,7 @@ def createDicts(variantsDict, topmedKeys, nontopmedKeys):
     variantsNotInTopmedList = list()
     for variant in variantsDict:
         for key in topmedKeys:
+            # odd hack that sometimes a variant doesn't have AC and AN for all ethnicities
             if key in variantsDict[variant]:
                 topmedDict[key].append(variantsDict[variant][key])
             else:
@@ -196,7 +198,7 @@ def plotDists(topmedDict, nontopmedDict, topmedKeys, nontopmedKeys, graphFileNam
         binSize = (upperLimit - lowerLimit) / 10
         plt.xlim(lowerLimit, upperLimit)
         bins = numpy.arange(lowerLimit, upperLimit, binSize)
-        plt.hist([logntmList, logtmList], label=['log10(topmed AF)', 'log10(nontopmed AF)'], density=True, bins=bins)
+        plt.hist([logntmList, logtmList], label=['log10(topmed AF)', 'log10(nontopmed AF)'], bins=bins)
         plt.xlabel('log10(AF)')
         plt.ylabel('count')
         plt.title(graphFileName + '_' + tmkey + '_vs_' + ntmkey + 'PDF' + ' n=' + str(n))
