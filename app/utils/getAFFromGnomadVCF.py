@@ -28,13 +28,24 @@ def main():
 
 
     logger.info('finding variants from ' + vcfFileName)
-    vcfDF = pd.read_csv(vcfFileName, delimiter='\t', header=0, dtype=str)
-    variantsDict = dict()
-    # pull AF, AC, and AN and figure out how to deal with this!
     topmedKeys = ['AF-afr', 'AF-amr', 'AF-nfe', 'AF-fin', 'AF-eas', 'AF-sas']
     nontopmedKeys = ['AF-non_topmed-afr', 'AF-non_topmed-amr', 'AF-non_topmed-nfe',
                      'AF-non_topmed-fin', 'AF-non_topmed-eas', 'AF-non_topmed-sas']
     keys = topmedKeys + nontopmedKeys
+    variantsDict = getAlleleFreqs(vcfFileName, keys)
+
+    logger.info('saving allele freqs')
+    with open(outputFileName, 'w') as f:
+        json.dump(variantsDict, f)
+    f.close()
+
+    logger.info('plotting allele freqs')
+    plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName)
+
+def getAlleleFreqs(vcfFileName, keys):
+    vcfDF = pd.read_csv(vcfFileName, delimiter='\t', header=0, dtype=str)
+    variantsDict = dict()
+    # pull AF, AC, and AN and figure out how to deal with this!
 
     logger.info('getting allele freqs')
     for i in range(len(vcfDF)):
@@ -52,13 +63,7 @@ def main():
                     value = float(field.split('=')[1])
                     variantsDict[mykey][key] = value
 
-    logger.info('saving allele freqs')
-    with open(outputFileName, 'w') as f:
-        json.dump(variantsDict, f)
-    f.close()
-
-    logger.info('plotting allele freqs')
-    plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName)
+    return variantsDict
 
 def plotDists(variantsDict, topmedKeys, nontopmedKeys, graphFileName):
     # create dict for topmed and non-topmed
