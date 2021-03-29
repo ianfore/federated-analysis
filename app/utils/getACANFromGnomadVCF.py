@@ -184,6 +184,9 @@ def plotDists(topmedDict, nontopmedDict, topmedKeys, nontopmedKeys, graphFileNam
         lineNumbers = numpy.arange(lowerBound, upperBound, 0.1)
 
         # plot all
+        print('log ntm list = ' + str(len(logntmList)))
+        print('log tm list = ' + str(len(logtmList)))
+        print('line numbers list = ' + str(len(lineNumbers)))
         plt.scatter(logntmList, logtmList, marker='.', color='black')
         plt.scatter(lineNumbers, lineNumbers, marker='.', color='red')
         plt.ylabel('log10(topmed AF)', fontsize=18)
