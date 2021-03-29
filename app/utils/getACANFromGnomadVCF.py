@@ -139,11 +139,16 @@ def createDicts(variantsDict, topmedKeys, nontopmedKeys):
         topmedDict[key] = list()
     for key in nontopmedKeys:
         nontopmedDict[key] = list()
+    variantsNotInTopmedList = list()
     for variant in variantsDict:
         for key in topmedKeys:
-            topmedDict[key].append(variantsDict[variant][key])
+            if key in variantsDict[variant]:
+                topmedDict[key].append(variantsDict[variant][key])
+            else:
+                variantsNotInTopmedList.append(variant)
         for key in nontopmedKeys:
-            nontopmedDict[key].append(variantsDict[variant][key])
+            if not variant in variantsNotInTopmedList:
+                nontopmedDict[key].append(variantsDict[variant][key])
     return topmedDict, nontopmedDict
 
 def plotDists(topmedDict, nontopmedDict, topmedKeys, nontopmedKeys, graphFileName):
