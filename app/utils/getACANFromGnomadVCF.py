@@ -34,9 +34,16 @@ def main():
 
     nonTopmedVariants = getNontopmedAlleleFreqs(vcfDF, nontopmedKeys)
 
-    logger.info('saving allele freqs')
+    topmedVariants = getTopmedAlleleFreqs(vcfDF)
+
+    logger.info('saving ntm allele freqs')
     with open(outputFileName, 'w') as f:
         json.dump(nonTopmedVariants, f)
+    f.close()
+
+    logger.info('saving tm allele freqs')
+    with open(outputFileName + 'justtm', 'w') as f:
+        json.dump(topmedVariants, f)
     f.close()
 
     '''logger.info('plotting allele freqs')
@@ -72,7 +79,7 @@ def getTopmedAlleleFreqs(vcfDF):
             ntmANKey = 'AN-non_topmed-' + e
             ntmAC = justTopmedVariantsDict[v][ntmACKey]
             ntmAN = justTopmedVariantsDict[v][ntmANKey]
-            
+
             # get topmed ac and an
             tmACKey = 'AC-' + e
             tmANKey = 'AN-' + e
