@@ -41,7 +41,7 @@ def main():
 
     logger.info('plotting allele freqs')
     topmedDict, nontopmedDict = createDicts(variantsDict, topmedKeys, nontopmedKeys)
-    plotDists(topmedDict, nontopmeDict, topmedKeys, nontopmedKeys, graphFileName)
+    plotDists(topmedDict, nontopmedDict, topmedKeys, nontopmedKeys, graphFileName)
 
 def getAlleleFreqs(vcfFileName, keys):
     vcfDF = pd.read_csv(vcfFileName, delimiter='\t', header=0, dtype=str)
