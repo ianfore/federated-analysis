@@ -32,25 +32,23 @@ def main():
     nontopmedKeys = ['AF-non_topmed-afr', 'AF-non_topmed-amr', 'AF-non_topmed-nfe',
                      'AF-non_topmed-fin', 'AF-non_topmed-eas', 'AF-non_topmed-sas']
 
-    nonTopmedVariants = getNontopmedAlleleFreqs(vcfDF, nontopmedKeys)
+    topmedKeys = ['AF-just_topmed-afr', 'AF-just_topmed-amr', 'AF-just_topmed-nfe',
+                     'AF-just_topmed-fin', 'AF-just_topmed-eas', 'AF-just_topmed-sas']
 
-    topmedVariants = getTopmedAlleleFreqs(vcfDF)
+    allVariants = getNontopmedAlleleFreqs(vcfDF, nontopmedKeys)
+
+    getTopmedAlleleFreqs(vcfDF, allVariants)
 
     logger.info('saving ntm allele freqs')
     with open(outputFileName, 'w') as f:
-        json.dump(nonTopmedVariants, f)
+        json.dump(allVariants, f)
     f.close()
 
-    logger.info('saving tm allele freqs')
-    with open(outputFileName + 'justtm', 'w') as f:
-        json.dump(topmedVariants, f)
-    f.close()
+    logger.info('plotting allele freqs')
+    topmedDict, nontopmedDict = createDicts(allVariants, topmedKeys, nontopmedKeys)
+    plotDists(topmedDict, nontopmedDict, topmedKeys, nontopmedKeys, graphFileName)
 
-    '''logger.info('plotting allele freqs')
-    topmedDict, nontopmedDict = createDicts(nontopmedVariants, topmedKeys, nontopmedKeys)
-    plotDists(topmedDict, nontopmedDict, topmedKeys, nontopmedKeys, graphFileName)'''
-
-def getTopmedAlleleFreqs(vcfDF):
+def getTopmedAlleleFreqs(vcfDF, allVariants):
     ethnicitiesList = ['afr', 'amr', 'eas', 'fin', 'nfe', 'sas']
     # AC-non_topmed-afr, AN-non_topmed-afr, AC-afr, AN-afr
     keys = list()
@@ -64,10 +62,6 @@ def getTopmedAlleleFreqs(vcfDF):
         tmANKey = 'AN-' + e
         keys.append(tmANKey)
 
-    print(keys)
-
-    # AF-non_topmed-afr AF-afr
-    justTopmedVariantsDict = dict()
 
     # get AC and AN for each ethnicity, then calculate AF
     for i in range(len(vcfDF)):
@@ -76,38 +70,39 @@ def getTopmedAlleleFreqs(vcfDF):
         pos = vcfDF.iloc[i]['POS']
         ref = vcfDF.iloc[i]['REF']
         alt = vcfDF.iloc[i]['ALT']
-        mykey = "(" + chrom + ", " + pos + ", '" + ref + "', '" + alt + "')"
-        justTopmedVariantsDict[mykey] = dict()
+        v = "(" + chrom + ", " + pos + ", '" + ref + "', '" + alt + "')"
         for field in fields:
             if '=' in field:
                 key = field.split('=')[0]
                 if key in keys:
-                    print(key)
                     value = float(field.split('=')[1])
-                    justTopmedVariantsDict[mykey][key] = value
+                    allVariants[v][key] = value
 
-    for v in justTopmedVariantsDict:
+    for v in allVariants:
         for e in ethnicitiesList:
             # get non-topmed ac and an
             ntmACKey = 'AC-non_topmed-' + e
             ntmANKey = 'AN-non_topmed-' + e
-            ntmAC = justTopmedVariantsDict[v][ntmACKey]
-            ntmAN = justTopmedVariantsDict[v][ntmANKey]
+            ntmAC = allVariants[v][ntmACKey]
+            if not ntmANKey in allVariants[v]:
+                allVariants[v][afKey] = 0.0
+            else:
+                ntmAN = allVariants[v][ntmANKey]
 
-            # get topmed ac and an
-            tmACKey = 'AC-' + e
-            tmANKey = 'AN-' + e
-            tmAC = justTopmedVariantsDict[v][tmACKey]
-            tmAN = justTopmedVariantsDict[v][tmANKey]
+                # get topmed ac and an
+                tmACKey = 'AC-' + e
+                tmANKey = 'AN-' + e
+                tmAC = allVariants[v][tmACKey]
+                tmAN = allVariants[v][tmANKey]
 
-            # subtract
-            ac = tmAC - ntmAC
-            an = tmAN - ntmAN
-            af = 0.0
-            if an != 0:
-                af = float(ac) / float(an)
-            afKey = 'AF-just_topmed-' + e
-            justTopmedVariantsDict[v][afKey] = af
+                # subtract
+                ac = tmAC - ntmAC
+                an = tmAN - ntmAN
+                af = 0.0
+                if an != 0:
+                    af = float(ac) / float(an)
+                afKey = 'AF-just_topmed-' + e
+                allVariants[v][afKey] = af
 
 
 def getNontopmedAlleleFreqs(vcfDF, keys):
