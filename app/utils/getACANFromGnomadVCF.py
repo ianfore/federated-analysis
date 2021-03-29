@@ -53,6 +53,16 @@ def main():
 def getTopmedAlleleFreqs(vcfDF):
     ethnicitiesList = ['afr', 'amr', 'eas', 'fin', 'nfe', 'sas']
     # AC-non_topmed-afr, AN-non_topmed-afr, AC-afr, AN-afr
+    keys = list()
+    for e in ethnicitiesList:
+        ntmACKey = 'AC-non_topmed-' + e
+        keys.append(ntmACKey)
+        ntmANKey = 'AN-non_topmed-' + e
+        keys.append(ntmANKey)
+        tmACKey = 'AC-' + e
+        keys.append(tmACKey)
+        tmANKey = 'AN-' + e
+        keys.append(tmANKey)
 
     # AF-non_topmed-afr AF-afr
     justTopmedVariantsDict = dict()
@@ -69,8 +79,9 @@ def getTopmedAlleleFreqs(vcfDF):
         for field in fields:
             if '=' in field:
                 key = field.split('=')[0]
-                value = float(field.split('=')[1])
-                justTopmedVariantsDict[mykey][key] = value
+                if key in keys:
+                    value = float(field.split('=')[1])
+                    justTopmedVariantsDict[mykey][key] = value
 
     for v in justTopmedVariantsDict:
         for e in ethnicitiesList:
