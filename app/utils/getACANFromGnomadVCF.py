@@ -64,6 +64,8 @@ def getTopmedAlleleFreqs(vcfDF):
         tmANKey = 'AN-' + e
         keys.append(tmANKey)
 
+    print(keys)
+
     # AF-non_topmed-afr AF-afr
     justTopmedVariantsDict = dict()
 
@@ -80,6 +82,7 @@ def getTopmedAlleleFreqs(vcfDF):
             if '=' in field:
                 key = field.split('=')[0]
                 if key in keys:
+                    print(key)
                     value = float(field.split('=')[1])
                     justTopmedVariantsDict[mykey][key] = value
 
