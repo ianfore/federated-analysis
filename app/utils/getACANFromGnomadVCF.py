@@ -155,64 +155,69 @@ def createDicts(variantsDict, topmedKeys, nontopmedKeys):
                 nontopmedDict[key].append(variantsDict[variant][key])
     return topmedDict, nontopmedDict
 
+def plotScatter(logntmList, logtmList, lineNumbers, graphFileName, tmkey, ntmkey):
+    plt.scatter(logntmList, logtmList, marker='.', color='black')
+    plt.scatter(lineNumbers, lineNumbers, marker='.', color='red')
+    plt.ylabel('log10(topmed AF)', fontsize=18)
+    plt.xlabel('log10(nontopmed AF)', fontsize=18)
+    plt.title(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_scatter_' + ' n=' + str(n))
+    plt.savefig(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_scatter_' + '_n=' + str(n) + '.png')
+    plt.close()
+
+def plotHist(logntmList, logtmList, graphFileName, tmkey, ntmkey):
+    lowerLimit = min(logntmList + logtmList)
+    upperLimit = max(logntmList + logtmList)
+    binSize = (upperLimit - lowerLimit) / 10
+    plt.xlim(lowerLimit, upperLimit)
+    bins = numpy.arange(lowerLimit, upperLimit, binSize)
+    plt.hist([logntmList, logtmList], label=['log10(topmed AF)', 'log10(nontopmed AF)'], bins=bins)
+    plt.xlabel('log10(AF)')
+    plt.ylabel('count')
+    plt.title(graphFileName + '_' + tmkey + '_vs_' + ntmkey + 'PDF' + ' n=' + str(n))
+    plt.legend(loc="upper right")
+    plt.savefig(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_PDF_' + '_n=' + str(n) + '.png')
+    plt.close()
+
+def generateListsForPlot(nontopmedDict, topmedDict, ntmkey, tmkey):
+    nontopmedList = nontopmedDict[ntmkey]
+    topmedList = topmedDict[tmkey]
+    logntmList = list()
+    for j in range(len(nontopmedList)):
+        if nontopmedList[j] == 0:
+            logntmList.append(0.0)
+        else:
+            logntmList.append(math.log(nontopmedList[j], 10))
+
+    logtmList = list()
+    for k in range(len(topmedList)):
+        if topmedList[k] == 0:
+            logtmList.append(0.0)
+        else:
+            logtmList.append(math.log(topmedList[k], 10))
+
+    return logntmList, logtmList
+
 def plotDists(topmedDict, nontopmedDict, topmedKeys, nontopmedKeys, graphFileName):
 
-    n=len(topmedDict[topmedKeys[0]])
 
     for i in range(len(topmedKeys)):
-        # plot scatter
         tmkey = topmedKeys[i]
         ntmkey = nontopmedKeys[i]
 
-        nontopmedList = nontopmedDict[ntmkey]
-        topmedList = topmedDict[tmkey]
-        logntmList = list()
-        for j in range(len(nontopmedList)):
-            if nontopmedList[j] == 0:
-                logntmList.append(0.0)
-            else:
-                logntmList.append(math.log(nontopmedList[j], 10))
-
-        logtmList = list()
-        for k in range(len(topmedList)):
-            if topmedList[k] == 0:
-                logtmList.append(0.0)
-            else:
-                logtmList.append(math.log(topmedList[k], 10))
+        logntmList, logtmList = generateListsForPlot(nontopmedDict, topmedDict, ntmkey, tmkey)
 
         lowerBound = min([min(logntmList), min(logtmList)])
         upperBound = max([max(logntmList), max(logtmList)])
         lineNumbers = numpy.arange(lowerBound, upperBound, 0.1)
 
-        # plot all
-        print('log ntm list = ' + str(len(logntmList)))
-        print('log tm list = ' + str(len(logtmList)))
-        print('line numbers list = ' + str(len(lineNumbers)))
-        plt.scatter(logntmList, logtmList, marker='.', color='black')
-        plt.scatter(lineNumbers, lineNumbers, marker='.', color='red')
-        plt.ylabel('log10(topmed AF)', fontsize=18)
-        plt.xlabel('log10(nontopmed AF)', fontsize=18)
-        plt.title(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_scatter_' + ' n=' + str(n))
-        plt.savefig(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_scatter_' + '_n=' + str(n) + '.png')
-        plt.close()
+        # plot scatter
+        plotScatter(logntmList, logtmList, lineNumbers, graphFileName, tmkey, ntmkey)
 
         # plot PDF
-        lowerLimit = min(logntmList + logtmList)
-        upperLimit = max(logntmList + logtmList)
-        binSize = (upperLimit - lowerLimit) / 10
-        plt.xlim(lowerLimit, upperLimit)
-        bins = numpy.arange(lowerLimit, upperLimit, binSize)
-        plt.hist([logntmList, logtmList], label=['log10(topmed AF)', 'log10(nontopmed AF)'], bins=bins)
-        plt.xlabel('log10(AF)')
-        plt.ylabel('count')
-        plt.title(graphFileName + '_' + tmkey + '_vs_' + ntmkey + 'PDF' + ' n=' + str(n))
-        plt.legend(loc="upper right")
-        plt.savefig(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_PDF_' + '_n=' + str(n) + '.png')
-        plt.close()
-
+        plotHist(logntmList, logtmList, graphFileName, tmkey, ntmkey)
 
         # run KS test
-        ksTest = ks_2samp(topmedList, nontopmedList)
+        ksTest = ks_2samp(topmedDict[tmkey], nontopmedDict[ntmkey])
         print('ksTest for ' + tmkey + ' vs ' + ntmkey + ' : ' + str(ksTest))
 
 
