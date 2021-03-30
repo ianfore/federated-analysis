@@ -6,10 +6,11 @@ import matplotlib.pyplot as plt
 import numpy
 from scipy.stats import ks_2samp
 import math
+from statsmodels.graphics.gofplots import qqplot_2samples
 
 logging.basicConfig()
 logger = logging.getLogger()
-logger.setLevel(logging.WARNING)
+logger.setLevel(logging.INFO)
 
 
 def parse_args():
@@ -35,8 +36,10 @@ def main():
     topmedKeys = ['AF-just_topmed-afr', 'AF-just_topmed-amr', 'AF-just_topmed-nfe',
                      'AF-just_topmed-fin', 'AF-just_topmed-eas', 'AF-just_topmed-sas']
 
+    logger.info('getting nontopmed allele freqs')
     allVariants = getNontopmedAlleleFreqs(vcfDF, nontopmedKeys)
 
+    logger.info('getting topmed allele freqs')
     getTopmedAlleleFreqs(vcfDF, allVariants)
 
     logger.info('saving ntm allele freqs')
@@ -46,6 +49,8 @@ def main():
 
     logger.info('plotting allele freqs')
     topmedDict, nontopmedDict = createDicts(allVariants, topmedKeys, nontopmedKeys)
+
+
     plotDists(topmedDict, nontopmedDict, topmedKeys, nontopmedKeys, graphFileName)
 
 def getTopmedAlleleFreqs(vcfDF, allVariants):
@@ -107,10 +112,8 @@ def getTopmedAlleleFreqs(vcfDF, allVariants):
 
 
 def getNontopmedAlleleFreqs(vcfDF, keys):
-    variantsDict = dict()
-    # pull AF, AC, and AN and figure out how to deal with this!
 
-    logger.info('getting allele freqs')
+    variantsDict = dict()
     for i in range(len(vcfDF)):
         fields = vcfDF.iloc[i]['INFO'].split(';')
         chrom = vcfDF.iloc[i]['#CHROM'].split('chr')[1]
@@ -168,7 +171,7 @@ def plotHist(logntmList, logtmList, graphFileName, tmkey, ntmkey):
     n=len(logntmList)
     lowerLimit = min(logntmList + logtmList)
     upperLimit = max(logntmList + logtmList)
-    binSize = (upperLimit - lowerLimit) / 10
+    binSize = (upperLimit - lowerLimit) / 20
     plt.xlim(lowerLimit, upperLimit)
     bins = numpy.arange(lowerLimit, upperLimit, binSize)
     plt.hist([logntmList, logtmList], label=['log10(just_topmed AF)', 'log10(non_topmed AF)'], bins=bins)
@@ -217,8 +220,17 @@ def plotDists(topmedDict, nontopmedDict, topmedKeys, nontopmedKeys, graphFileNam
         # plot PDF
         plotHist(logntmList, logtmList, graphFileName, tmkey, ntmkey)
 
+        # plot QQ-plot
+        qqplot_2samples(numpy.array(logntmList), numpy.array(logtmList))
+        plt.show()
+        plt.close()
+
         # run KS test
-        ksTest = ks_2samp(topmedDict[tmkey], nontopmedDict[ntmkey])
+        nonZeroTM = [x if x !=0 for x in topmedDict[tmkey] ]
+        nonZeroNTM = [x if x !=0 for x in nontopmedDict[ntmkey] ]
+        #ksTest = ks_2samp(topmedDict[tmkey], nontopmedDict[ntmkey])
+        ksTest = ks_2samp(nonZeroTM, nonZeroNTM)
+
         print('ksTest for ' + tmkey + ' vs ' + ntmkey + ' : ' + str(ksTest))
 
 
