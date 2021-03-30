@@ -226,8 +226,8 @@ def plotDists(topmedDict, nontopmedDict, topmedKeys, nontopmedKeys, graphFileNam
         plt.close()
 
         # run KS test
-        nonZeroTM = [x if x !=0 for x in topmedDict[tmkey] ]
-        nonZeroNTM = [x if x !=0 for x in nontopmedDict[ntmkey] ]
+        nonZeroTM = [x for x in topmedDict[tmkey] if x!= 0 ]
+        nonZeroNTM = [x for x in nontopmedDict[ntmkey] if x !=0 ]
         #ksTest = ks_2samp(topmedDict[tmkey], nontopmedDict[ntmkey])
         ksTest = ks_2samp(nonZeroTM, nonZeroNTM)
 
