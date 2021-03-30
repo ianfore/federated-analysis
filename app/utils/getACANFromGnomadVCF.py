@@ -166,6 +166,7 @@ def plotScatter(logntmList, logtmList, lineNumbers, graphFileName, tmkey, ntmkey
     plt.close()
 
 def plotHist(logntmList, logtmList, graphFileName, tmkey, ntmkey):
+    n=len(logntmList)
     lowerLimit = min(logntmList + logtmList)
     upperLimit = max(logntmList + logtmList)
     binSize = (upperLimit - lowerLimit) / 10
