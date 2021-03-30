@@ -156,6 +156,7 @@ def createDicts(variantsDict, topmedKeys, nontopmedKeys):
     return topmedDict, nontopmedDict
 
 def plotScatter(logntmList, logtmList, lineNumbers, graphFileName, tmkey, ntmkey):
+    n=len(logntmList)
     plt.scatter(logntmList, logtmList, marker='.', color='black')
     plt.scatter(lineNumbers, lineNumbers, marker='.', color='red')
     plt.ylabel('log10(topmed AF)', fontsize=18)
