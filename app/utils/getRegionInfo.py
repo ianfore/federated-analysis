@@ -1,16 +1,21 @@
 import json
 import logging
 import argparse
+from pyliftover import LiftOver
 
 
 class regionInfo():
     # genomeAssembly = 'GRCh38' or 'GRCh37'
-    def __init__(self, regionsFileName):
+    def __init__(self, regionsFileName, hg):
         with open(regionsFileName, 'r') as f:
             self.regionsDict = json.load(f)
         f.close()
+        self.lo = None
+        if hg != 'hg38':
+            self.lo = LiftOver(hg, 'hg38')
 
-    def get(self, gene, strand, pos):
+
+    def get(self, chr, gene, strand, pos):
 
         # get splice donors
         '''"brca1RefSpliceAcceptorBounds" : {
@@ -18,6 +23,12 @@ class regionInfo():
                 "start": 43124135,
                 "end": 43124113
             },'''
+        if strand == 'negative':
+            myStrand = '-'
+        else:
+            myStrand = '+'
+        if not self.lo is None:
+            pos = self.lo.convert_coordinate(chr, pos ,myStrand)[0][1]
         spliceDonors = list()
         spliceDonorBounds = gene + 'RefSpliceDonorBounds'
         for exon in self.regionsDict[spliceDonorBounds]:
@@ -106,15 +117,19 @@ def main():
     parser.add_argument("--g", dest="gene", help="gene name", default=None)
     parser.add_argument("--p", dest="position", help="variant position", default=None)
     parser.add_argument("--s", dest="strand", help="strand (positive or negative", default=None)
+    parser.add_argument("--v", dest="version", help="genome assembly version", default=None)
+    parser.add_argument("--c", dest="chrom", help="chromosome", default=None)
 
     options = parser.parse_args()
     regionsFile = options.regionsFile
+    chr = options.chrom
     gene = options.gene
     position = int(options.position)
     strand = options.strand
+    version = options.version
 
-    ri = regionInfo(regionsFile)
-    infoDict = ri.get(gene, strand, position)
+    ri = regionInfo(regionsFile, version)
+    infoDict = ri.get(chr, gene, strand, position)
     print(infoDict)
 
 
