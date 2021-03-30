@@ -143,13 +143,15 @@ def createDicts(variantsDict, topmedKeys, nontopmedKeys):
     variantsNotInTopmedList = list()
     for variant in variantsDict:
         for key in topmedKeys:
+            # key = AF-just_topmed-eth
+            ntmKey = key.replace('just', 'non')
             # odd hack that sometimes a variant doesn't have AC and AN for all ethnicities
-            if key in variantsDict[variant]:
+            if key in variantsDict[variant] and ntmKey in variantsDict[variant]:
                 topmedDict[key].append(variantsDict[variant][key])
-            else:
-                variantsNotInTopmedList.append(variant)
         for key in nontopmedKeys:
-            if not variant in variantsNotInTopmedList:
+            # key = AF-non_topmed-eth
+            tmKey = key.replace('non', 'just')
+            if key in variantsDict[variant] and tmKey in variantsDict[variant]:
                 nontopmedDict[key].append(variantsDict[variant][key])
     return topmedDict, nontopmedDict
 
