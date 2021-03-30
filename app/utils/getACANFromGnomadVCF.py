@@ -117,14 +117,14 @@ def getNontopmedAlleleFreqs(vcfDF, keys):
         pos = vcfDF.iloc[i]['POS']
         ref = vcfDF.iloc[i]['REF']
         alt = vcfDF.iloc[i]['ALT']
-        mykey = "(" + chrom + ", " + pos + ", '" + ref + "', '" + alt + "')"
-        variantsDict[mykey] = dict()
+        variant = "(" + chrom + ", " + pos + ", '" + ref + "', '" + alt + "')"
+        variantsDict[variant] = dict()
         for field in fields:
             if '=' in field:
                 key = field.split('=')[0]
                 if key in keys:
                     value = float(field.split('=')[1])
-                    variantsDict[mykey][key] = value
+                    variantsDict[variant][key] = value
 
     return variantsDict
 
@@ -165,19 +165,18 @@ def plotDists(topmedDict, nontopmedDict, topmedKeys, nontopmedKeys, graphFileNam
         nontopmedList = nontopmedDict[ntmkey]
         topmedList = topmedDict[tmkey]
         logntmList = list()
-        for i in range(len(nontopmedList)):
-            if nontopmedList[i] == 0:
+        for j in range(len(nontopmedList)):
+            if nontopmedList[j] == 0:
                 logntmList.append(0.0)
             else:
-                logntmList.append(math.log(nontopmedList[i], 10))
+                logntmList.append(math.log(nontopmedList[j], 10))
 
         logtmList = list()
-        logjusttmList = list()
-        for i in range(len(topmedList)):
-            if topmedList[i] == 0:
+        for k in range(len(topmedList)):
+            if topmedList[k] == 0:
                 logtmList.append(0.0)
             else:
-                logtmList.append(math.log(topmedList[i], 10))
+                logtmList.append(math.log(topmedList[k], 10))
 
         lowerBound = min([min(logntmList), min(logtmList)])
         upperBound = max([max(logntmList), max(logtmList)])
