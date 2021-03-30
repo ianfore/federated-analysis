@@ -80,6 +80,7 @@ def getTopmedAlleleFreqs(vcfDF, allVariants):
 
     for v in allVariants:
         for e in ethnicitiesList:
+            afKey = 'AF-just_topmed-' + e
             # get non-topmed ac and an
             ntmACKey = 'AC-non_topmed-' + e
             ntmANKey = 'AN-non_topmed-' + e
@@ -102,7 +103,6 @@ def getTopmedAlleleFreqs(vcfDF, allVariants):
                 af = 0.0
                 if an != 0:
                     af = float(ac) / float(an)
-                afKey = 'AF-just_topmed-' + e
                 allVariants[v][afKey] = af
 
 
@@ -140,7 +140,6 @@ def createDicts(variantsDict, topmedKeys, nontopmedKeys):
         topmedDict[key] = list()
     for key in nontopmedKeys:
         nontopmedDict[key] = list()
-    variantsNotInTopmedList = list()
     for variant in variantsDict:
         for key in topmedKeys:
             # key = AF-just_topmed-eth
@@ -172,7 +171,7 @@ def plotHist(logntmList, logtmList, graphFileName, tmkey, ntmkey):
     binSize = (upperLimit - lowerLimit) / 10
     plt.xlim(lowerLimit, upperLimit)
     bins = numpy.arange(lowerLimit, upperLimit, binSize)
-    plt.hist([logntmList, logtmList], label=['log10(topmed AF)', 'log10(nontopmed AF)'], bins=bins)
+    plt.hist([logntmList, logtmList], label=['log10(just_topmed AF)', 'log10(non_topmed AF)'], bins=bins)
     plt.xlabel('log10(AF)')
     plt.ylabel('count')
     plt.title(graphFileName + '_' + tmkey + '_vs_' + ntmkey + 'PDF' + ' n=' + str(n))
