@@ -220,14 +220,17 @@ def plotDists(topmedDict, nontopmedDict, topmedKeys, nontopmedKeys, graphFileNam
         # plot PDF
         plotHist(logntmList, logtmList, graphFileName, tmkey, ntmkey)
 
+        # create non-zero lists
+        nonZeroTM = [x for x in topmedDict[tmkey] if x!= 0 ]
+        nonZeroNTM = [x for x in nontopmedDict[ntmkey] if x !=0 ]
+
         # plot QQ-plot
-        qqplot_2samples(numpy.array(logntmList), numpy.array(logtmList))
+        qqplot_2samples(numpy.array(nonZeroNTM), numpy.array(nonZeroTM))
         plt.savefig(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_QQ.png')
         plt.close()
 
         # run KS test
-        nonZeroTM = [x for x in topmedDict[tmkey] if x!= 0 ]
-        nonZeroNTM = [x for x in nontopmedDict[ntmkey] if x !=0 ]
+
         #ksTest = ks_2samp(topmedDict[tmkey], nontopmedDict[ntmkey])
         ksTest = ks_2samp(nonZeroTM, nonZeroNTM)
 
