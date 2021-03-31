@@ -182,7 +182,7 @@ def plotHist(logntmList, logtmList, graphFileName, tmkey, ntmkey):
     plt.savefig(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_PDF_' + '_n=' + str(n) + '.png')
     plt.close()
 
-def generateListsForPlot(nontopmedDict, topmedDict, ntmkey, tmkey):
+def createListsPerEthnicity(nontopmedDict, topmedDict, ntmkey, tmkey):
     nontopmedList = nontopmedDict[ntmkey]
     topmedList = topmedDict[tmkey]
     logntmList = list()
@@ -201,14 +201,58 @@ def generateListsForPlot(nontopmedDict, topmedDict, ntmkey, tmkey):
 
     return logntmList, logtmList
 
+def createListsFromDict(nontopmedDict, topmedDict):
+    logntmList = list()
+    logtmList = list()
+    for key in nontopmedDict:
+        for j in range(len(nontopmedDict[key])):
+            if nontopmedDict[key][j] == 0:
+                logntmList.append(0.0)
+            else:
+                logntmList.append(math.log(nontopmedDict[key][j], 10))
+    for key in topmedDict:
+        for k in range(len(topmedDict[key])):
+            if topmedDict[key][k] == 0:
+                logtmList.append(0.0)
+            else:
+                logtmList.append(math.log(topmedDict[key][k], 10))
+
+    return logntmList, logtmList
+
+
 def plotDists(topmedDict, nontopmedDict, topmedKeys, nontopmedKeys, graphFileName):
 
+    logntmList, logtmList = createListsFromDict(nontopmedDict, topmedDict)
+    lowerBound = min([min(logntmList), min(logtmList)])
+    upperBound = max([max(logntmList), max(logtmList)])
+    lineNumbers = numpy.arange(lowerBound, upperBound, 0.1)
+
+    # plot scatter
+    plotScatter(logntmList, logtmList, lineNumbers, graphFileName, 'just_topmed', 'non_topmed')
+
+    # plot PDF
+    plotHist(logntmList, logtmList, graphFileName, 'just_topmed', 'non_topmed')
+
+    # create non-zero lists
+    nonZeroTM = [x for x in logtmList if x != 0]
+    nonZeroNTM = [x for x in logntmList if x != 0]
+
+    # plot QQ-plot
+    #qqplot_2samples(numpy.array(nonZeroNTM), numpy.array(nonZeroTM))
+    #plt.savefig(graphFileName + '_' + 'just_topmed' + '_vs_' + 'non_topmed' + '_QQ.png')
+    #plt.close()
+
+    # run KS test
+    # ksTest = ks_2samp(topmedDict[tmkey], nontopmedDict[ntmkey])
+    ksTest = ks_2samp(nonZeroTM, nonZeroNTM)
+
+    print('ksTest for non-zero: ' + 'just_topmed' + ' vs ' + 'non_topmed' + ' : ' + str(ksTest))
 
     for i in range(len(topmedKeys)):
         tmkey = topmedKeys[i]
         ntmkey = nontopmedKeys[i]
 
-        logntmList, logtmList = generateListsForPlot(nontopmedDict, topmedDict, ntmkey, tmkey)
+        logntmList, logtmList = createListsPerEthnicity(nontopmedDict, topmedDict, ntmkey, tmkey)
 
         lowerBound = min([min(logntmList), min(logtmList)])
         upperBound = max([max(logntmList), max(logtmList)])
@@ -225,16 +269,15 @@ def plotDists(topmedDict, nontopmedDict, topmedKeys, nontopmedKeys, graphFileNam
         nonZeroNTM = [x for x in nontopmedDict[ntmkey] if x !=0 ]
 
         # plot QQ-plot
-        qqplot_2samples(numpy.array(nonZeroNTM), numpy.array(nonZeroTM))
-        plt.savefig(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_QQ.png')
-        plt.close()
+        #qqplot_2samples(numpy.array(nonZeroNTM), numpy.array(nonZeroTM))
+        #plt.savefig(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_QQ.png')
+        #plt.close()
 
         # run KS test
-
         #ksTest = ks_2samp(topmedDict[tmkey], nontopmedDict[ntmkey])
         ksTest = ks_2samp(nonZeroTM, nonZeroNTM)
 
-        print('ksTest for ' + tmkey + ' vs ' + ntmkey + ' : ' + str(ksTest))
+        print('ksTest for non-zero: ' + tmkey + ' vs ' + ntmkey + ' : ' + str(ksTest))
 
         # TODO stratify by < 0.01
         # TODO combine / unstratify by ethnicities
