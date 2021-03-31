@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy
 from scipy.stats import ks_2samp
 import math
-#from statsmodels.graphics.gofplots import qqplot_2samples
+from statsmodels.graphics.gofplots import qqplot_2samples
 
 logging.basicConfig()
 logger = logging.getLogger()
@@ -221,9 +221,9 @@ def plotDists(topmedDict, nontopmedDict, topmedKeys, nontopmedKeys, graphFileNam
         plotHist(logntmList, logtmList, graphFileName, tmkey, ntmkey)
 
         # plot QQ-plot
-        #qqplot_2samples(numpy.array(logntmList), numpy.array(logtmList))
-        #plt.show()
-        #plt.close()
+        qqplot_2samples(numpy.array(logntmList), numpy.array(logtmList))
+        plt.savefig(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_QQ.png')
+        plt.close()
 
         # run KS test
         nonZeroTM = [x for x in topmedDict[tmkey] if x!= 0 ]
@@ -233,7 +233,10 @@ def plotDists(topmedDict, nontopmedDict, topmedKeys, nontopmedKeys, graphFileNam
 
         print('ksTest for ' + tmkey + ' vs ' + ntmkey + ' : ' + str(ksTest))
 
-
+        # TODO stratify by < 0.01
+        # TODO combine / unstratify by ethnicities
+        # TODO fix labels
+        # TODO broad v non-broad
 
 if __name__ == "__main__":
     main()

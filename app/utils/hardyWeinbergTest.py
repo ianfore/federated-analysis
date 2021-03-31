@@ -3,12 +3,15 @@ class hardyWeinberg:
 
 
     def __init__(self, variants):
-        # variants is a dict of the form {"(13, 323339291, 'A', 'T')": {'AA': 1000, 'Aa': 527, 'aa': 2}, ...}
+        # variants is a dict of the form {"benign": "(13, 323339291, 'A', 'T')": {'AA': 1000, 'Aa': 527, 'aa': 2}, ...,
+        #                                   "pathogenic": (13,32333221, 'C', 'G')": {'AA': 37, 'Aa': 399', 'aa': 3}, ...,
+        #                                   "vus": ...}
         self.variants = variants
 
     def chiSquareTest(self, c=0.5, criticalValue=3.84):
         # https://en.wikipedia.org/wiki/Hardy-Weinberg_principle
         # since degrees of freedom = 1,  criticalValue = 3.84
+        #for t in ['benign', 'pathogenic', 'vus']:
         n = len(self.variants)
         for v in self.variants:
             # 2. calculate p = (2 x Obs(AA) + Obs(Aa)) / (2 x (Obs(AA) + Obs(Aa) + Obs(aa))
@@ -36,4 +39,4 @@ class hardyWeinberg:
                                         (1.0/expaa) * (abs(self.variants[v]['aa'] - expaa) - c)**2
 
 
-            return self.variants[v]['chisquare']
+        return self.variants
