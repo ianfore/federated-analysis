@@ -245,7 +245,7 @@ def plotDists(topmedDict, nontopmedDict, topmedKeys, nontopmedKeys, graphFileNam
     ax = plt.gca()
     qqplot_2samples(data1=numpy.array(logntmList), data2=numpy.array(logtmList),
                     xlabel='non-topmed', ylabel='just-topmed', line="45",ax = ax)
-    plt.savefig(graphFileName + '_' + 'non_topmed' + '_vs_' + 'just_topmed' + '_QQ.png')
+    plt.savefig(graphFileName + '_' + 'non_topmed' + '_vs_' + 'just_topmed' + '_QQ_n=' + str(n) + '.png')
     plt.close()
 
     # create non-zero lists
@@ -280,7 +280,7 @@ def plotDists(topmedDict, nontopmedDict, topmedKeys, nontopmedKeys, graphFileNam
         ax = plt.gca()
         qqplot_2samples(data1=numpy.array(logntmList), data2=numpy.array(logtmList),
                         xlabel='non-topmed', ylabel='just-topmed', line="45", ax=ax)
-        plt.savefig(graphFileName + '_' + ntmkey + '_vs_' + tmkey + '_QQ.png')
+        plt.savefig(graphFileName + '_' + ntmkey + '_vs_' + tmkey + '_QQ_n=' + str(n) + '.png')
 
         plt.close()
 
