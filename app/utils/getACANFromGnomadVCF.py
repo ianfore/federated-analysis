@@ -274,8 +274,12 @@ def plotDists(topmedDict, nontopmedDict, topmedKeys, nontopmedKeys, graphFileNam
         plotHist(logntmList, logtmList, graphFileName, tmkey, ntmkey)
 
         # plot QQ-plot
-        qqplot_2samples(numpy.array(logntmList), numpy.array(logtmList))
+        plt.title(graphFileName + '_' + ntmkey + '_vs_' + tmkey )
+        ax = plt.gca()
+        qqplot_2samples(data1=numpy.array(logntmList), data2=numpy.array(logtmList),
+                        xlabel='non-topmed', ylabel='just-topmed', line="45", ax=ax)
         plt.savefig(graphFileName + '_' + ntmkey + '_vs_' + tmkey + '_QQ.png')
+
         plt.close()
 
         # create non-zero lists
