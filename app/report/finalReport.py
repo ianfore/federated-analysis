@@ -115,9 +115,9 @@ def getVariantStats(ipvDict, studyPerVariant, centersPerHomoVus, inList, outList
 		variantsDict[v]['homozygousSample'] = homoSample
 		variantsDict[v]['heterozygousSample'] = heteroSample
 		variantsDict[v]['inGnomad'] = vIn
-		variantsDict[v]['homo_alt'] = aa
-		variantsDict[v]['hetero'] = Aa
-		variantsDict[v]['homo_ref'] = AA
+		variantsDict[v]['aa'] = aa
+		variantsDict[v]['Aa'] = Aa
+		variantsDict[v]['AA'] = AA
 		variantsDict[v]['hail_hweafp'] = hl.eval(hl.hardy_weinberg_test(int(AA),int(Aa),int(aa))).p_value
 		variantsDict[v]['F'] = F
 		variantsDict[v]['Z'] = Z

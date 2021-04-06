@@ -51,12 +51,12 @@ def main():
     if subset == 'vus':
         samples_1 = df_1[df_1['class'] == 'vus']
         samples_2 = df_2[df_2['class'] == 'vus']
-        homoAltList_1 = list(samples_1['homo_alt'])
-        homoAltList_2 = list(samples_2['homo_alt'])
-        homoRefList_1 = list(samples_1['homo_ref'])
-        homoRefList_2 = list(samples_2['homo_ref'])
-        heteroList_1 = list(samples_1['hetero'])
-        heteroList_2 = list(samples_2['hetero'])
+        homoAltList_1 = list(samples_1['aa'])
+        homoAltList_2 = list(samples_2['aa'])
+        homoRefList_1 = list(samples_1['AA'])
+        homoRefList_2 = list(samples_2['AA'])
+        heteroList_1 = list(samples_1['Aa'])
+        heteroList_2 = list(samples_2['Aa'])
 
         if gene == 'both':
             #hweafpQList = list(df_1['HWEAF_P']) + list(df_2['HWEAF_P'])
@@ -107,12 +107,12 @@ def main():
             print('brca1-report.tsv brca2-report.tsv output-dir all|vus brca1|brca2|both')
             sys.exit(1)
     elif subset == 'all':
-        homoAltList_1 = list(df_1['homo_alt'])
-        homoAltList_2 = list(df_2['homo_alt'])
-        homoRefList_1 = list(df_1['homo_ref'])
-        homoRefList_2 = list(df_2['homo_ref'])
-        heteroList_1 = list(df_1['hetero'])
-        heteroList_2 = list(df_2['hetero'])
+        homoAltList_1 = list(df_1['aa'])
+        homoAltList_2 = list(df_2['aa'])
+        homoRefList_1 = list(df_1['AA'])
+        homoRefList_2 = list(df_2['AA'])
+        heteroList_1 = list(df_1['Aa'])
+        heteroList_2 = list(df_2['Aa'])
 
         if gene == 'both':
             #hweafpQList = list(df_1['HWEAF_P']) + list(df_2['HWEAF_P'])

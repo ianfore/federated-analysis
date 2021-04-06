@@ -162,7 +162,7 @@ def plotScatter(logntmList, logtmList, lineNumbers, graphFileName, tmkey, ntmkey
     plt.scatter(logntmList, logtmList, marker='.', color='black')
     plt.scatter(lineNumbers, lineNumbers, marker='.', color='red')
     plt.ylabel('log10(topmed AF)', fontsize=18)
-    plt.xlabel('log10(nontopmed AF)', fontsize=18)
+    plt.xlabel('log10(non-topmed AF)', fontsize=18)
     plt.title(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_scatter_' + ' n=' + str(n))
     plt.savefig(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_scatter_' + '_n=' + str(n) + '.png')
     plt.close()
@@ -174,7 +174,7 @@ def plotHist(logntmList, logtmList, graphFileName, tmkey, ntmkey):
     binSize = (upperLimit - lowerLimit) / 20
     plt.xlim(lowerLimit, upperLimit)
     bins = numpy.arange(lowerLimit, upperLimit, binSize)
-    plt.hist([logntmList, logtmList], label=['log10(just_topmed AF)', 'log10(non_topmed AF)'], bins=bins)
+    plt.hist([logntmList, logtmList], label=['log10(non_topmed AF)', 'log10(just_topmed AF)'], bins=bins)
     plt.xlabel('log10(AF)')
     plt.ylabel('count')
     plt.title(graphFileName + '_' + tmkey + '_vs_' + ntmkey + 'PDF' + ' n=' + str(n))

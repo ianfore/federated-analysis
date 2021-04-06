@@ -1,3 +1,4 @@
+import hail as hl
 
 class hardyWeinberg:
 
@@ -8,7 +9,8 @@ class hardyWeinberg:
         #                                   "vus": ...}
         self.variants = variants
 
-    def chiSquareTest(self, c=0.5, criticalValue=3.84):
+
+    def hwTest(self, c=0.5, criticalValue=3.84):
         # https://en.wikipedia.org/wiki/Hardy-Weinberg_principle
         # since degrees of freedom = 1,  criticalValue = 3.84
         #for t in ['benign', 'pathogenic', 'vus']:
@@ -38,5 +40,9 @@ class hardyWeinberg:
                                         (1.0/expAa) * (abs(self.variants[v]['Aa'] - expAa) - c)**2 + \
                                         (1.0/expaa) * (abs(self.variants[v]['aa'] - expaa) - c)**2
 
+            AA = self.variants[v]['AA']
+            Aa = self.variants[v]['Aa']
+            aa = self.variants[v]['aa']
+            self.variants[v]['hail_hweafp'] = hl.eval(hl.hardy_weinberg_test(int(AA), int(Aa), int(aa))).p_value
 
         return self.variants
