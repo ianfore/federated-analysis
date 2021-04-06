@@ -280,11 +280,9 @@ def plotDists(topmedDict, nontopmedDict, topmedKeys, nontopmedKeys, graphFileNam
         plt.title(graphFileName + '_' + ntmkey + '_vs_' + tmkey + '_QQ_' + 'n=' + str(n) )
         ax = plt.gca()
         ntmData = numpy.array(logntmList)
-        print('len ntm data for qq: ' + str(len(ntmData)))
-        print('type ntm data for qq: ' + str(type(ntmData)))
+        print('len ntm data for qq: ' + str(len(ntmData.data.shape[0])))
         tmData = numpy.array(logtmList)
-        print('len tm data for qq: ' + str(len(tmData)))
-        print('type tm data for qq: ' + str(type(tmData)))
+        print('len tm data for qq: ' + str(len(tmData.data.shape[0])))
         qqplot_2samples(data1=ntmData, data2=tmData,
                         xlabel='non-topmed', ylabel='just-topmed', line="45", ax=ax)
         plt.savefig(graphFileName + '_' + ntmkey + '_vs_' + tmkey + '_QQ_n=' + str(n) + '.png')
