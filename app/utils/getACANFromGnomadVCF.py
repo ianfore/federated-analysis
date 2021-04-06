@@ -177,9 +177,9 @@ def plotHist(logntmList, logtmList, graphFileName, tmkey, ntmkey):
     plt.hist([logntmList, logtmList], label=['log10(non_topmed AF)', 'log10(just_topmed AF)'], bins=bins)
     plt.xlabel('log10(AF)')
     plt.ylabel('count')
-    plt.title(graphFileName + '_' + tmkey + '_vs_' + ntmkey + 'PDF' + ' n=' + str(n))
+    plt.title(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_PDF_' + ' n=' + str(n))
     plt.legend(loc="upper right")
-    plt.savefig(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_PDF_' + '_n=' + str(n) + '.png')
+    plt.savefig(graphFileName + '_' + tmkey + '_vs_' + ntmkey + '_PDF_' + 'n=' + str(n) + '.png')
     plt.close()
 
 def createListsPerEthnicity(nontopmedDict, topmedDict, ntmkey, tmkey):
