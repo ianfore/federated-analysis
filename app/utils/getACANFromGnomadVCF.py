@@ -240,7 +240,8 @@ def plotDists(topmedDict, nontopmedDict, topmedKeys, nontopmedKeys, graphFileNam
     plotHist(logntmList, logtmList, graphFileName, 'non_topmed', 'just_topmed')
 
     # plot QQ-plot
-    plt.title('all non-topmed vs all just-topmed')
+    n = len(logntmList)
+    plt.title('all non-topmed vs all just-topmed QQ n=' + str(n))
     ax = plt.gca()
     qqplot_2samples(data1=numpy.array(logntmList), data2=numpy.array(logtmList),
                     xlabel='non-topmed', ylabel='just-topmed', line="45",ax = ax)
@@ -274,7 +275,8 @@ def plotDists(topmedDict, nontopmedDict, topmedKeys, nontopmedKeys, graphFileNam
         plotHist(logntmList, logtmList, graphFileName, tmkey, ntmkey)
 
         # plot QQ-plot
-        plt.title(graphFileName + '_' + ntmkey + '_vs_' + tmkey )
+        n = len(logntmList)
+        plt.title(graphFileName + '_' + ntmkey + '_vs_' + tmkey + '_QQ_' + 'n=' + str(n) )
         ax = plt.gca()
         qqplot_2samples(data1=numpy.array(logntmList), data2=numpy.array(logtmList),
                         xlabel='non-topmed', ylabel='just-topmed', line="45", ax=ax)
