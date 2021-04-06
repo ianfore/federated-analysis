@@ -244,8 +244,8 @@ def plotDists(topmedDict, nontopmedDict, topmedKeys, nontopmedKeys, graphFileNam
     n = len(logntmList)
     plt.title('all non-topmed vs all just-topmed QQ n=' + str(n))
     ax = plt.gca()
-    qqplot_2samples(data1=sm.ProbPlot(numpy.array(logntmList)), data2=sm.ProbPlot(numpy.array(logtmList)),
-                    xlabel='just-topmed', ylabel='non-topmed',
+    qqplot_2samples(data1=sm.ProbPlot(numpy.array(logtmList)), data2=sm.ProbPlot(numpy.array(logntmList)),
+                    xlabel='non-topmed', ylabel='just-topmed',
                     line="45",ax = ax)
     plt.savefig(graphFileName + '_' + 'non_topmed' + '_vs_' + 'just_topmed' + '_QQ_n=' + str(n) + '.png')
     plt.close()
@@ -282,8 +282,8 @@ def plotDists(topmedDict, nontopmedDict, topmedKeys, nontopmedKeys, graphFileNam
         ax = plt.gca()
         ntmData = sm.ProbPlot(numpy.array(logntmList))
         tmData = sm.ProbPlot(numpy.array(logtmList))
-        qqplot_2samples(data1=ntmData, data2=tmData,
-                        xlabel='just-topmed', ylabel='non-topmed',
+        qqplot_2samples(data1=tmData, data2=ntmData,
+                        xlabel='non-topmed', ylabel='just-topmed',
                         line="45", ax=ax)
         plt.savefig(graphFileName + '_' + ntmkey + '_vs_' + tmkey + '_QQ_n=' + str(n) + '.png')
 
