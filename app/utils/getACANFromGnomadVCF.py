@@ -279,8 +279,8 @@ def plotDists(topmedDict, nontopmedDict, topmedKeys, nontopmedKeys, graphFileNam
         n = len(logntmList)
         plt.title(graphFileName + '_' + ntmkey + '_vs_' + tmkey + '_QQ_' + 'n=' + str(n) )
         ax = plt.gca()
-        ntmData = numpy.array(logntmList)
-        tmData = numpy.array(logtmList)
+        ntmData = sm.ProbPlot(numpy.array(logntmList))
+        tmData = sm.ProbPlot(numpy.array(logtmList))
         qqplot_2samples(data1=ntmData, data2=tmData,
                         #xlabel='non-topmed', ylabel='just-topmed',
                         line="45", ax=ax)
