@@ -186,18 +186,24 @@ def createListsPerEthnicity(nontopmedDict, topmedDict, ntmkey, tmkey):
     nontopmedList = nontopmedDict[ntmkey]
     topmedList = topmedDict[tmkey]
     logntmList = list()
-    for j in range(len(nontopmedList)):
+    logtmList = list()
+
+    '''for j in range(len(nontopmedList)):
         if nontopmedList[j] == 0:
             logntmList.append(0.0)
         else:
             logntmList.append(math.log(nontopmedList[j], 10))
-
-    logtmList = list()
     for k in range(len(topmedList)):
         if topmedList[k] == 0:
             logtmList.append(0.0)
         else:
-            logtmList.append(math.log(topmedList[k], 10))
+            logtmList.append(math.log(topmedList[k], 10))'''
+    for i in range(len(topmedList)):
+        if topmedList[i] == 0 or nontopmedList[i] == 0:
+            continue
+        else:
+            logtmList.append(math.log(topmedList[i], 10))
+            logntmList.append(math.log(nontopmedList[i], 10))
 
     return logntmList, logtmList
 
