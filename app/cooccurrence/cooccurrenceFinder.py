@@ -326,7 +326,10 @@ def findVariantsInBRCA(fileName, classStrings, hgVersion):
         print(brcaDF.loc[i, coordinateColumnBase + str(hgVersion)])
         coord = brcaDF.loc[i, coordinateColumnBase + str(hgVersion)].split(':')
         chrom = int(coord[0].split('chr')[1])
-        pos = int(coord[1].split('g.')[1])
+        if 'g.' in coord[1]:
+            pos = int(coord[1].split('g.')[1])
+        else:
+            pos = int(coord[1])
         ref, alt = coord[2].split('>')
         var = (chrom, pos, ref, alt)
         if str(brcaDF.loc[i, sigColName]) in classStrings['Pathogenic']:
