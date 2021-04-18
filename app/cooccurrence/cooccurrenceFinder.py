@@ -323,7 +323,7 @@ def findVariantsInBRCA(fileName, classStrings, hgVersion):
         # TODO use HGVS? problem is indel representation
         # TODO VCF has standard of using left-most pos where HGVS has standard of using right-most pos for indel
         # if cDNA (3' side or 5'?) => standard is using 5' strand
-        print(brcaDF.loc[i, coordinateColumnBase + str(hgVersion)])
+        logger.debug(brcaDF.loc[i, coordinateColumnBase + str(hgVersion)])
         coord = brcaDF.loc[i, coordinateColumnBase + str(hgVersion)].split(':')
         chrom = int(coord[0].split('chr')[1])
         if 'g.' in coord[1]:
