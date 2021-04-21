@@ -29,7 +29,6 @@ classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely ben
                  'Unknown': [ 'Uncertain significance', '-']}
 sigColName = 'Clinical_significance_ENIGMA'
 coordinateColumnBase = 'Genomic_Coordinate_hg'
-alleleFrequencyName = 'Allele_frequency_ExAC'
 
 
 class NpEncoder(json.JSONEncoder):
@@ -566,19 +565,20 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
                     continue
 
                 genotype = str(int(str(vcf['calldata/GT'][variant][i][0]) + str(vcf['calldata/GT'][variant][i][1]), 2))
-                try:
-                    if freeze == 5:
-                        seqCenter = annoDF[annoDF['sample.id'] == individuals[i]]['CENTER'].iloc[0]
-                    elif freeze == 8:
-                        seqCenter = annoDF[annoDF['sample.id'] == individuals[i]]['seq_center'].iloc[0]
-                    elif freeze == 9:
-                        seqCenter = annoDF[annoDF['sample.id'] == individuals[i]]['seq_center'].iloc[0]
-                except Exception as e:
-                    seqCenter = "NA"
-                try:
-                    study = annoDF[annoDF['sample.id'] == individuals[i]]['study'].iloc[0]
-                except Exception as e:
-                    study = "NA"
+                if not annoDF is None:
+                    try:
+                        if freeze == 5:
+                            seqCenter = annoDF[annoDF['sample.id'] == individuals[i]]['CENTER'].iloc[0]
+                        elif freeze == 8:
+                            seqCenter = annoDF[annoDF['sample.id'] == individuals[i]]['seq_center'].iloc[0]
+                        elif freeze == 9:
+                            seqCenter = annoDF[annoDF['sample.id'] == individuals[i]]['seq_center'].iloc[0]
+                    except Exception as e:
+                        seqCenter = "NA"
+                    try:
+                        study = annoDF[annoDF['sample.id'] == individuals[i]]['study'].iloc[0]
+                    except Exception as e:
+                        study = "NA"
                 if (c, p, r, a) in benignVariants:
                     variantsPerIndividual[individuals[i]]['benign'].append(((c, p, r, a), genotype, seqCenter, study))
                 elif (c, p, r, a) in pathogenicVariants:
