@@ -112,14 +112,14 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
     logger.info('setting pyensembl dir to ' + pyensemblDir)
     os.environ['PYENSEMBL_CACHE_DIR'] = '/var/tmp/pyensembl-cache'
 
-    if not annoFileName is None or annoFileName != '':
+    if not annoFileName is None and annoFileName != '':
         logger.info('reading annotation data from ' + annoFileName)
         with open(annoFileName, 'r') as f:
             annoDF = pandas.read_csv(annoFileName, header=0, sep='\t')
         f.close()
     else:
         annoDF = None
-        
+
     logger.info('reading BRCA data from ' + brcaFileName)
     t = time.time()
     brcaDF, pathogenicVariants, benignVariants, unknownVariants = findVariantsInBRCA(brcaFileName, classStrings, hgVersion)
