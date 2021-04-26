@@ -6,6 +6,7 @@ import numpy
 import customDataAnalyzer
 import supplementaryTable4
 import os
+import argparse
 
 class ConfigFile:
     """
@@ -297,17 +298,24 @@ class FederatedDataAnalyzer:
             print('exception in dataAnalyzer.run() method: ' + str(e))
             return False
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', '--conf', help='configuration file')
+    options = parser.parse_args()
+    return options
+
 def main():
 
     # get file name of config file from command line
-    configFileName = sys.argv[1]
+    configFileName = parse_args().conf
 
     # instantiate analyzer object
     myFederatedDataAnalyzer = FederatedDataAnalyzer(configFileName)
 
     # run analyzer and any custom code
-    return myFederatedDataAnalyzer.run() and customDataAnalyzer.run(myFederatedDataAnalyzer) \
-            and supplementaryTable4.run(myFederatedDataAnalyzer)
+    '''return myFederatedDataAnalyzer.run() and customDataAnalyzer.run(myFederatedDataAnalyzer) \
+            and supplementaryTable4.run(myFederatedDataAnalyzer)'''
+    return myFederatedDataAnalyzer.run()
 
     #return myFederatedDataAnalyzer.run() and app.supplementaryTable4.run(myFederatedDataAnalyzer)
 

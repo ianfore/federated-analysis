@@ -184,20 +184,21 @@ def main():
         twoPQAdj.append(2. * hweafpPlist[i] * hweafpQList[i])
         xExpAdj.append(hweafpPlist[i])
 
-    psqPlot = plt.scatter(x=xExp, y=pSq, c='K', s=1)
-    qsqPlot = plt.scatter(x=xExp, y=qSq, c='K', s=1)
-    twopqPlot = plt.scatter(x=xExp, y=twoPQ, c='K', s=1)
+    psqPlot = plt.scatter(x=xExp, y=pSq, marker='o', c='black', s=40)
+    qsqPlot = plt.scatter(x=xExp, y=qSq, marker='o', c='black', s=40)
+    twopqPlot = plt.scatter(x=xExp, y=twoPQ, marker='o', c='black', s=40)
 
-    psqAdjPlot = plt.scatter(x=xExpAdj, y=pSqAdj, c='Y', s=1)
-    qsqAdjPlot = plt.scatter(x=xExpAdj, y=qSqAdj, c='Y', s=1)
-    twopqPAdjlot = plt.scatter(x=xExpAdj, y=twoPQAdj, c='Y', s=1)
 
-    haPlot = plt.scatter(x=xObs, y=haList, c='R', s=30)
-    hrPlot = plt.scatter(x=xObs, y=hrList, c='B', s=30)
-    hPlot = plt.scatter(x=xObs, y=hList, c='G', s=30)
+    #psqAdjPlot = plt.scatter(x=xExpAdj, y=pSqAdj, c='Y', s=5)
+    #qsqAdjPlot = plt.scatter(x=xExpAdj, y=qSqAdj, c='Y', s=5)
+    #twopqPAdjlot = plt.scatter(x=xExpAdj, y=twoPQAdj, c='Y', s=5)
 
-    plt.legend((psqPlot, psqAdjPlot, haPlot, hrPlot, hPlot),
-               ('expected', 'expected pop-adjusted', 'observered homozygous alt', 'observed homozygous ref', 'observed hetero'),
+    haPlot = plt.scatter(x=xObs, y=haList, c='red', s=2)
+    hrPlot = plt.scatter(x=xObs, y=hrList, c='orange', s=2)
+    hPlot = plt.scatter(x=xObs, y=hList, c='green', s=2)
+
+    plt.legend((psqPlot, haPlot, hrPlot, hPlot),
+               ('expected', 'observered homozygous alt', 'observed homozygous ref', 'observed hetero'),
                scatterpoints=1,
                loc='upper center',
                ncol=1,
