@@ -103,7 +103,7 @@ def main():
 
     print(options)
 
-    dataDir = str(options.data)
+    dataDir = options.data
     if dataDir != None:
         outFileName = dataDir + "/" + str(options.c) + "-out.json"
         ipvFileName = str(options.data) + "/" + str(options.c) + "-ipv.json"
