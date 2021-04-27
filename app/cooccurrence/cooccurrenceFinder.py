@@ -94,6 +94,7 @@ def configureLogging(options):
     logger.addHandler(ch)
     logger.debug("Established logger")
 
+
 def main():
     # main just parses the CLI and then calls the run() method with appropriate args
     options = parseArgs()
@@ -111,9 +112,16 @@ def main():
         toutFileName = str(options.data) + "/" + str(options.c) + "-tout.json"
         vcfFileName = str(options.data) + "/" + options.vcf
         brcaFileName = str(options.data) + "/" + options.b
+    else:
+        outFileName = str(options.c) + "-out.json"
+        ipvFileName = str(options.c) + "-ipv.json"
+        vpiFileName = str(options.c) + "-vpi.json"
+        allFileName = str(options.c) + "-all.json"
+        toutFileName = str(options.c) + "-tout.json"
+        vcfFileName = options.vcf
+        brcaFileName =  options.b
     saveFiles = str2bool(options.save)
     phased = str2bool(options.p)
-
 
 
     run(int(options.h), int(options.e), options.c, options.g, phased, vcfFileName,
