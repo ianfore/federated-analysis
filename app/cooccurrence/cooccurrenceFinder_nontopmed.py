@@ -28,7 +28,6 @@ classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely ben
                  'Unknown': [ 'Uncertain significance', '-']}
 sigColName = 'Clinical_significance_ENIGMA'
 coordinateColumnBase = 'Genomic_Coordinate_hg'
-alleleFrequencyName = 'Allele_frequency_ExAC'
 
 
 class NpEncoder(json.JSONEncoder):

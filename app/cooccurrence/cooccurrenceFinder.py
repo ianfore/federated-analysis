@@ -13,7 +13,7 @@ from multiprocessing import Process, Queue, cpu_count
 
 
 logger = logging.getLogger()
-defaultLogLevel = "DEBUG"
+defaultLogLevel = "ERROR"
 
 # you must define the PYENSEMBL_CACHE_DIR before importing the pyensembl module
 logger.info('setting pyensembl dir to /var/tmp/pyensembl-cache')
@@ -25,7 +25,9 @@ import pyensembl
 brca1_p2 = 0.0001
 brca2_p2 = 0.001
 
-classStrings = { 'Pathogenic':[ 'Pathogenic' ], 'Benign':[ 'Benign', 'Likely benign' ],
+rareCutoff = 0.01
+
+classStrings = { 'Pathogenic':[ 'Pathogenic', 'Likely pathogenic'], 'Benign':[ 'Benign', 'Likely benign' ],
                  'Unknown': [ 'Uncertain significance', '-']}
 sigColName = 'Clinical_significance_ENIGMA'
 coordinateColumnBase = 'Genomic_Coordinate_hg'
@@ -53,27 +55,28 @@ class NpDecoder(json.JSONDecoder):
         else:
             return super(NpDecoder, self).default(obj)
 
+def str2bool(string):
+    # or just return bool(eval(string))
+    '''if string == 'True' or string == 'true':
+        return True
+    else:
+        return False'''
+    return bool(eval(string))
+
 def parseArgs():
     parser = argparse.ArgumentParser(usage="cooccurrenceFinder args [options]")
-    parser.add_argument("--vcf", dest="vcf", help="name of file containing VCF data, default=None", default=None)
-    parser.add_argument("--ipv", dest="ipv", help="ipv file name, default=ipv.json", default='ipv.json')
-    parser.add_argument("--vpi", dest="vpi", help="vpi file name, default=vpi.json", default='vpi.json')
-    parser.add_argument("--out", dest="out", help="output file name, default=out.json", default='out.json')
-    parser.add_argument("--all", dest="all", help="all vars file name, default=all.json", default='all.json')
     parser.add_argument("--anno", dest="anno", help="annotation file name, default=None", default=None)
+    parser.add_argument("--vcf", dest="vcf", help="vcf file name, default=None", default=None)
+    parser.add_argument("--data", dest="data", help="data directory name, default=None", default=None)
+    parser.add_argument("--save", dest="save", help="save intermediate files boolean, default=None", default=None)
     parser.add_argument("--h", dest="h", help="Human genome version (37 or 38). Default=None", default=None)
     parser.add_argument("--e", dest="e", help="Ensembl version - 75 (for 37) or 99 (for 38). Default=None", default=None)
     parser.add_argument("--c", dest="c", help="Chromosome of interest. Default=None", default=None)
     parser.add_argument("--g", dest="g", help="Gene of interest. Default=None", default=None)
     parser.add_argument("--p", dest="p", help="Phased (boolean). Default=False", default='True')
-    parser.add_argument("--s", dest="s", help="Save variants per individual. Default=True", default='True')
-    parser.add_argument("--i", dest="i", help="Include pathog vars per VUS in report. Default=True", default='True')
     parser.add_argument("--n", dest="n", help="Number of processes. Default=1", default=cpu_count())
     parser.add_argument("--b", dest="b", help="BRCA variants file. Default=brca-variants", default=None)
     parser.add_argument("--d", dest="d", help="directory containing pyensembl-cache. Default=/var/tmp/pyensembl-cache", default='/var/tmp/pyensembl-cache')
-    parser.add_argument("--r", dest="r", help="Rare frequency cutoff. Default=0.01", default=0.01)
-    parser.add_argument("--f", dest="f", help="Topmed freeze. Default=0", default=0)
-    parser.add_argument("--tout", dest="tout", help="tout file name. Default=None", default=None)
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" % defaultLogLevel, default=defaultLogLevel)
     return parser.parse_args()
 
@@ -99,14 +102,25 @@ def main():
 
     print(options)
 
+    outFileName = str(options.data) + "/" + str(options.c) + "-out.json"
+    ipvFileName = str(options.data) + "/" + str(options.c) + "-ipv.json"
+    vpiFileName = str(options.data) + "/" + str(options.c) + "-vpi.json"
+    allFileName = str(options.data) + "/" + str(options.c) + "-all.json"
+    toutFileName = str(options.data) + "/" + str(options.c) + "-tout.json"
+    vcfFileName = str(options.data) + "/" + options.vcf
+    brcaFileName = str(options.data) + "/" + options.b
+    saveFiles = str2bool(options.save)
+    phased = str2bool(options.p)
 
-    run(int(options.h), int(options.e), options.c, options.g, bool(eval(options.p)), options.vcf, bool(eval(options.s)),
-        int(options.n), options.b, options.d, float(options.r), options.ipv, options.vpi, options.all, options.anno,
-        options.out, int(options.f), options.tout)
 
-def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVarsPerIndivid, numProcs,
-        brcaFileName, pyensemblDir, rareCutoff, ipvFileName, vpiFileName, allVariantsFileName, annoFileName,
-        outputFileName, freeze, toutFileName):
+
+    run(int(options.h), int(options.e), options.c, options.g, phased, vcfFileName,
+        int(options.n), brcaFileName, options.d, ipvFileName, vpiFileName, allFileName, options.anno,
+        outFileName, toutFileName, saveFiles)
+
+def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, numProcs,
+        brcaFileName, pyensemblDir, ipvFileName, vpiFileName, allVariantsFileName, annoFileName,
+        outputFileName, toutFileName, saveFiles):
 
 
     logger.info('setting pyensembl dir to ' + pyensemblDir)
@@ -149,7 +163,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
     processList = list()
     for i in range(numProcs):
         p = Process(target=findVarsPerIndividual, args=(q, w, vcf, benignVariants, pathogenicVariants, chromosome, gene,
-                                                        ensemblRelease, annoDF, i, numProcs, freeze, ))
+                                                        ensemblRelease, annoDF, i, numProcs, ))
         p.start()
         processList.append(p)
     logger.info('joining results from forked threads')
@@ -168,19 +182,20 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, saveVa
     logger.info('number of records is ' + str(len(individualsPerVariant)))
     logger.info('elapsed time in updateIndividualsPerVariant() ' + str(time.time() -t))
 
-    logger.info('saving vpi to ' + vpiFileName)
-    with open(vpiFileName, 'w') as f:
-        json.dump(variantsPerIndividual, f, cls=NpEncoder)
-    f.close()
+    if saveFiles:
+        logger.info('saving vpi to ' + vpiFileName)
+        with open(vpiFileName, 'w') as f:
+            json.dump(variantsPerIndividual, f, cls=NpEncoder)
+        f.close()
 
-    logger.info('saving ipv to ' + ipvFileName)
-    with open(ipvFileName, 'w') as f:
-        json.dump(individualsPerVariant, f, cls=NpEncoder)
-    f.close()
+        logger.info('saving ipv to ' + ipvFileName)
+        with open(ipvFileName, 'w') as f:
+            json.dump(individualsPerVariant, f, cls=NpEncoder)
+        f.close()
 
     logger.info('finding homozygous individuals per vus')
     t = time.time()
-    homozygousPerVus = countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, gene, rareCutoff)
+    homozygousPerVus = countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, gene)
     logger.info('elapsed time in countHomozygousPerVus() ' + str(time.time() -t))
 
     #logger.info('finding homozygous individuals per benign')
@@ -382,7 +397,7 @@ def getGnomadData(brcaDF, vus, hgVersion):
 
     return (maxPopulation, maxFrequency, minPopulation, minFrequency, allPopFreq)
 
-def countHomozygousPerBenign(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, geneOfInterest, rareCutoff):
+def countHomozygousPerBenign(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, geneOfInterest):
     homozygousPerBenign = dict()
 
     for individual in variantsPerIndividual:
@@ -412,7 +427,7 @@ def countHomozygousPerBenign(variantsPerIndividual, brcaDF, hgVersion, ensemblRe
     return homozygousPerBenign
 
 
-def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, geneOfInterest, rareCutoff):
+def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, geneOfInterest):
     homozygousPerVus = dict()
 
     for individual in variantsPerIndividual:
@@ -533,7 +548,7 @@ def getStartAndEnd(partitionSizes, threadID):
     return start, end
 
 def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromosome, gene, ensemblRelease, annoDF,
-                          threadID, numProcesses, freeze):
+                          threadID, numProcesses):
     '''infoFields = ['variants/ABE', 'variants/ABZ', 'variants/AC', 'variants/AF',
      'variants/AN', 'variants/ANN', 'variants/AVGDP', 'variants/BETA_IF', 'variants/BQZ',
      'variants/CYZ', 'variants/FIBC_I', 'variants/FIBC_P', 'variants/FILTER_PASS', 'variants/FLT20', 'variants/GC',
@@ -570,11 +585,9 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
                 genotype = str(int(str(vcf['calldata/GT'][variant][i][0]) + str(vcf['calldata/GT'][variant][i][1]), 2))
                 if not annoDF is None:
                     try:
-                        if freeze == 5:
+                        if 'CENTER' in individuals[i]:
                             seqCenter = annoDF[annoDF['sample.id'] == individuals[i]]['CENTER'].iloc[0]
-                        elif freeze == 8:
-                            seqCenter = annoDF[annoDF['sample.id'] == individuals[i]]['seq_center'].iloc[0]
-                        elif freeze == 9:
+                        elif 'seq_center' in individuals[i]:
                             seqCenter = annoDF[annoDF['sample.id'] == individuals[i]]['seq_center'].iloc[0]
                     except Exception as e:
                         seqCenter = "NA"
