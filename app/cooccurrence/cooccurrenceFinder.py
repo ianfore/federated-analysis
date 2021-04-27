@@ -102,13 +102,15 @@ def main():
 
     print(options)
 
-    outFileName = str(options.data) + "/" + str(options.c) + "-out.json"
-    ipvFileName = str(options.data) + "/" + str(options.c) + "-ipv.json"
-    vpiFileName = str(options.data) + "/" + str(options.c) + "-vpi.json"
-    allFileName = str(options.data) + "/" + str(options.c) + "-all.json"
-    toutFileName = str(options.data) + "/" + str(options.c) + "-tout.json"
-    vcfFileName = str(options.data) + "/" + options.vcf
-    brcaFileName = str(options.data) + "/" + options.b
+    dataDir = str(options.data)
+    if dataDir != None:
+        outFileName = dataDir + "/" + str(options.c) + "-out.json"
+        ipvFileName = str(options.data) + "/" + str(options.c) + "-ipv.json"
+        vpiFileName = str(options.data) + "/" + str(options.c) + "-vpi.json"
+        allFileName = str(options.data) + "/" + str(options.c) + "-all.json"
+        toutFileName = str(options.data) + "/" + str(options.c) + "-tout.json"
+        vcfFileName = str(options.data) + "/" + options.vcf
+        brcaFileName = str(options.data) + "/" + options.b
     saveFiles = str2bool(options.save)
     phased = str2bool(options.p)
 
