@@ -76,7 +76,9 @@ def parseArgs():
     parser.add_argument("--p", dest="p", help="Phased (boolean). Default=False", default='True')
     parser.add_argument("--n", dest="n", help="Number of processes. Default=1", default=cpu_count())
     parser.add_argument("--b", dest="b", help="BRCA variants file. Default=brca-variants", default=None)
-    parser.add_argument("--d", dest="d", help="directory containing pyensembl-cache. Default=/var/tmp/pyensembl-cache", default='/var/tmp/pyensembl-cache')
+    parser.add_argument("--d", dest="d", help="directory containing pyensembl-cache. Default=/var/tmp/pyensembl-cache",
+                        default='/var/tmp/pyensembl-cache')
+    parser.add_argument("--pf", dest="pf", help="Pathology input file. Default=None", default=None)
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" % defaultLogLevel, default=defaultLogLevel)
     return parser.parse_args()
 
@@ -106,12 +108,12 @@ def main():
     dataDir = options.data
     if dataDir != None:
         outFileName = dataDir + "/" + str(options.c) + "-out.json"
-        ipvFileName = str(options.data) + "/" + str(options.c) + "-ipv.json"
-        vpiFileName = str(options.data) + "/" + str(options.c) + "-vpi.json"
-        allFileName = str(options.data) + "/" + str(options.c) + "-all.json"
-        toutFileName = str(options.data) + "/" + str(options.c) + "-tout.json"
-        vcfFileName = str(options.data) + "/" + options.vcf
-        brcaFileName = str(options.data) + "/" + options.b
+        ipvFileName = dataDir + "/" + str(options.c) + "-ipv.json"
+        vpiFileName = dataDir + "/" + str(options.c) + "-vpi.json"
+        allFileName = dataDir + "/" + str(options.c) + "-all.json"
+        toutFileName = dataDir + "/" + str(options.c) + "-tout.json"
+        vcfFileName = dataDir + "/" + options.vcf
+        brcaFileName = dataDir + "/" + options.b
     else:
         outFileName = str(options.c) + "-out.json"
         ipvFileName = str(options.c) + "-ipv.json"
@@ -126,11 +128,11 @@ def main():
 
     run(int(options.h), int(options.e), options.c, options.g, phased, vcfFileName,
         int(options.n), brcaFileName, options.d, ipvFileName, vpiFileName, allFileName, options.anno,
-        outFileName, toutFileName, saveFiles)
+        outFileName, toutFileName, saveFiles, options.pf)
 
 def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, numProcs,
         brcaFileName, pyensemblDir, ipvFileName, vpiFileName, allVariantsFileName, annoFileName,
-        outputFileName, toutFileName, saveFiles):
+        outputFileName, toutFileName, saveFiles, pathologyFileName):
 
 
     logger.info('setting pyensembl dir to ' + pyensemblDir)
@@ -244,6 +246,115 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, numPro
 
     logger.info('saving final VUS data  to ' + outputFileName)
     with open(outputFileName, 'w') as f:
+        f.write(json_dump)
+    f.close()
+
+    if not pathologyFileName is None:
+        logger.info('intersecting variants with pathology data')
+        intersectionFile = '/data/' + str(chromosome) + '-intersection.json'
+        intersectPathology(pathologyFileName, data_set, individualsPerVariant, intersectionFile )
+
+def intersectPathology(pathologyFile, data_set, ipvDF, intersectFile):
+    logger.info('reading data from ' + pathologyFile)
+    pathologyDF = pandas.read_csv(pathologyFile, sep='\t', header=0)
+
+    # determine total number of cases and controls for cohort frequency calculations
+    numCases = 0
+    numSpecialCases = 0
+    for i in range(len(pathologyDF)):
+        if pandas.isna(pathologyDF.iloc[i]['Age at onset']):
+            numSpecialCases += 1
+        else:
+            numCases += 1
+    numTotalCases = numCases + numSpecialCases
+    print('numCases = ' + str(numCases))
+    print('numSpecialCases = ' + str(numSpecialCases))
+
+    numMissing = 0
+
+    pathologyPerCoocIndividual = dict()
+    for variant in data_set['cooccurring vus']:
+        for pathogenicVariant in data_set['cooccurring vus'][variant]['pathogenic variants']:
+            pv = str(tuple(pathogenicVariant))
+            heterozygousIndividuals = ipvDF[pv]['heterozygous individuals']
+            pathologyPerCoocIndividual[pv] = dict()
+            pathologyPerCoocIndividual[pv]['pathologies'] = list()
+            pathologyPerCoocIndividual[pv]['numCases'] = 0
+            pathologyPerCoocIndividual[pv]['numSpecialCases'] = 0
+            for hi in heterozygousIndividuals:
+                pathologies = dict()
+                hiInt = int(hi)
+                row = pathologyDF.loc[pathologyDF['ID'] == hiInt]
+                if len(row) == 0:
+                    logger.warning('no pathology record for sample ' + hi)
+                    numMissing += 1
+                aao = row['Age at onset'].tolist()
+                if len(aao) == 0 or pandas.isna(aao[0]):
+                    pathologies['Age at onset'] = 0.0
+                    pathologyPerCoocIndividual[pv]['numSpecialCases'] += 1
+                else:
+                    pathologies['Age at onset'] = aao[0]
+                    pathologyPerCoocIndividual[pv]['numCases']  += 1
+                pathologies['Ovarian cancer history'] = row['Ovarian cancer history'].tolist()
+                pathologies['Bilateral breast cancer'] = row['Bilateral breast cancer'].tolist()
+                pathologies['Tissue type (3 groups)'] = row['Tissue type (3 groups)'].tolist()
+                pathologies['TMN classification / T'] = row['TMN classification / T'].tolist()
+                pathologies['TNM classification / N'] = row['TNM classification / N'].tolist()
+                pathologies['TNM classification / M'] = row['TNM classification / M'].tolist()
+                pathologies['ER'] = row['ER'].tolist()
+                pathologies['PgR'] = row['PgR'].tolist()
+                pathologies['HER2'] = row['HER2'].tolist()
+                pathologyPerCoocIndividual[pv]['pathologies'].append(pathologies)
+
+            pathologyPerCoocIndividual[pv]['caseFreq'] = float(pathologyPerCoocIndividual[pv]['numCases'] )/float(numTotalCases)
+            pathologyPerCoocIndividual[pv]['specialCaseFreq'] = float(pathologyPerCoocIndividual[pv]['numSpecialCases'] )/float(numTotalCases)
+
+
+    pathologyPerHomoIndividual = dict()
+    for variant in data_set['homozygous vus']:
+        homozygousIndividuals = ipvDF[variant]['homozygous individuals']
+        pathologyPerHomoIndividual[variant] = dict()
+        pathologyPerHomoIndividual[variant]['pathologies'] = list()
+        pathologyPerHomoIndividual[variant]['numCases'] = 0
+        pathologyPerHomoIndividual[variant]['numSpecialCases'] = 0
+        for hi in homozygousIndividuals:
+            pathologies = dict()
+            hiInt = int(hi)
+            row = pathologyDF.loc[pathologyDF['ID'] == hiInt]
+            if len(row) == 0:
+                logger.warning('no pathology record for sample ' + hi)
+                numMissing += 1
+            aao = row['Age at onset'].tolist()
+            if len(aao) == 0 or pandas.isna(aao[0]):
+                pathologies['Age at onset'] = 0.0
+                pathologyPerHomoIndividual[variant]['numSpecialCases'] += 1
+            else:
+                pathologies['Age at onset'] = aao[0]
+                pathologyPerHomoIndividual[variant]['numCases'] += 1
+            pathologies['Ovarian cancer history'] = row['Ovarian cancer history'].tolist()
+            pathologies['Bilateral breast cancer'] = row['Bilateral breast cancer'].tolist()
+            pathologies['Tissue type (3 groups)'] = row['Tissue type (3 groups)'].tolist()
+            pathologies['TMN classification / T'] = row['TMN classification / T'].tolist()
+            pathologies['TNM classification / N'] = row['TNM classification / N'].tolist()
+            pathologies['TNM classification / M'] = row['TNM classification / M'].tolist()
+            pathologies['ER'] = row['ER'].tolist()
+            pathologies['PgR'] = row['PgR'].tolist()
+            pathologies['HER2'] = row['HER2'].tolist()
+            pathologyPerHomoIndividual[variant]['pathologies'].append(pathologies)
+
+        pathologyPerHomoIndividual[variant]['caseFreq'] = float(pathologyPerHomoIndividual[variant]['numCases']) / float(numTotalCases)
+        pathologyPerHomoIndividual[variant]['specialCaseFreq'] = float(pathologyPerHomoIndividual[variant]['numSpecialCases']) / float(numTotalCases)
+
+
+    pathologyPerAllIndividuals = dict()
+    pathologyPerAllIndividuals['homozygous'] = pathologyPerHomoIndividual
+    pathologyPerAllIndividuals['cooccurring'] = pathologyPerCoocIndividual
+    pathologyPerAllIndividuals['numCases'] = numCases
+    pathologyPerAllIndividuals['numSpecialCases'] = numSpecialCases
+    pathologyPerAllIndividuals['numMissing'] = numMissing
+
+    json_dump = json.dumps(pathologyPerAllIndividuals, indent=4, sort_keys=True)
+    with open(intersectFile, 'w') as f:
         f.write(json_dump)
     f.close()
 
@@ -593,6 +704,8 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
                     continue
 
                 genotype = str(int(str(vcf['calldata/GT'][variant][i][0]) + str(vcf['calldata/GT'][variant][i][1]), 2))
+                seqCenter = "NA"
+                study = "NA"
                 if not annoDF is None:
                     try:
                         if 'CENTER' in individuals[i]:
@@ -605,9 +718,6 @@ def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromos
                         study = annoDF[annoDF['sample.id'] == individuals[i]]['study'].iloc[0]
                     except Exception as e:
                         study = "NA"
-                else:
-                    study = "NA"
-                    seqCenter = "NA"
                 if (c, p, r, a) in benignVariants:
                     variantsPerIndividual[individuals[i]]['benign'].append(((c, p, r, a), genotype, seqCenter, study))
                 elif (c, p, r, a) in pathogenicVariants:
