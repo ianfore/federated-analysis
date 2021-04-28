@@ -33,7 +33,7 @@ then
 		docker run -it --rm --user=1968:1968 -w /home/myuser -v "$(pwd)":/app  -v "${DATA_PATH}":/data:rw --entrypoint /bin/bash  ${COOCCUR_DOCKER_IMAGE_NAME}
 	fi
 
-elif [ $# -eq 9 ]
+elif [ $# -eq 10 ]
 then
 	
 	VCF_FILE=$1
@@ -45,11 +45,12 @@ then
         BRCA_VARS=$7
 	DATA_DIR=$8
 	SAVE_FILES=$9
+	PATHOLOGY_FILE=${10}
 
 
 	docker build -t ${COOCCUR_DOCKER_IMAGE_NAME} - < docker/cooccurrence/Dockerfile
 
-	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 --user=`id -u`:`id -g` -v ${APP_PATH}/cooccurrence:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${COOCCUR_DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder.py  --vcf $VCF_FILE --h $HG_VERSION --e $ENSEMBL_RELEASE --c $CHROM --p $PHASED  --g $GENE --b $BRCA_VARS  --d /var/tmp/pyensembl-cache  --data /data --save $SAVE_FILES
+	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 --user=`id -u`:`id -g` -v ${APP_PATH}/cooccurrence:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${COOCCUR_DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder.py  --vcf $VCF_FILE --h $HG_VERSION --e $ENSEMBL_RELEASE --c $CHROM --p $PHASED  --g $GENE --b $BRCA_VARS  --d /var/tmp/pyensembl-cache  --data /data --save $SAVE_FILES --pf $PATHOLOGY_FILE
 
 
 else

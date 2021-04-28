@@ -106,6 +106,7 @@ def main():
     print(options)
 
     dataDir = options.data
+    pathologyFileName = None
     if dataDir != None:
         outFileName = dataDir + "/" + str(options.c) + "-out.json"
         ipvFileName = dataDir + "/" + str(options.c) + "-ipv.json"
@@ -114,6 +115,8 @@ def main():
         toutFileName = dataDir + "/" + str(options.c) + "-tout.json"
         vcfFileName = dataDir + "/" + options.vcf
         brcaFileName = dataDir + "/" + options.b
+        if not options.pf is None:
+            pathologyFileName = dataDir + "/" + options.pf
     else:
         outFileName = str(options.c) + "-out.json"
         ipvFileName = str(options.c) + "-ipv.json"
@@ -122,13 +125,15 @@ def main():
         toutFileName = str(options.c) + "-tout.json"
         vcfFileName = options.vcf
         brcaFileName =  options.b
+        if not options.pf is None:
+            pathologyFileName = options.pf
     saveFiles = str2bool(options.save)
     phased = str2bool(options.p)
 
 
     run(int(options.h), int(options.e), options.c, options.g, phased, vcfFileName,
         int(options.n), brcaFileName, options.d, ipvFileName, vpiFileName, allFileName, options.anno,
-        outFileName, toutFileName, saveFiles, options.pf)
+        outFileName, toutFileName, saveFiles, pathologyFileName)
 
 def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, numProcs,
         brcaFileName, pyensemblDir, ipvFileName, vpiFileName, allVariantsFileName, annoFileName,
