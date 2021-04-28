@@ -303,6 +303,7 @@ def plotDists(topmedDict, nontopmedDict, topmedKeys, nontopmedKeys, graphFileNam
         # TODO combine / unstratify by ethnicities
         # TODO fix labels
         # TODO broad v non-broad
+        # TODO compare gnomad VC vs topmed VC (singletons, all, ?)
 
 if __name__ == "__main__":
     main()
