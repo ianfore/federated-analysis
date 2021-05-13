@@ -1,6 +1,5 @@
 import pandas as pd
 import logging
-import json
 from pyliftover import LiftOver
 import argparse
 

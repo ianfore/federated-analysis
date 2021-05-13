@@ -176,10 +176,9 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, numPro
     logger.info('finding variants per individual in ' + vcfFileName)
     t = time.time()
     q = Queue()
-    w = Queue()
     processList = list()
     for i in range(numProcs):
-        p = Process(target=findVarsPerIndividual, args=(q, w, vcf, benignVariants, pathogenicVariants, chromosome, gene,
+        p = Process(target=findVarsPerIndividual, args=(q, vcf, benignVariants, pathogenicVariants, chromosome, gene,
                                                         ensemblRelease, annoDF, i, numProcs, ))
         p.start()
         processList.append(p)
@@ -673,7 +672,7 @@ def getStartAndEnd(partitionSizes, threadID):
 
     return start, end
 
-def findVarsPerIndividual(q, w, vcf, benignVariants, pathogenicVariants, chromosome, gene, ensemblRelease, annoDF,
+def findVarsPerIndividual(q, vcf, benignVariants, pathogenicVariants, chromosome, gene, ensemblRelease, annoDF,
                           threadID, numProcesses):
     '''infoFields = ['variants/ABE', 'variants/ABZ', 'variants/AC', 'variants/AF',
      'variants/AN', 'variants/ANN', 'variants/AVGDP', 'variants/BETA_IF', 'variants/BQZ',
