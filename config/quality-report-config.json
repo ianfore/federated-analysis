@@ -1,5 +1,5 @@
 {
-	"outputFile": "",
+	"outputFile": "/data/data-quality-report.txt",
 	"fileName": "/data/shuffle.tsv",
 	"fileHeader": "True",
 	"fieldDelimiter": "\t",
