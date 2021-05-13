@@ -467,7 +467,10 @@ def findVariantsInBRCA(fileName, classStrings, hgVersion):
         # if cDNA (3' side or 5'?) => standard is using 5' strand
         logger.debug(brcaDF.loc[i, coordinateColumnBase + str(hgVersion)])
         coord = brcaDF.loc[i, coordinateColumnBase + str(hgVersion)].split(':')
-        chrom = int(coord[0].split('chr')[1])
+        if 'chr' in coord[0]:
+            chrom = int(coord[0].split('chr')[1])
+        else:
+            chrom = int(coord[0])
         if 'g.' in coord[1]:
             pos = int(coord[1].split('g.')[1])
         else:
