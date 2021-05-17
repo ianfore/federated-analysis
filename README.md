@@ -16,36 +16,25 @@ To prepare for a co-occurrence analysis, perform the following steps:
 $ git clone https://github.com/BRCAChallenge/federated-analysis
 ```
 
-2. Put a copy of the cases-only VCF file in the federated-analysis/data directory.
-
-```console
-$ cp <your-cases-only-vcf-file> federated-analysis/data
-```
-
-3. Make sure the cases-only VCF file has read permissions for the world.
-
-```console
-$ chmod a+r federated-analysis/data/<your-cases-only-vcf-file>
-```
-4. Put a copy of the controls-only VCF file in the federated-analysis/data directory.
+2. Put a copy of the VCF file in the federated-analysis/data directory.
 
 ```console
 $ cp <your-controls-only-vcf-file> federated-analysis/data
 ```
 
-5. Make sure the controls-only VCF file has read permissions for the world.
+3. Make sure the VCF file has read permissions for the world.
 
 ```console
-$ chmod a+r federated-analysis/data/<your-controls-only-vcf-file>
+$ chmod a+r federated-analysis/data/<your-vcf-file>
 ```
 
-6. Put a copy of the pathology report in the federated-analysis/data directory.
+4. Put a copy of the pathology report in the federated-analysis/data directory.
 
 ```console
 $ cp <your-pathology-report> federated-analysis/data
 ```
 
-7. Make sure the pathology report has read permissions for the world.
+5. Make sure the pathology report has read permissions for the world.
 
 ```console
 $ chmod a+r federated-analysis/data/<your-pathology-report>
@@ -61,28 +50,37 @@ To run the co-occurrence analysis, perform the following steps:
 $ cd federated-analysis/
 ```
 
-2. Run the runMe_nontopmed.sh script two times as follows:
+2. Run the runMe.sh script as follows:
 
-```console
-$ ./runMe_nontopmed.sh -v cases-only.vcf -m casesOnly -p pathology.tsv
+$ ./runMe.sh -dq quality-report-config.json -vf my.vcf -hg 38 -er 99 -c 13 -p True -g BRCA2 -pf brca-variants.tsv -dd data -st True -sp mypf.tsv ```console
 
-$ ./runMe_nontopmed.sh -v controls-only.vcf -m controlsOnly 
 ```
 
 where:
-* cases-only.vcf is the name of the VCF file in the federated-analysis/data directory which contains only case sample variants.
+* -dq is the data quality report configuration JSON file in the config directory
 
-* controls-only.vcf is the name of the VCF file in the federated-analysis/data directory which contains only control sample variants.
+* -vf is the VCF file in the data directory
 
-* pathology.tsv is the name of the pathology report located in the federated-analysis/data directory
+* -hg is the human genome version (37 or 38)
 
-* controlsOnly is a flag to tell the container that the VCF is a controls-only VCF
+* -er is the ensembl release (75 or 99)
 
-* casesOnly is a flag to tell the container that the VCF is a cases-only VCF
+* -c is the chromosome number
+
+* -p is the Boolean phased value (True or False)
+
+* -g is the gene name
+
+* -pf is the pathogenicity file
+
+* -dd is the data directory
+
+* -st is the Boolean save temps value (True or False)
+
+* -sp is the sample pathology file in the data directory 
 
 
-
-3. This will generate reports in federated-analysis/data called `13-out-casesOnly.json`, `13-out-controlsOnly.json`, `17-out-casesOnly.json`, and `17-out-controlsOnly.json` which contain a list of VUS, each in the following format:
+3. This will generate reports in federated-analysis/data called `13-out.json` which contain a list of VUS, each in the following format:
 
 ```json
 "(13, 32911164, 'T', 'A')": {
@@ -111,10 +109,11 @@ where:
 
 ```
 
-5. This will also create 2 JSON files called `13-intersection.json` and `17-intersection.json` in the federated-analysis/data directory which intersect the pathology report with the co-occurrence results when run in `casesOnly` mode.
+4. This will also create a JSON file called `13-intersection.json` in the federated-analysis/data directory which intersect the pathology report with the co-occurrence results.
 
-6. Finally, this will also create some ancillary files in the federated-analysis/data directory called `13-all-casesOnly.json`, `13-all-controlsOnly.json`, `17-all-controlsOnly.json`, and `17-all-casesOnly.json` .
+5. Finally, this will also create an ancillary files in the federated-analysis/data directory called `13-all.json`.
 
+6. Repeat step 2 for your other genes (e.g. BRCA1 on chromosome 17).
 
 # Pathology statistics
 

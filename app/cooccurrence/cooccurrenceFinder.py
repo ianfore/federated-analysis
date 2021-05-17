@@ -22,8 +22,9 @@ import pyensembl
 
 # p2 = P(VUS is pathogenic and patient carries a pathogenic variant in trans) (arbitrarily set by goldgar et al)
 # Integrated Evaluation of DNA Sequence Variants of Unknown Clinical Significance: Application to BRCA1 and BRCA2
-brca1_p2 = 0.0001
-brca2_p2 = 0.001
+#brca1_p2 = 0.0001
+#brca2_p2 = 0.001
+p2 = [0.0001, 0.001]
 
 rareCutoff = 0.01
 
@@ -74,6 +75,7 @@ def parseArgs():
     parser.add_argument("--c", dest="c", help="Chromosome of interest. Default=None", default=None)
     parser.add_argument("--g", dest="g", help="Gene of interest. Default=None", default=None)
     parser.add_argument("--p", dest="p", help="Phased (boolean). Default=False", default='True')
+    parser.add_argument("--p2", dest="p2", help="Probability VUS is pathogenic and carries pathogenic variant in trans", default=0.001)
     parser.add_argument("--n", dest="n", help="Number of processes. Default=1", default=cpu_count())
     parser.add_argument("--b", dest="b", help="BRCA variants file. Default=brca-variants", default=None)
     parser.add_argument("--d", dest="d", help="directory containing pyensembl-cache. Default=/var/tmp/pyensembl-cache",
@@ -129,13 +131,14 @@ def main():
             pathologyFileName = options.pf
     saveFiles = str2bool(options.save)
     phased = str2bool(options.p)
+    p2 = float(options.p2)
 
 
-    run(int(options.h), int(options.e), options.c, options.g, phased, vcfFileName,
+    run(int(options.h), int(options.e), options.c, options.g, phased, p2, vcfFileName,
         int(options.n), brcaFileName, options.d, ipvFileName, vpiFileName, allFileName, options.anno,
         outFileName, toutFileName, saveFiles, pathologyFileName)
 
-def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, numProcs,
+def run(hgVersion, ensemblRelease, chromosome, gene, phased, p2, vcfFileName, numProcs,
         brcaFileName, pyensemblDir, ipvFileName, vpiFileName, allVariantsFileName, annoFileName,
         outputFileName, toutFileName, saveFiles, pathologyFileName):
 
@@ -242,7 +245,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, vcfFileName, numPro
     f.close()
 
     logger.info('putting all the data together per vus')
-    dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, p1, n, k, brcaDF, hgVersion, cohortSize)
+    dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, p1, p2, n, k, brcaDF, hgVersion, cohortSize)
 
     #data_set = {"cooccurring vus": dataPerVus, "homozygous vus": homozygousPerVus, "homozygous benign": homozygousPerBenign}
     data_set = {"cooccurring vus": dataPerVus, "homozygous vus": homozygousPerVus}
@@ -585,7 +588,7 @@ def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelea
 
     return homozygousPerVus
 
-def calculateLikelihood(pathCoocs, p1, n, k, brcaDF, hgVersion, cohortSize):
+def calculateLikelihood(pathCoocs, p1, p2, n, k, df, hgVersion, cohortSize):
 
     # vus coocs data: {(vus1, vus2):[individuals]}
     # "([10, 89624243, 'A', 'G'], [10, 89624304, 'C', 'T')]": ["0000057940", "0000057950"],
@@ -604,15 +607,6 @@ def calculateLikelihood(pathCoocs, p1, n, k, brcaDF, hgVersion, cohortSize):
     # now calculate log likelihood ratios!
     likelihoodRatios = dict()
     for vus in n:
-        # decide whether to use brca1_p2 or brca2_p2
-        if vus[0] == 13:
-            p2 = brca2_p2
-        elif vus[0] == 17:
-            p2 = brca1_p2
-        else:
-            logger.error("unknown chromosome: " + str(vus[0]))
-            continue
-
         n_ = n[vus]
         k_ = k[vus]
         denom = ((p1 ** k_) * (1 - p1) ** (n_ - k_))
@@ -633,14 +627,7 @@ def calculateLikelihood(pathCoocs, p1, n, k, brcaDF, hgVersion, cohortSize):
     # put it all together in a single dict
     dataPerVus = dict()
     for vus in likelihoodRatios:
-        if vus[0] == 13:
-            p2 = brca2_p2
-        elif vus[0] == 17:
-            p2 = brca1_p2
-        else:
-            logger.error("unknown chromosome: " + str(vus[0]))
-            continue
-        maxPop, maxPopFreq, minPop, minPopFreq, allPopFreq = getGnomadData(brcaDF, vus, hgVersion)
+        maxPop, maxPopFreq, minPop, minPopFreq, allPopFreq = getGnomadData(df, vus, hgVersion)
         cohortFreq = float(n[vus]) / float(cohortSize)
         data = {'likelihood data': {'p1':p1, 'p2':p2, 'n':n[vus], 'k':k[vus], 'likelihood':likelihoodRatios[vus]},
                     'allele frequencies':{'maxPop':maxPop, 'maxPopFreq':maxPopFreq, 'minPop': minPop, 'minPopFreq': minPopFreq,
@@ -744,7 +731,6 @@ def getGenesForVariant(variant, ensemblRelease, geneOfInterest):
     try:
         #exons = ensembl.exons_at_locus(contig=int(chrom), position=int(pos))
         genes = ensembl.gene_names_at_locus(contig=int(chrom), position=int(pos))
-        # TODO could get BRCA and other gene like ZAR1L?
         g_of_i = set()
         g_of_i.add(geneOfInterest)
         g = set(genes)

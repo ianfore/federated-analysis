@@ -9,8 +9,8 @@ PATHOLOGY_DOCKER_IMAGE_NAME=brcachallenge/federated-analysis:pathology
 
 if [ $# -eq 0 ]
 then
-	echo "usage: $0 -dq qualityReportConfigFile -vf vcfFile -hg hgVersion -er ensemblRelease -c chromosome -p phased -g gene -vp variantPathogenicityFile -dd dataDirectory -st saveTempfiles -sp samplePathologyFile"
-	echo "example: $0 -dq quality-report-config.json -vf my.vcf -hg 38 -er 99 -c 13 -p True -g BRCA2 -vp brca-variants.tsv -dd data -st True -sp mypf.tsv " 
+	echo "usage: $0 -dq qualityReportConfigFile -vf vcfFile -hg hgVersion -er ensemblRelease -c chromosome -p phased -g gene -pf pathogenicityFile -dd dataDirectory -st saveTempfiles -sp samplePathologyFile"
+	echo "example: $0 -dq quality-report-config.json -vf my.vcf -hg 38 -er 99 -c 13 -p True -g BRCA2 -pf brca-variants.tsv -dd data -st True -sp mypf.tsv " 
 	exit 1
 	
 
