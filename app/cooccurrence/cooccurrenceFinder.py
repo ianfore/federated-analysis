@@ -24,9 +24,7 @@ import pyensembl
 # Integrated Evaluation of DNA Sequence Variants of Unknown Clinical Significance: Application to BRCA1 and BRCA2
 #brca1_p2 = 0.0001
 #brca2_p2 = 0.001
-p2 = [0.0001, 0.001]
 
-rareCutoff = 0.01
 
 classStrings = { 'Pathogenic':[ 'Pathogenic', 'Likely pathogenic'], 'Benign':[ 'Benign', 'Likely benign' ],
                  'Unknown': [ 'Uncertain significance', '-']}
@@ -74,10 +72,10 @@ def parseArgs():
     parser.add_argument("--e", dest="e", help="Ensembl version - 75 (for 37) or 99 (for 38). Default=None", default=None)
     parser.add_argument("--c", dest="c", help="Chromosome of interest. Default=None", default=None)
     parser.add_argument("--g", dest="g", help="Gene of interest. Default=None", default=None)
-    parser.add_argument("--p", dest="p", help="Phased (boolean). Default=False", default='True')
+    parser.add_argument("--p", dest="p", help="Phased (boolean). Default=True", default='True')
     parser.add_argument("--p2", dest="p2", help="Probability VUS is pathogenic and carries pathogenic variant in trans", default=0.001)
-    parser.add_argument("--n", dest="n", help="Number of processes. Default=1", default=cpu_count())
-    parser.add_argument("--b", dest="b", help="BRCA variants file. Default=brca-variants", default=None)
+    parser.add_argument("--n", dest="n", help="Number of processes. Default=cpu_count()", default=cpu_count())
+    parser.add_argument("--b", dest="b", help="pathogenicity  file. Default=None", default=None)
     parser.add_argument("--d", dest="d", help="directory containing pyensembl-cache. Default=/var/tmp/pyensembl-cache",
                         default='/var/tmp/pyensembl-cache')
     parser.add_argument("--pf", dest="pf", help="Pathology input file. Default=None", default=None)
@@ -116,7 +114,7 @@ def main():
         allFileName = dataDir + "/" + str(options.c) + "-all.json"
         toutFileName = dataDir + "/" + str(options.c) + "-tout.json"
         vcfFileName = dataDir + "/" + options.vcf
-        brcaFileName = dataDir + "/" + options.b
+        pathogenicityFileName = dataDir + "/" + options.b
         if not options.pf is None:
             pathologyFileName = dataDir + "/" + options.pf
     else:
@@ -126,7 +124,7 @@ def main():
         allFileName = str(options.c) + "-all.json"
         toutFileName = str(options.c) + "-tout.json"
         vcfFileName = options.vcf
-        brcaFileName =  options.b
+        pathogenicityFileName =  options.b
         if not options.pf is None:
             pathologyFileName = options.pf
     saveFiles = str2bool(options.save)
@@ -135,11 +133,11 @@ def main():
 
 
     run(int(options.h), int(options.e), options.c, options.g, phased, p2, vcfFileName,
-        int(options.n), brcaFileName, options.d, ipvFileName, vpiFileName, allFileName, options.anno,
+        int(options.n), pathogenicityFileName, options.d, ipvFileName, vpiFileName, allFileName, options.anno,
         outFileName, toutFileName, saveFiles, pathologyFileName)
 
 def run(hgVersion, ensemblRelease, chromosome, gene, phased, p2, vcfFileName, numProcs,
-        brcaFileName, pyensemblDir, ipvFileName, vpiFileName, allVariantsFileName, annoFileName,
+        pathogenicityFileName, pyensemblDir, ipvFileName, vpiFileName, allVariantsFileName, annoFileName,
         outputFileName, toutFileName, saveFiles, pathologyFileName):
 
 
@@ -154,10 +152,10 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, p2, vcfFileName, nu
     else:
         annoDF = None
 
-    logger.info('reading BRCA data from ' + brcaFileName)
+    logger.info('reading data from ' + pathogenicityFileName)
     t = time.time()
-    brcaDF, pathogenicVariants, benignVariants, unknownVariants = findVariantsInBRCA(brcaFileName, classStrings, hgVersion)
-    logger.info('elapsed time in findVariantsInBRCA() ' + str(time.time() -t))
+    df, pathogenicVariants, benignVariants, unknownVariants = findVariants(pathogenicityFileName, classStrings, hgVersion)
+    logger.info('elapsed time in findVariants() ' + str(time.time() -t))
 
     logger.info('number of pathogenic variants is ' + str(len(pathogenicVariants)))
     logger.info('number of benign variants is ' + str(len(benignVariants)))
@@ -196,7 +194,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, p2, vcfFileName, nu
     t = time.time()
     cohortSize = len(variantsPerIndividual)
     logger.info('number of samples is ' + str(cohortSize))
-    individualsPerVariant = findIndividualsPerVariant(variantsPerIndividual, vcf, chromosome,brcaDF, hgVersion,
+    individualsPerVariant = findIndividualsPerVariant(variantsPerIndividual, vcf, chromosome,df, hgVersion,
                                                         ensemblRelease, cohortSize)
     logger.info('number of records is ' + str(len(individualsPerVariant)))
     logger.info('elapsed time in updateIndividualsPerVariant() ' + str(time.time() -t))
@@ -214,12 +212,12 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, p2, vcfFileName, nu
 
     logger.info('finding homozygous individuals per vus')
     t = time.time()
-    homozygousPerVus = countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, gene)
+    homozygousPerVus = countHomozygousPerVus(variantsPerIndividual, df, hgVersion, ensemblRelease, gene)
     logger.info('elapsed time in countHomozygousPerVus() ' + str(time.time() -t))
 
     #logger.info('finding homozygous individuals per benign')
     #t = time.time()
-    #homozygousPerBenign = countHomozygousPerBenign(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, gene, rareCutoff)
+    #homozygousPerBenign = countHomozygousPerBenign(variantsPerIndividual, df, hgVersion, ensemblRelease, gene, rareCutoff)
     #logger.info('elapsed time in countHomozygousPerBenign() ' + str(time.time() - t))
 
     logger.info('finding individuals per cooc')
@@ -245,7 +243,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, p2, vcfFileName, nu
     f.close()
 
     logger.info('putting all the data together per vus')
-    dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, p1, p2, n, k, brcaDF, hgVersion, cohortSize)
+    dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, p1, p2, n, k, df, hgVersion, cohortSize)
 
     #data_set = {"cooccurring vus": dataPerVus, "homozygous vus": homozygousPerVus, "homozygous benign": homozygousPerBenign}
     data_set = {"cooccurring vus": dataPerVus, "homozygous vus": homozygousPerVus}
@@ -365,7 +363,7 @@ def intersectPathology(pathologyFile, data_set, ipvDF, intersectFile):
         f.write(json_dump)
     f.close()
 
-def findIndividualsPerVariant(variantsPerIndividual, vcf, chromosome, brcaDF, hgVersion, ensemblRelease, cohortSize):
+def findIndividualsPerVariant(variantsPerIndividual, vcf, chromosome, df, hgVersion, ensemblRelease, cohortSize):
     individualsPerVariant = dict()
     for individual in variantsPerIndividual:
         for b in variantsPerIndividual[individual]['benign']:
@@ -401,7 +399,7 @@ def findIndividualsPerVariant(variantsPerIndividual, vcf, chromosome, brcaDF, hg
                 individualsPerVariant[v]['homozygous individuals'].add(individual)
             else:
                 logger.warning('hmm - didnt add this vus ' + v)
-    individualsPerVariant = addVariantInfo(individualsPerVariant, vcf, chromosome, ['FIBC_I', 'FIBC_P'], brcaDF,
+    individualsPerVariant = addVariantInfo(individualsPerVariant, vcf, chromosome, ['FIBC_I', 'FIBC_P'], df,
                                            hgVersion, cohortSize, ensemblRelease)
 
     return individualsPerVariant
@@ -416,7 +414,7 @@ def isExonic(ensemblRelease, chrom, pos):
         return None
     return len(exons) > 0
 
-def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, brcaDF, hgVersion, cohortSize, ensemblRelease):
+def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, df, hgVersion, cohortSize, ensemblRelease):
     # add infoList stuff from INFO field
     for variant in range(len(vcf['calldata/GT'])):
         if int(vcf['variants/CHROM'][variant].replace('chr', '')) != int(chromosome):
@@ -429,7 +427,7 @@ def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, brcaDF, hgV
         if v in individualsPerVariant:
             '''for info in infoList:
                 individualsPerVariant[v][info] = vcf['variants/' + info][variant]'''
-            maxPop, maxFreq, minPop, minFreq, allPopFreq = getGnomadData(brcaDF, eval(v), hgVersion)
+            maxPop, maxFreq, minPop, minFreq, allPopFreq = getGnomadData(df, eval(v), hgVersion)
             individualsPerVariant[v]['maxPop'] = maxPop
             individualsPerVariant[v]['maxFreq'] = maxFreq
             individualsPerVariant[v]['minPop'] = minPop
@@ -457,19 +455,19 @@ def getAllVariantsPerClass(vpi):
 
     return allVariants
 
-def findVariantsInBRCA(fileName, classStrings, hgVersion):
-    brcaDF = pandas.read_csv(fileName, sep='\t', header=0, dtype=str)
+def findVariants(fileName, classStrings, hgVersion):
+    df = pandas.read_csv(fileName, sep='\t', header=0, dtype=str)
     # Genomic_Coordinate_hg37
     # chr13:g.32972575:G>T
     pathVars = set()
     benignVars = set()
     vusVars = set()
-    for i in range(len(brcaDF)):
+    for i in range(len(df)):
         # TODO use HGVS? problem is indel representation
         # TODO VCF has standard of using left-most pos where HGVS has standard of using right-most pos for indel
         # if cDNA (3' side or 5'?) => standard is using 5' strand
-        logger.debug(brcaDF.loc[i, coordinateColumnBase + str(hgVersion)])
-        coord = brcaDF.loc[i, coordinateColumnBase + str(hgVersion)].split(':')
+        logger.debug(df.loc[i, coordinateColumnBase + str(hgVersion)])
+        coord = df.loc[i, coordinateColumnBase + str(hgVersion)].split(':')
         if 'chr' in coord[0]:
             chrom = int(coord[0].split('chr')[1])
         else:
@@ -480,25 +478,25 @@ def findVariantsInBRCA(fileName, classStrings, hgVersion):
             pos = int(coord[1])
         ref, alt = coord[2].split('>')
         var = (chrom, pos, ref, alt)
-        if str(brcaDF.loc[i, sigColName]) in classStrings['Pathogenic']:
+        if str(df.loc[i, sigColName]) in classStrings['Pathogenic']:
             pathVars.add(var)
-        elif str(brcaDF.loc[i, sigColName]) in classStrings['Benign']:
+        elif str(df.loc[i, sigColName]) in classStrings['Benign']:
             benignVars.add(var)
-        elif str(brcaDF.loc[i, sigColName]) in classStrings['Unknown']:
+        elif str(df.loc[i, sigColName]) in classStrings['Unknown']:
             vusVars.add(var)
         else:
             continue
 
-    return brcaDF, pathVars, benignVars, vusVars
+    return df, pathVars, benignVars, vusVars
 
-def getGnomadData(brcaDF, vus, hgVersion):
+def getGnomadData(df, vus, hgVersion):
     # TODO write a unit test
     # 13:g.32393468:C>CT
     #hgString = 'chr' + str(vus[0][0]) + ':g.' + str(vus[0][1]) + ':' + str(vus[0][2]) + '>' + str(vus[0][3])
     hgString = 'chr' + str(vus[0]) + ':g.' + str(vus[1]) + ':' + str(vus[2]) + '>' + str(vus[3])
 
     # first, get list of columns for GnomAD allleles
-    gnomad = [v for v in list(brcaDF.columns) if 'GnomAD' in v]
+    gnomad = [v for v in list(df.columns) if 'GnomAD' in v]
     alleleFrequencies = [v for v in gnomad if 'Allele_frequency' in v]
 
     # second, get frequencies across exomes and genomes to determine max
@@ -512,7 +510,7 @@ def getGnomadData(brcaDF, vus, hgVersion):
     allPopFreq = dict()
     for af in alleleFrequencies:
         freq=0.0
-        alleleFreqList = brcaDF[brcaDF[coordinateColumnBase + str(hgVersion)] == hgString][af].tolist()
+        alleleFreqList = df[df[coordinateColumnBase + str(hgVersion)] == hgString][af].tolist()
         if alleleFreqList:
             try:
                 freq = float(alleleFreqList[0])
@@ -528,7 +526,7 @@ def getGnomadData(brcaDF, vus, hgVersion):
 
     return (maxPopulation, maxFrequency, minPopulation, minFrequency, allPopFreq)
 
-def countHomozygousPerBenign(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, geneOfInterest):
+def countHomozygousPerBenign(variantsPerIndividual, df, hgVersion, ensemblRelease, geneOfInterest):
     homozygousPerBenign = dict()
 
     for individual in variantsPerIndividual:
@@ -537,7 +535,7 @@ def countHomozygousPerBenign(variantsPerIndividual, brcaDF, hgVersion, ensemblRe
                 if str(ben[0]) not in homozygousPerBenign:
                     homozygousPerBenign[str(ben[0])] = dict()
                     homozygousPerBenign[str(ben[0])]['count'] = 0
-                    maxPop, maxPopFreq, minPop, minPopFreq, allPopFreq = getGnomadData(brcaDF, ben[0], hgVersion)
+                    maxPop, maxPopFreq, minPop, minPopFreq, allPopFreq = getGnomadData(df, ben[0], hgVersion)
                     homozygousPerBenign[str(ben[0])]['maxPop'] = maxPop
                     homozygousPerBenign[str(ben[0])]['maxPopFreq'] = maxPopFreq
                     homozygousPerBenign[str(ben[0])]['minPop'] = minPop
@@ -549,16 +547,11 @@ def countHomozygousPerBenign(variantsPerIndividual, brcaDF, hgVersion, ensemblRe
         maxPopFreq = homozygousPerBenign[ben]['maxPopFreq']
         cohortFreq = float(homozygousPerBenign[ben]['count'])/ float(cohortSize)
         homozygousPerBenign[ben]['cohortFreq'] = float(cohortFreq)
-        if cohortFreq < rareCutoff or (maxPopFreq != 0 and maxPopFreq < rareCutoff):
-            homozygousPerBenign[ben]['RARE']= True
-        else:
-            homozygousPerBenign[ben]['RARE'] = False
-
 
     return homozygousPerBenign
 
 
-def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelease, geneOfInterest):
+def countHomozygousPerVus(variantsPerIndividual, df, hgVersion, ensemblRelease, geneOfInterest):
     homozygousPerVus = dict()
 
     for individual in variantsPerIndividual:
@@ -567,7 +560,7 @@ def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelea
                 if str(vus[0]) not in homozygousPerVus:
                     homozygousPerVus[str(vus[0])] = dict()
                     homozygousPerVus[str(vus[0])]['count'] = 0
-                    maxPop, maxPopFreq, minPop, minPopFreq, allPopFreq = getGnomadData(brcaDF, vus[0], hgVersion)
+                    maxPop, maxPopFreq, minPop, minPopFreq, allPopFreq = getGnomadData(df, vus[0], hgVersion)
                     homozygousPerVus[str(vus[0])]['maxPop'] = maxPop
                     homozygousPerVus[str(vus[0])]['maxPopFreq'] = maxPopFreq
                     homozygousPerVus[str(vus[0])]['minPop'] = minPop
@@ -580,10 +573,6 @@ def countHomozygousPerVus(variantsPerIndividual, brcaDF, hgVersion, ensemblRelea
         maxPopFreq = homozygousPerVus[vus]['maxPopFreq']
         cohortFreq = float(homozygousPerVus[vus]['count'])/ float(cohortSize)
         homozygousPerVus[vus]['cohortFreq'] = float(cohortFreq)
-        if cohortFreq < rareCutoff or (maxPopFreq != 0 and maxPopFreq < rareCutoff):
-            homozygousPerVus[vus]['RARE']= True
-        else:
-            homozygousPerVus[vus]['RARE'] = False
 
 
     return homozygousPerVus
