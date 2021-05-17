@@ -4,7 +4,9 @@
 DATA_DIR=/private/groups/patenlab/jcasalet/TOPMED_WORKDIR/DATA/PUB/MANDY/BROAD/13/AMR
 CHROM=13
 GENE=BRCA2
-VCF_FILENAME=f8_chr13_brca2_amr-broad.vcf
+P2=0.001
+VCF_FILENAME=f8_chr13_brca2_mc_broad_amr.vcf
+SAVE_FILES=True
 
 TOP_DIR=/private/groups/patenlab/jcasalet/federated-analysis
 PYTHON_SCRIPT=${TOP_DIR}/app/cooccurrence/cooccurrenceFinder.py
@@ -19,10 +21,11 @@ VPI_FILENAME=${CHROM}-vpi.json \
 IPV_FILENAME=${CHROM}-ipv.json \
 TOUT_FILENAME=${CHROM}-tout.json \
 HG_VERSION=38 \
-FREEZE=8 \
 ENSEMBL_RELEASE=99 \
 PHASED=True \
+P2=$P2 \
 CHROM=$CHROM \
 GENE=$GENE \
 NUM_CORES=$(grep -c processor /proc/cpuinfo) \
+SAVE_FILES=$SAVE_FILES \
 -c /private/groups/patenlab/jcasalet/WDL/cromwell.local.conf 
