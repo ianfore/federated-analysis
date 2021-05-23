@@ -34,8 +34,7 @@ def run(myFDA):
                 'with': round(statistics.mean(removeNA(dfWithPath['Age at onset'].tolist())), 2),
                 'without': round(statistics.mean(removeNA(dfWithoutPath['Age at onset'].tolist())), 2)}
         except Exception as e:
-            pass
-            #return False
+            return False
 
 
         # TNM clinical classification: N
@@ -58,9 +57,7 @@ def run(myFDA):
                 getPercentage(results, 'TNM clinical classification N', '2', ['0', '1', '2', '3'])
                 getPercentage(results, 'TNM clinical classification N', '3', ['0', '1', '2', '3'])
             except Exception as e:
-                pass
-                #return False
-
+                return False
 
         # Estrogen-receptor status
         if 'ER' in fieldsOfInterest:
@@ -76,8 +73,7 @@ def run(myFDA):
                 getPercentage(results, 'Estrogen-receptor status', 'Positive', ['Positive', 'Negative'])
                 getFisherExact(RScriptPath, results, 'Estrogen-receptor status', ['Positive', 'Negative'])
             except Exception as e:
-                pass
-                #return False
+                return False
 
         # Progesterone-receptor status
         if 'PgR' in fieldsOfInterest:
@@ -93,8 +89,7 @@ def run(myFDA):
                 getPercentage(results, 'Progesterone-receptor status', 'Positive', ['Positive', 'Negative'])
                 getFisherExact(RScriptPath, results, 'Progesterone-receptor status', ['Positive', 'Negative'])
             except Exception as e:
-                pass
-                #return False
+                return False
 
         # Triple negative breast cancer
         if 'PgR' in fieldsOfInterest and 'ER' in fieldsOfInterest and 'HER2' in fieldsOfInterest:
@@ -116,33 +111,36 @@ def run(myFDA):
                 getPercentage(results, 'Triple negative breast cancer', 'Yes', ['Yes', 'No'])
                 getFisherExact(RScriptPath, results, 'Triple negative breast cancer', ['Yes', 'No'])
             except Exception as e:
-                pass
-            #return False
+                return False
 
-        # TNM clinical classification: M
-        callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'TNM classification / M', fieldsOfInterest, RScriptPath)
+        for field in ['TNM classification / M', 'Family history / breast cancer', 'Family history / breast cancer',
+                      'Family history / ovarian cancer', 'Family history / pancreatic cancer', 'Family history / stomach cancer',
+                      'Family history / liver cancer', 'Family history / bone tumor', 'Family history / bladder cancer' ]:
+            callSQLOnBinary(results, dfWithPath, dfWithoutPath, field, fieldsOfInterest, RScriptPath)
+
+        '''# TNM clinical classification: M
+        returnCodes &= callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'TNM classification / M', fieldsOfInterest, RScriptPath)
 
         # Family history of breast cancer
-        callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'Family history / breast cancer', fieldsOfInterest, RScriptPath)
+        returnCodes &= callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'Family history / breast cancer', fieldsOfInterest, RScriptPath)
 
         # Family history of ovarian cancer
-        callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'Family history / ovarian cancer', fieldsOfInterest, RScriptPath)
+        returnCodes &= callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'Family history / ovarian cancer', fieldsOfInterest, RScriptPath)
 
         # Family history of pancreas cancer
-        callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'Family history / pancreatic cancer', fieldsOfInterest, RScriptPath)
+        returnCodes &= callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'Family history / pancreatic cancer', fieldsOfInterest, RScriptPath)
 
         # Family history of gastric (stomach?) cancer
-        callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'Family history / stomach cancer', fieldsOfInterest, RScriptPath)
+        returnCodes &= callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'Family history / stomach cancer', fieldsOfInterest, RScriptPath)
 
         # Family history of liver cancer
-        callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'Family history / liver cancer', fieldsOfInterest, RScriptPath)
+        returnCodes &= callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'Family history / liver cancer', fieldsOfInterest, RScriptPath)
 
         # Family history of bone tumor
-        callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'Family history / bone tumor', fieldsOfInterest, RScriptPath)
+        returnCodes &= callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'Family history / bone tumor', fieldsOfInterest, RScriptPath)
 
         # Family history of bladder cancer
-        callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'Family history / bladder cancer', fieldsOfInterest, RScriptPath)
-
+        returnCodes &= callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'Family history / bladder cancer', fieldsOfInterest, RScriptPath)'''
 
         # define fileObject based on config
         if myFDA.configFile.outputFile == "":
@@ -151,8 +149,6 @@ def run(myFDA):
             fileObject = open(myFDA.configFile.outputFile, mode='a')
 
         prettyPrint(results, fileObject)
-
-        return True
 
     except Exception as e:
         print('exception in supplementaryTable4.run() method: ' + str(e))
@@ -176,7 +172,7 @@ def callSQLOnBinary(results, dfWithPath, dfWithoutPath, fieldName, fieldsOfInter
                 'No': psql.sqldf("select * from dfWithoutPath where `" + fieldName + "` = 0",
                                  locals()).shape[0]}}
     except Exception as e:
-        pass
+        return
     getPercentage(results, fieldName, 'Yes', ['Yes', 'No'])
     getFisherExact(RScriptPath, results, fieldName, ['Yes', 'No'])
 
@@ -187,7 +183,10 @@ def getPercentage(results, key, value, allValues):
         num = results[key][path][value]
         for v in allValues:
             denom += results[key][path][v]
-        results[key][path]['% ' + value] = str(round(100 * num / denom, 2)) + '%'
+        if denom != 0:
+            results[key][path]['% ' + value] = str(round(100 * num / denom, 2)) + '%'
+        else:
+            results[key][path]['% ' + value] = str(0) + '%'
 
 def getFisherExact(RScriptPath, results, key, allValues):
     # create 2x2 contingency table
