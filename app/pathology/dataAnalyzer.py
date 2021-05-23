@@ -22,7 +22,7 @@ class ConfigFile:
     """
 
     def __init__(self, fileName, fileHeader, fieldDelimiter, fieldFilters, outputFile, printBadValues,
-                 printConfigFileInfo, suppressAllOutput):
+                 printConfigFileInfo, suppressAllOutput, RScriptPath):
         self.fileName = fileName
         self.fileHeader = fileHeader
         self.fieldDelimiter = fieldDelimiter
@@ -31,6 +31,7 @@ class ConfigFile:
         self.printBadValues = printBadValues
         self.printConfigFileInfo = printConfigFileInfo
         self.suppressAllOutput = suppressAllOutput
+        self.RScriptPath = RScriptPath
 
         if self.outputFile != '' and os.path.exists(self.outputFile):
             print('output file ' + self.outputFile + ' exists!', file=sys.stderr)
@@ -104,7 +105,7 @@ class FederatedDataAnalyzer:
 
         configFile = ConfigFile(data['fileName'], data['fileHeader'], data['fieldDelimiter'], data['fieldFilters'],
                                 data['outputFile'], data['printBadValues'], data['printConfigFileInfo'],
-                                data['suppressAllOutput'])
+                                data['suppressAllOutput'], data['RScriptPath'])
         fieldFilters = dict()
         for f in configFile.fieldFilters:
             fieldFilters[f['fieldName']] = f
@@ -313,9 +314,9 @@ def main():
     myFederatedDataAnalyzer = FederatedDataAnalyzer(configFileName)
 
     # run analyzer and any custom code
-    '''return myFederatedDataAnalyzer.run() and customDataAnalyzer.run(myFederatedDataAnalyzer) \
-            and supplementaryTable4.run(myFederatedDataAnalyzer)'''
-    return myFederatedDataAnalyzer.run()
+    return myFederatedDataAnalyzer.run() and customDataAnalyzer.run(myFederatedDataAnalyzer) \
+            and supplementaryTable4.run(myFederatedDataAnalyzer)
+    #return myFederatedDataAnalyzer.run()
 
     #return myFederatedDataAnalyzer.run() and app.supplementaryTable4.run(myFederatedDataAnalyzer)
 

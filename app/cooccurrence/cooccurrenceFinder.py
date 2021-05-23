@@ -215,11 +215,6 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, p2, vcfFileName, nu
     homozygousPerVus = countHomozygousPerVus(variantsPerIndividual, df, hgVersion, ensemblRelease, gene)
     logger.info('elapsed time in countHomozygousPerVus() ' + str(time.time() -t))
 
-    #logger.info('finding homozygous individuals per benign')
-    #t = time.time()
-    #homozygousPerBenign = countHomozygousPerBenign(variantsPerIndividual, df, hgVersion, ensemblRelease, gene, rareCutoff)
-    #logger.info('elapsed time in countHomozygousPerBenign() ' + str(time.time() - t))
-
     logger.info('finding individuals per cooc')
     t = time.time()
     individualsPerPathogenicCooccurrence, n, k = findIndividualsPerCooccurrence(variantsPerIndividual, ensemblRelease,
@@ -245,7 +240,6 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, p2, vcfFileName, nu
     logger.info('putting all the data together per vus')
     dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, p1, p2, n, k, df, hgVersion, cohortSize)
 
-    #data_set = {"cooccurring vus": dataPerVus, "homozygous vus": homozygousPerVus, "homozygous benign": homozygousPerBenign}
     data_set = {"cooccurring vus": dataPerVus, "homozygous vus": homozygousPerVus}
     json_dump = json.dumps(data_set, cls=NpEncoder)
 
@@ -300,16 +294,56 @@ def intersectPathology(pathologyFile, data_set, ipvDF, intersectFile):
                 else:
                     pathologies['Age at onset'] = aao[0]
                     pathologyPerCoocIndividual[pv]['numCases']  += 1
-                pathologies['Ovarian cancer history'] = row['Ovarian cancer history'].tolist()
-                pathologies['Bilateral breast cancer'] = row['Bilateral breast cancer'].tolist()
-                pathologies['Tissue type (3 groups)'] = row['Tissue type (3 groups)'].tolist()
-                pathologies['TMN classification / T'] = row['TMN classification / T'].tolist()
-                pathologies['TNM classification / N'] = row['TNM classification / N'].tolist()
-                pathologies['TNM classification / M'] = row['TNM classification / M'].tolist()
-                pathologies['ER'] = row['ER'].tolist()
-                pathologies['PgR'] = row['PgR'].tolist()
-                pathologies['HER2'] = row['HER2'].tolist()
-                pathologyPerCoocIndividual[pv]['pathologies'].append(pathologies)
+                try:
+                    pathologies['Ovarian cancer history'] = row['Ovarian cancer history'].tolist()
+                except Exception as e:
+                    pass
+                    #return False
+                try:
+                    pathologies['Bilateral breast cancer'] = row['Bilateral breast cancer'].tolist()
+                except Exception as e:
+                    pass
+                    #return False
+                try:
+                    pathologies['Tissue type (3 groups)'] = row['Tissue type (3 groups)'].tolist()
+                except Exception as e:
+                    pass
+                    #return False
+                try:
+                    pathologies['TMN classification / T'] = row['TMN classification / T'].tolist()
+                except Exception as e:
+                    pass
+                    #return False
+                try:
+                    pathologies['TNM classification / N'] = row['TNM classification / N'].tolist()
+                except Exception as e:
+                    pass
+                    #return False
+                try:
+                    pathologies['TNM classification / M'] = row['TNM classification / M'].tolist()
+                except Exception as e:
+                    pass
+                    #return False
+                try:
+                    pathologies['ER'] = row['ER'].tolist()
+                except Exception as e:
+                    pass
+                    #return False
+                try:
+                    pathologies['PgR'] = row['PgR'].tolist()
+                except Exception as e:
+                    pass
+                    #return False
+                try:
+                    pathologies['HER2'] = row['HER2'].tolist()
+                except Exception as e:
+                    pass
+                    #return False
+                try:
+                    pathologyPerCoocIndividual[pv]['pathologies'].append(pathologies)
+                except Exception as e:
+                    pass
+                    #return False
 
             pathologyPerCoocIndividual[pv]['caseFreq'] = float(pathologyPerCoocIndividual[pv]['numCases'] )/float(numTotalCases)
             pathologyPerCoocIndividual[pv]['specialCaseFreq'] = float(pathologyPerCoocIndividual[pv]['numSpecialCases'] )/float(numTotalCases)
@@ -336,16 +370,56 @@ def intersectPathology(pathologyFile, data_set, ipvDF, intersectFile):
             else:
                 pathologies['Age at onset'] = aao[0]
                 pathologyPerHomoIndividual[variant]['numCases'] += 1
-            pathologies['Ovarian cancer history'] = row['Ovarian cancer history'].tolist()
-            pathologies['Bilateral breast cancer'] = row['Bilateral breast cancer'].tolist()
-            pathologies['Tissue type (3 groups)'] = row['Tissue type (3 groups)'].tolist()
-            pathologies['TMN classification / T'] = row['TMN classification / T'].tolist()
-            pathologies['TNM classification / N'] = row['TNM classification / N'].tolist()
-            pathologies['TNM classification / M'] = row['TNM classification / M'].tolist()
-            pathologies['ER'] = row['ER'].tolist()
-            pathologies['PgR'] = row['PgR'].tolist()
-            pathologies['HER2'] = row['HER2'].tolist()
-            pathologyPerHomoIndividual[variant]['pathologies'].append(pathologies)
+            try:
+                pathologies['Ovarian cancer history'] = row['Ovarian cancer history'].tolist()
+            except Exception as e:
+                pass
+                #return False
+            try:
+                pathologies['Bilateral breast cancer'] = row['Bilateral breast cancer'].tolist()
+            except Exception as e:
+                pass
+                #return False
+            try:
+                pathologies['Tissue type (3 groups)'] = row['Tissue type (3 groups)'].tolist()
+            except Exception as e:
+                pass
+                #return False
+            try:
+                pathologies['TMN classification / T'] = row['TMN classification / T'].tolist()
+            except Exception as e:
+                pass
+                #return False
+            try:
+                pathologies['TNM classification / N'] = row['TNM classification / N'].tolist()
+            except Exception as e:
+                pass
+                #return False
+            try:
+                pathologies['TNM classification / M'] = row['TNM classification / M'].tolist()
+            except Exception as e:
+                pass
+                #return False
+            try:
+                pathologies['ER'] = row['ER'].tolist()
+            except Exception as e:
+                pass
+                #return False
+            try:
+                pathologies['PgR'] = row['PgR'].tolist()
+            except Exception as e:
+                pass
+                #return False
+            try:
+                pathologies['HER2'] = row['HER2'].tolist()
+            except Exception as e:
+                pass
+                #return False
+            try:
+                pathologyPerHomoIndividual[variant]['pathologies'].append(pathologies)
+            except Exception as e:
+                pass
+                #return False
 
         pathologyPerHomoIndividual[variant]['caseFreq'] = float(pathologyPerHomoIndividual[variant]['numCases']) / float(numTotalCases)
         pathologyPerHomoIndividual[variant]['specialCaseFreq'] = float(pathologyPerHomoIndividual[variant]['numSpecialCases']) / float(numTotalCases)

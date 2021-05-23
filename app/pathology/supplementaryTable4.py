@@ -14,6 +14,10 @@ def removeNA(myList):
 def run(myFDA):
 
     results = dict()
+    RScriptPath = myFDA.configFile.RScriptPath
+    fieldsOfInterest = dict()
+    for fieldDict in myFDA.configFile.fieldFilters:
+        fieldsOfInterest[fieldDict['fieldName']] = fieldDict['fieldValues']
 
     try:
         dfWithPath = myFDA.dataFile[myFDA.dataFile.CarrierGene != 'NonCarrier']
@@ -25,196 +29,119 @@ def run(myFDA):
             'without': len(dfWithoutPath)}
 
         # Age at onset
-        results['Age at onset'] = {
-            'with': round(statistics.mean(removeNA(dfWithPath['Age at onset'].tolist())), 2),
-            'without': round(statistics.mean(removeNA(dfWithoutPath['Age at onset'].tolist())), 2)}
+        try:
+            results['Age at onset'] = {
+                'with': round(statistics.mean(removeNA(dfWithPath['Age at onset'].tolist())), 2),
+                'without': round(statistics.mean(removeNA(dfWithoutPath['Age at onset'].tolist())), 2)}
+        except Exception as e:
+            pass
+            #return False
 
-        # Age at entry (?)
-
-        # Age at diagnosis (?)
-
-        # History of ovarian cancer
-        results['History of ovarian cancer'] = {
-            'with': {
-                'Yes': psql.sqldf("select * from dfWithPath where `Ovarian cancer history` = 1",locals()).shape[0],
-                'No': psql.sqldf("select * from dfWithPath where `Ovarian cancer history` = 0",locals()).shape[0]},
-            'without': {
-                'Yes': psql.sqldf("select * from dfWithoutPath where `Ovarian cancer history` = 1",locals()).shape[0],
-                'No': psql.sqldf("select * from dfWithoutPath where `Ovarian cancer history` = 0",locals()).shape[0]}}
-
-        getPercentage(results, 'History of ovarian cancer', 'Yes', ['Yes', 'No'])
-        getFisherExact(results, 'History of ovarian cancer', ['Yes', 'No'])
-
-        # Location of cancer (?)
 
         # TNM clinical classification: N
-        results['TNM clinical classification N'] = {
-            'with': {
-                '0': psql.sqldf("select * from dfWithPath where `TNM classification / N` = 0", locals()).shape[0],
-                '1': psql.sqldf("select * from dfWithPath where `TNM classification / N` = 1", locals()).shape[0],
-                '2': psql.sqldf("select * from dfWithPath where `TNM classification / N` = 2", locals()).shape[0],
-                '3': psql.sqldf("select * from dfWithPath where `TNM classification / N` = 3", locals()).shape[0]},
-            'without': {
-                '0': psql.sqldf("select * from dfWithoutPath where `TNM classification / N` = 0", locals()).shape[0],
-                '1': psql.sqldf("select * from dfWithoutPath where `TNM classification / N` = 1",locals()).shape[0],
-                '2': psql.sqldf("select * from dfWithoutPath where `TNM classification / N` = 2",locals()).shape[0],
-                '3': psql.sqldf("select * from dfWithoutPath where `TNM classification / N` = 3",locals()).shape[0]}}
+        if 'TNM classification / N' in fieldsOfInterest:
+            try:
+                results['TNM clinical classification N'] = {
+                    'with': {
+                        '0': psql.sqldf("select * from dfWithPath where `TNM classification / N` = 0", locals()).shape[0],
+                        '1': psql.sqldf("select * from dfWithPath where `TNM classification / N` = 1", locals()).shape[0],
+                        '2': psql.sqldf("select * from dfWithPath where `TNM classification / N` = 2", locals()).shape[0],
+                        '3': psql.sqldf("select * from dfWithPath where `TNM classification / N` = 3", locals()).shape[0]},
+                    'without': {
+                        '0': psql.sqldf("select * from dfWithoutPath where `TNM classification / N` = 0", locals()).shape[0],
+                        '1': psql.sqldf("select * from dfWithoutPath where `TNM classification / N` = 1",locals()).shape[0],
+                        '2': psql.sqldf("select * from dfWithoutPath where `TNM classification / N` = 2",locals()).shape[0],
+                        '3': psql.sqldf("select * from dfWithoutPath where `TNM classification / N` = 3",locals()).shape[0]}}
 
-        getPercentage(results, 'TNM clinical classification N', '0', ['0', '1', '2', '3'])
-        getPercentage(results, 'TNM clinical classification N', '1', ['0', '1', '2', '3'])
-        getPercentage(results, 'TNM clinical classification N', '2', ['0', '1', '2', '3'])
-        getPercentage(results, 'TNM clinical classification N', '3', ['0', '1', '2', '3'])
-
-
-
-        # TNM clinical classification: M
-        results['TNM clinical classification M'] = {
-            'with': {
-                '0': psql.sqldf("select * from dfWithPath where `TNM classification / M` = 0", locals()).shape[0],
-                '1': psql.sqldf("select * from dfWithPath where `TNM classification / M` = 1", locals()).shape[0]},
-            'without': {
-                '0': psql.sqldf("select * from dfWithoutPath where `TNM classification / M` = 0", locals()).shape[0],
-                '1': psql.sqldf("select * from dfWithoutPath where `TNM classification / M` = 1",locals()).shape[0]}}
-
-        getPercentage(results, 'TNM clinical classification M', '0', ['0', '1'])
-        getPercentage(results, 'TNM clinical classification M', '1', ['0', '1'])
-        getFisherExact(results, 'TNM clinical classification M', ['0', '1'])
+                getPercentage(results, 'TNM clinical classification N', '0', ['0', '1', '2', '3'])
+                getPercentage(results, 'TNM clinical classification N', '1', ['0', '1', '2', '3'])
+                getPercentage(results, 'TNM clinical classification N', '2', ['0', '1', '2', '3'])
+                getPercentage(results, 'TNM clinical classification N', '3', ['0', '1', '2', '3'])
+            except Exception as e:
+                pass
+                #return False
 
 
         # Estrogen-receptor status
-        results['Estrogen-receptor status'] = {
-            'with': {
-                'Positive': psql.sqldf("select * from dfWithPath where `ER` = 'Positive'", locals()).shape[0],
-                'Negative': psql.sqldf("select * from dfWithPath where `ER` = 'Negative'", locals()).shape[0]},
-            'without': {
-                'Positive': psql.sqldf("select * from dfWithoutPath where `ER` = 'Positive'", locals()).shape[0],
-                'Negative': psql.sqldf("select * from dfWithoutPath where `ER` = 'Negative'", locals()).shape[0]}}
+        if 'ER' in fieldsOfInterest:
+            try:
+                results['Estrogen-receptor status'] = {
+                    'with': {
+                        'Positive': psql.sqldf("select * from dfWithPath where `ER` = 'Positive'", locals()).shape[0],
+                        'Negative': psql.sqldf("select * from dfWithPath where `ER` = 'Negative'", locals()).shape[0]},
+                    'without': {
+                        'Positive': psql.sqldf("select * from dfWithoutPath where `ER` = 'Positive'", locals()).shape[0],
+                        'Negative': psql.sqldf("select * from dfWithoutPath where `ER` = 'Negative'", locals()).shape[0]}}
 
-        getPercentage(results, 'Estrogen-receptor status', 'Positive', ['Positive', 'Negative'])
-        getFisherExact(results, 'Estrogen-receptor status', ['Positive', 'Negative'])
-
+                getPercentage(results, 'Estrogen-receptor status', 'Positive', ['Positive', 'Negative'])
+                getFisherExact(RScriptPath, results, 'Estrogen-receptor status', ['Positive', 'Negative'])
+            except Exception as e:
+                pass
+                #return False
 
         # Progesterone-receptor status
-        results['Progesterone-receptor status'] = {
-            'with': {
-                'Positive': psql.sqldf("select * from dfWithPath where `PgR` = 'Positive'", locals()).shape[0],
-                'Negative': psql.sqldf("select * from dfWithPath where `PgR` = 'Negative'", locals()).shape[0]},
-            'without': {
-                'Positive': psql.sqldf("select * from dfWithoutPath where `PgR` = 'Positive'", locals()).shape[0],
-                'Negative': psql.sqldf("select * from dfWithoutPath where `PgR` = 'Negative'", locals()).shape[0]}}
+        if 'PgR' in fieldsOfInterest:
+            try:
+                results['Progesterone-receptor status'] = {
+                    'with': {
+                        'Positive': psql.sqldf("select * from dfWithPath where `PgR` = 'Positive'", locals()).shape[0],
+                        'Negative': psql.sqldf("select * from dfWithPath where `PgR` = 'Negative'", locals()).shape[0]},
+                    'without': {
+                        'Positive': psql.sqldf("select * from dfWithoutPath where `PgR` = 'Positive'", locals()).shape[0],
+                        'Negative': psql.sqldf("select * from dfWithoutPath where `PgR` = 'Negative'", locals()).shape[0]}}
 
-        getPercentage(results, 'Progesterone-receptor status', 'Positive', ['Positive', 'Negative'])
-        getFisherExact(results, 'Progesterone-receptor status', ['Positive', 'Negative'])
-
+                getPercentage(results, 'Progesterone-receptor status', 'Positive', ['Positive', 'Negative'])
+                getFisherExact(RScriptPath, results, 'Progesterone-receptor status', ['Positive', 'Negative'])
+            except Exception as e:
+                pass
+                #return False
 
         # Triple negative breast cancer
-        results['Triple negative breast cancer'] = {
-            'with': {
-                'Yes': psql.sqldf("select * from dfWithPath where (`PgR` = 'Negative' and `ER` = 'Negative') and \
-                (`HER2` = '0'  or `HER2` = '1+')", locals()).shape[0],
-                'No': psql.sqldf("select * from (select * from dfWithPath where  `PgR` != 'NA' and  `ER` != 'NA' \
-                and  `HER2` != 'NA') T where  T.`PgR` != 'Negative' or  T.`ER` != 'Negative' or  (T.`HER2` != '0' and \
-                T.`HER2` != '1+')", locals()).shape[0]},
-            'without': {
-                'Yes': psql.sqldf("select * from dfWithoutPath where (`PgR` = 'Negative' and `ER` = 'Negative') and \
-                (`HER2` = '0'  or `HER2` = '1+')", locals()).shape[0],
-                'No': psql.sqldf("select * from (select * from dfWithoutPath where  `PgR` != 'NA' and  `ER` != 'NA' \
-                and  `HER2` != 'NA') T where  T.`PgR` != 'Negative' or  T.`ER` != 'Negative' or  (T.`HER2` != '0' and \
-                T.`HER2` != '1+')", locals()).shape[0]}}
+        if 'PgR' in fieldsOfInterest and 'ER' in fieldsOfInterest and 'HER2' in fieldsOfInterest:
+            try:
+                results['Triple negative breast cancer'] = {
+                    'with': {
+                        'Yes': psql.sqldf("select * from dfWithPath where (`PgR` = 'Negative' and `ER` = 'Negative') and \
+                        (`HER2` = '0'  or `HER2` = '1+')", locals()).shape[0],
+                        'No': psql.sqldf("select * from (select * from dfWithPath where  `PgR` != 'NA' and  `ER` != 'NA' \
+                        and  `HER2` != 'NA') T where  T.`PgR` != 'Negative' or  T.`ER` != 'Negative' or  (T.`HER2` != '0' and \
+                        T.`HER2` != '1+')", locals()).shape[0]},
+                    'without': {
+                        'Yes': psql.sqldf("select * from dfWithoutPath where (`PgR` = 'Negative' and `ER` = 'Negative') and \
+                        (`HER2` = '0'  or `HER2` = '1+')", locals()).shape[0],
+                        'No': psql.sqldf("select * from (select * from dfWithoutPath where  `PgR` != 'NA' and  `ER` != 'NA' \
+                        and  `HER2` != 'NA') T where  T.`PgR` != 'Negative' or  T.`ER` != 'Negative' or  (T.`HER2` != '0' and \
+                        T.`HER2` != '1+')", locals()).shape[0]}}
 
-        getPercentage(results, 'Triple negative breast cancer', 'Yes', ['Yes', 'No'])
-        getFisherExact(results, 'Triple negative breast cancer', ['Yes', 'No'])
+                getPercentage(results, 'Triple negative breast cancer', 'Yes', ['Yes', 'No'])
+                getFisherExact(RScriptPath, results, 'Triple negative breast cancer', ['Yes', 'No'])
+            except Exception as e:
+                pass
+            #return False
 
+        # TNM clinical classification: M
+        callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'TNM classification / M', fieldsOfInterest, RScriptPath)
 
         # Family history of breast cancer
-        results['Family history of breast cancer'] = {
-            'with': {
-                'Yes': psql.sqldf("select * from dfWithPath where `Family history / breast cancer` = 1",locals()).shape[0],
-                'No': psql.sqldf("select * from dfWithPath where `Family history / breast cancer` = 0", locals()).shape[0]},
-            'without': {
-                'Yes': psql.sqldf("select * from dfWithoutPath where `Family history / breast cancer` = 1", locals()).shape[0],
-                'No': psql.sqldf("select * from dfWithoutPath where `Family history / breast cancer` = 0",locals()).shape[0]}}
-
-        getPercentage(results, 'Family history of breast cancer', 'Yes', ['Yes', 'No'])
-        getFisherExact(results, 'Family history of breast cancer', ['Yes', 'No'])
-
+        callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'Family history / breast cancer', fieldsOfInterest, RScriptPath)
 
         # Family history of ovarian cancer
-        results['Family history of ovarian cancer'] = {
-            'with': {
-                'Yes': psql.sqldf("select * from dfWithPath where `Family history / ovarian cancer` = 1", locals()).shape[0],
-                'No': psql.sqldf("select * from dfWithPath where `Family history / ovarian cancer` = 0", locals()).shape[0]},
-            'without': {
-                'Yes': psql.sqldf("select * from dfWithoutPath where `Family history / ovarian cancer` = 1", locals()).shape[0],
-                'No': psql.sqldf("select * from dfWithoutPath where `Family history / ovarian cancer` = 0", locals()).shape[0]}}
-
-        getPercentage(results, 'Family history of ovarian cancer', 'Yes', ['Yes', 'No'])
-        getFisherExact(results, 'Family history of ovarian cancer', ['Yes', 'No'])
-
+        callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'Family history / ovarian cancer', fieldsOfInterest, RScriptPath)
 
         # Family history of pancreas cancer
-        results['Family history of pancreas cancer'] = {
-            'with': {
-                'Yes': psql.sqldf("select * from dfWithPath where `Family history / pancreatic cancer` = 1", locals()).shape[0],
-                'No': psql.sqldf("select * from dfWithPath where `Family history / pancreatic cancer` = 0", locals()).shape[0]},
-            'without': {
-                'Yes': psql.sqldf("select * from dfWithoutPath where `Family history / pancreatic cancer` = 1", locals()).shape[0],
-                'No': psql.sqldf("select * from dfWithoutPath where `Family history / pancreatic cancer` = 0", locals()).shape[0]}}
-
-        getPercentage(results, 'Family history of pancreas cancer', 'Yes', ['Yes', 'No'])
-        getFisherExact(results, 'Family history of pancreas cancer', ['Yes', 'No'])
-
+        callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'Family history / pancreatic cancer', fieldsOfInterest, RScriptPath)
 
         # Family history of gastric (stomach?) cancer
-        results['Family history of stomach cancer'] = {
-            'with': {
-                'Yes': psql.sqldf("select * from dfWithPath where `Family history / stomach cancer` = 1", locals()).shape[0],
-                'No': psql.sqldf("select * from dfWithPath where `Family history / stomach cancer` = 0", locals()).shape[0]},
-            'without': {
-                'Yes': psql.sqldf("select * from dfWithoutPath where `Family history / stomach cancer` = 1", locals()).shape[0],
-                'No': psql.sqldf("select * from dfWithoutPath where `Family history / stomach cancer` = 0", locals()).shape[0]}}
-
-        getPercentage(results, 'Family history of stomach cancer', 'Yes', ['Yes', 'No'])
-        getFisherExact(results, 'Family history of stomach cancer', ['Yes', 'No'])
-
+        callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'Family history / stomach cancer', fieldsOfInterest, RScriptPath)
 
         # Family history of liver cancer
-        results['Family history of liver cancer'] = {
-            'with': {
-                'Yes': psql.sqldf("select * from dfWithPath where `Family history / liver cancer` = 1", locals()).shape[0],
-                'No': psql.sqldf("select * from dfWithPath where `Family history / liver cancer` = 0", locals()).shape[0]},
-            'without': {
-                'Yes': psql.sqldf("select * from dfWithoutPath where `Family history / liver cancer` = 1", locals()).shape[0],
-                'No': psql.sqldf("select * from dfWithoutPath where `Family history / liver cancer` = 0", locals()).shape[0]}}
-
-        getPercentage(results, 'Family history of liver cancer', 'Yes', ['Yes', 'No'])
-        getFisherExact(results, 'Family history of liver cancer', ['Yes', 'No'])
-
+        callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'Family history / liver cancer', fieldsOfInterest, RScriptPath)
 
         # Family history of bone tumor
-        results['Family history of bone tumor'] = {
-            'with': {
-                'Yes': psql.sqldf("select * from dfWithPath where `Family history / bone tumor` = 1", locals()).shape[0],
-                'No': psql.sqldf("select * from dfWithPath where `Family history / bone tumor` = 0", locals()).shape[0]},
-            'without': {
-                'Yes': psql.sqldf("select * from dfWithoutPath where `Family history / bone tumor` = 1", locals()).shape[0],
-                'No': psql.sqldf("select * from dfWithoutPath where `Family history / bone tumor` = 0", locals()).shape[0]}}
-
-        getPercentage(results, 'Family history of bone tumor', 'Yes', ['Yes', 'No'])
-        getFisherExact(results, 'Family history of bone tumor', ['Yes', 'No'])
-
+        callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'Family history / bone tumor', fieldsOfInterest, RScriptPath)
 
         # Family history of bladder cancer
-        results['Family history of bladder cancer'] = {
-            'with': {
-                'Yes': psql.sqldf("select * from dfWithPath where `Family history / bladder cancer` = 1", locals()).shape[0],
-                'No': psql.sqldf("select * from dfWithPath where `Family history / bladder cancer` = 0", locals()).shape[0]},
-            'without': {
-                'Yes': psql.sqldf("select * from dfWithoutPath where `Family history / bladder cancer` = 1", locals()).shape[0],
-                'No': psql.sqldf("select * from dfWithoutPath where `Family history / bladder cancer` = 0", locals()).shape[0]}}
-
-        getPercentage(results, 'Family history of bladder cancer', 'Yes', ['Yes', 'No'])
-        getFisherExact(results, 'Family history of bladder cancer', ['Yes', 'No'])
+        callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'Family history / bladder cancer', fieldsOfInterest, RScriptPath)
 
 
         # define fileObject based on config
@@ -231,6 +158,28 @@ def run(myFDA):
         print('exception in supplementaryTable4.run() method: ' + str(e))
         return False
 
+def callSQLOnBinary(results, dfWithPath, dfWithoutPath, fieldName, fieldsOfInterest, RScriptPath):
+    if not fieldName in fieldsOfInterest:
+        return
+    try:
+        results[fieldName] = {
+            'with': {
+                'Yes':
+                    psql.sqldf("select * from dfWithPath  where `" + fieldName + "` = 1", locals()).shape[
+                        0],
+                'No':
+                    psql.sqldf("select * from dfWithPath where `" + fieldName + "` = 0", locals()).shape[
+                        0]},
+            'without': {
+                'Yes': psql.sqldf("select * from dfWithoutPath where `" + fieldName + "` = 1",
+                                  locals()).shape[0],
+                'No': psql.sqldf("select * from dfWithoutPath where `" + fieldName + "` = 0",
+                                 locals()).shape[0]}}
+    except Exception as e:
+        pass
+    getPercentage(results, fieldName, 'Yes', ['Yes', 'No'])
+    getFisherExact(RScriptPath, results, fieldName, ['Yes', 'No'])
+
 
 def getPercentage(results, key, value, allValues):
     for path in ['with', 'without']:
@@ -240,7 +189,7 @@ def getPercentage(results, key, value, allValues):
             denom += results[key][path][v]
         results[key][path]['% ' + value] = str(round(100 * num / denom, 2)) + '%'
 
-def getFisherExact(results, key, allValues):
+def getFisherExact(RScriptPath, results, key, allValues):
     # create 2x2 contingency table
     a = results[key]['with'][allValues[0]]
     b = results[key]['without'][allValues[0]]
@@ -262,7 +211,7 @@ def getFisherExact(results, key, allValues):
     # use R fisher.test to get confidence interval for LOR
     row1 = str('c(' + str(a) + ',' + str(b) + ')')
     row2 = str('c(' + str(c) + ',' + str(d) + ')')
-    CIcmd_1 = str('/usr/bin/Rscript -e "fisher.test(rbind(' + row1 + ',' +  row2 + '))"')
+    CIcmd_1 = str(RScriptPath + ' -e "fisher.test(rbind(' + row1 + ',' +  row2 + '))"')
     CIcmd_2 = str('| grep -A1 confidence | sed -n "2,2 p" | xargs')
     CIcmd = str(CIcmd_1 + CIcmd_2)
     lb, ub = subprocess.check_output(CIcmd, shell=True).split()

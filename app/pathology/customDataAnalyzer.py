@@ -37,12 +37,13 @@ class ReceptorCounts:
                         self.counts[str((receptor, myRow[receptor], "age>=50"))] += 1
 
 
-    def print(self, myFDA):
+    def print(self, outputFile, gene=None):
         # define fileObject based on config
-        if myFDA.configFile.outputFile == "":
+        if outputFile == "":
             fileObject = sys.stdout
         else:
-            fileObject = open(myFDA.configFile.outputFile, mode='a')
+            fileObject = open(outputFile, mode='a')
+        print('carrier gene: ' + gene, file=fileObject)
         print(json.dumps(self.__dict__, indent=4, sort_keys=True), file=fileObject)
 
 
@@ -87,20 +88,18 @@ def run(myFDA):
 
         # print results to fileObject
         print("number of triple negatives = " + str(len(tripleNegatives)), file=fileObject)
-        print('============================================')
+        print('============================================', file=fileObject)
         print("number of triple positives = " + str(len(triplePositives)), file=fileObject)
-        print('============================================')
+        print('============================================', file=fileObject)
         print("number of triple values = " + str(len(tripleValues)), file=fileObject)
-        print('============================================')
+        print('============================================', file=fileObject)
         print("number of non-triple negatives = " + str(len(nonTripleNegatives)), file=fileObject)
-        print('============================================')
+        print('============================================', file=fileObject)
         for gene in list(myFDA.dataFile['CarrierGene'].unique()):
             if gene == 'NonCarrier':
                 continue
             else:
-                print("gene: " + gene, file=fileObject)
-                countsPerGene[gene].print(myFDA)
-                print('============================================', file=fileObject)
+                countsPerGene[gene].print(myFDA.configFile.outputFile, gene)
 
         return True
 

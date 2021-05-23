@@ -2,8 +2,8 @@
 
 FDA_PATH=$(pwd)
 APP_PATH=${FDA_PATH}/app
-CONF_PATH=${FDA_PATH}/config
-DATA_PATH=${FDA_PATH}/data
+CONF_PATH=/Users/jcasaletto/Desktop/RESEARCH/BIOBANK_PAPER/PUB/EXAMPLE/config
+DATA_PATH=/Users/jcasaletto/Desktop/RESEARCH/BIOBANK_PAPER/PUB/EXAMPLE/data
 COOCCUR_DOCKER_IMAGE_NAME=brcachallenge/federated-analysis:cooccurrence
 PATHOLOGY_DOCKER_IMAGE_NAME=brcachallenge/federated-analysis:pathology
 
@@ -77,7 +77,7 @@ else
 
 
 			-dd|--dataDirectory)
-			DATA_DIR="$2"
+			DATA_PATH="$2"
         		shift # Remove argument name from processing
         		shift # Remove argument value from processing
         		;;
