@@ -2,14 +2,14 @@
 
 FDA_PATH=$(pwd)
 APP_PATH=${FDA_PATH}/app
-CONF_PATH=/Users/jcasaletto/Desktop/RESEARCH/BIOBANK_PAPER/PUB/EXAMPLE/config
-DATA_PATH=/Users/jcasaletto/Desktop/RESEARCH/BIOBANK_PAPER/PUB/EXAMPLE/data
+CONF_PATH=/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/config
+DATA_PATH=/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data
 COOCCUR_DOCKER_IMAGE_NAME=brcachallenge/federated-analysis:cooccurrence
 PATHOLOGY_DOCKER_IMAGE_NAME=brcachallenge/federated-analysis:pathology
 
 if [ $# -eq 0 ]
 then
-	echo "usage: $0 -dq qualityReportConfigFile -vf vcfFile -hg hgVersion -er ensemblRelease -c chromosome -p phased -g gene -pf pathogenicityFile -dd dataDirectory -st saveTempfiles -sp samplePathologyFile"
+	echo "usage: $0 -rc reportConfigFile -vf vcfFile -hg hgVersion -er ensemblRelease -c chromosome -p phased -g gene -pf pathogenicityFile -dd dataDirectory -st saveTempfiles -sp samplePathologyFile"
 	echo "example: $0 -dq quality-report-config.json -vf my.vcf -hg 38 -er 99 -c 13 -p True --p2 0.001 -g BRCA2 -pf brca-variants.tsv -dd data -st True -sp mypf.tsv " 
 	exit 1
 	
@@ -18,7 +18,7 @@ else
 	for arg in "$@"
 	do
     		case $arg in
-			-dq |--dataQuality)
+			-rc |--reportConfig)
 			CONFIG_FILE="$2"
         		shift # Remove argument name from processing
         		shift # Remove argument value from processing

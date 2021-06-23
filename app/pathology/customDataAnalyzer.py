@@ -81,10 +81,10 @@ def run(myFDA):
                 countsPerGene[myRow['CarrierGene']].increment(myRow)
 
         # define fileObject based on config
-        if myFDA.configFile.outputFile == "":
+        if myFDA.configFile.qualityReport == "":
             fileObject = sys.stdout
         else:
-            fileObject = open(myFDA.configFile.outputFile, mode='a')
+            fileObject = open(myFDA.configFile.qualityReport, mode='a')
 
         # print results to fileObject
         print("number of triple negatives = " + str(len(tripleNegatives)), file=fileObject)
@@ -99,7 +99,7 @@ def run(myFDA):
             if gene == 'NonCarrier':
                 continue
             else:
-                countsPerGene[gene].print(myFDA.configFile.outputFile, gene)
+                countsPerGene[gene].print(myFDA.configFile.qualityReport, gene)
 
         return True
 

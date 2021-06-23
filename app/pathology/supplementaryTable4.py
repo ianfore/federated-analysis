@@ -113,40 +113,17 @@ def run(myFDA):
             except Exception as e:
                 return False
 
-        for field in ['TNM classification / M', 'Family history / breast cancer', 'Family history / breast cancer',
-                      'Family history / ovarian cancer', 'Family history / pancreatic cancer', 'Family history / stomach cancer',
+        for field in ['TNM classification / M', 'Family history / breast cancer', 'Family history / ovarian cancer',
+                      'Family history / pancreatic cancer', 'Family history / stomach cancer',
                       'Family history / liver cancer', 'Family history / bone tumor', 'Family history / bladder cancer' ]:
             callSQLOnBinary(results, dfWithPath, dfWithoutPath, field, fieldsOfInterest, RScriptPath)
 
-        '''# TNM clinical classification: M
-        returnCodes &= callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'TNM classification / M', fieldsOfInterest, RScriptPath)
-
-        # Family history of breast cancer
-        returnCodes &= callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'Family history / breast cancer', fieldsOfInterest, RScriptPath)
-
-        # Family history of ovarian cancer
-        returnCodes &= callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'Family history / ovarian cancer', fieldsOfInterest, RScriptPath)
-
-        # Family history of pancreas cancer
-        returnCodes &= callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'Family history / pancreatic cancer', fieldsOfInterest, RScriptPath)
-
-        # Family history of gastric (stomach?) cancer
-        returnCodes &= callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'Family history / stomach cancer', fieldsOfInterest, RScriptPath)
-
-        # Family history of liver cancer
-        returnCodes &= callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'Family history / liver cancer', fieldsOfInterest, RScriptPath)
-
-        # Family history of bone tumor
-        returnCodes &= callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'Family history / bone tumor', fieldsOfInterest, RScriptPath)
-
-        # Family history of bladder cancer
-        returnCodes &= callSQLOnBinary(results, dfWithPath, dfWithoutPath, 'Family history / bladder cancer', fieldsOfInterest, RScriptPath)'''
 
         # define fileObject based on config
-        if myFDA.configFile.outputFile == "":
+        if myFDA.configFile.pathologyReport == "":
             fileObject = sys.stdout
         else:
-            fileObject = open(myFDA.configFile.outputFile, mode='a')
+            fileObject = open(myFDA.configFile.pathologyReport, mode='w')
 
         prettyPrint(results, fileObject)
 

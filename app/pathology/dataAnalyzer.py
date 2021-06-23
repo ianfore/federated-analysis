@@ -18,24 +18,25 @@ class ConfigFile:
         fileHeader:     boolean header present in file
         fieldDelimiter: char that separates field in data file
         fieldFilters:    json object encapsulating field filters
-        outputFile:     name of file to write results
+        qualityReport:     name of file to write quality results
+        pathologyReport:    name of file to write pathology report
     """
 
-    def __init__(self, fileName, fileHeader, fieldDelimiter, fieldFilters, outputFile, printBadValues,
-                 printConfigFileInfo, suppressAllOutput, RScriptPath):
+    def __init__(self, fileName, fileHeader, fieldDelimiter, fieldFilters, qualityReport, pathologyReport,
+                 printBadValues, printConfigFileInfo, suppressAllOutput, RScriptPath):
         self.fileName = fileName
         self.fileHeader = fileHeader
         self.fieldDelimiter = fieldDelimiter
         self.fieldFilters = fieldFilters
-        self.outputFile = outputFile
+        self.qualityReport = qualityReport
+        self.pathologyReport = pathologyReport
         self.printBadValues = printBadValues
         self.printConfigFileInfo = printConfigFileInfo
         self.suppressAllOutput = suppressAllOutput
         self.RScriptPath = RScriptPath
 
-        if self.outputFile != '' and os.path.exists(self.outputFile):
-            print('output file ' + self.outputFile + ' exists!', file=sys.stderr)
-            sys.exit(1)
+        if self.qualityReport != '' and os.path.exists(self.qualityReport):
+            print('overwriting quality report file ' + self.qualityReport + ' exists!', file=sys.stderr)
 
 class FieldCounter:
     """
@@ -103,9 +104,16 @@ class FederatedDataAnalyzer:
             jsonData = myFile.read()
         data = json.loads(jsonData)
 
-        configFile = ConfigFile(data['fileName'], data['fileHeader'], data['fieldDelimiter'], data['fieldFilters'],
-                                data['outputFile'], data['printBadValues'], data['printConfigFileInfo'],
-                                data['suppressAllOutput'], data['RScriptPath'])
+        configFile = ConfigFile(fileName = data['fileName'],
+                                fileHeader = data['fileHeader'],
+                                fieldDelimiter = data['fieldDelimiter'],
+                                fieldFilters = data['fieldFilters'],
+                                qualityReport = data['qualityReport'],
+                                pathologyReport = data['pathologyReport'],
+                                printBadValues = data['printBadValues'],
+                                printConfigFileInfo = data['printConfigFileInfo'],
+                                suppressAllOutput = data['suppressAllOutput'],
+                                RScriptPath = data['RScriptPath'])
         fieldFilters = dict()
         for f in configFile.fieldFilters:
             fieldFilters[f['fieldName']] = f
@@ -228,10 +236,10 @@ class FederatedDataAnalyzer:
         if (self.configFile.suppressAllOutput == "True"):
             return
 
-        if self.configFile.outputFile == "":
+        if self.configFile.qualityReport == "":
             fileObject = sys.stdout
         else:
-            fileObject = open(self.configFile.outputFile, mode='a')
+            fileObject = open(self.configFile.qualityReport, mode='a')
 
 
         print("============================================", file=fileObject)
