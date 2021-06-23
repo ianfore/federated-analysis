@@ -16,21 +16,23 @@ logger.setLevel(logging.INFO)
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-v', '--vcf', help='vcf input file')
+    parser.add_argument('-gv', '--gnomadVCF', help='gnomad vcf input file')
+    parser.add_argument('-tv', '--topmedVCF', help='topmed vcf input file')
     parser.add_argument('-j', '--json', help='json output file')
-    parser.add_argument('-g', '--graph', help='graph output file')
+    parser.add_argument('-gp', '--graphPrefix', help='graph output file prefix')
     options = parser.parse_args()
     return options
 
 
 def main():
-    vcfFileName = parse_args().vcf
+    gnomadVCFFile = parse_args().gnomadVCF
+    topmedVCFFile = parse_args().topmedVCF
     outputFileName = parse_args().json
-    graphFileName = parse_args().graph
+    graphFileName = parse_args().graphPrefix
 
 
-    logger.info('finding variants from ' + vcfFileName)
-    vcfDF = pd.read_csv(vcfFileName, delimiter='\t', header=0, dtype=str)
+    logger.info('finding variants from ' + gnomadVCFFile)
+    gnomadVCFDF = pd.read_csv(gnomadVCFFile, delimiter='\t', header=0, dtype=str)
     nontopmedKeys = ['AF-non_topmed-afr', 'AF-non_topmed-amr', 'AF-non_topmed-nfe',
                      'AF-non_topmed-fin', 'AF-non_topmed-eas', 'AF-non_topmed-sas']
 
@@ -38,10 +40,14 @@ def main():
                      'AF-just_topmed-fin', 'AF-just_topmed-eas', 'AF-just_topmed-sas']
 
     logger.info('getting nontopmed allele freqs')
-    allVariants = getNontopmedAlleleFreqs(vcfDF, nontopmedKeys)
+    allVariants = getNontopmedAlleleFreqsFromGnomad(gnomadVCFDF, nontopmedKeys)
 
     logger.info('getting topmed allele freqs')
-    getTopmedAlleleFreqs(vcfDF, allVariants)
+    getTopmedAlleleFreqsFromGnomad(gnomadVCFDF, allVariants)
+
+    logger.info('reading data from topmed vcf')
+    topmedVCFDF = pd.read_csv(topmedVCFFile, delimiter='\t', header=0, dtype=str)
+
 
     logger.info('saving ntm allele freqs')
     with open(outputFileName, 'w') as f:
@@ -54,10 +60,10 @@ def main():
 
     plotDists(topmedDict, nontopmedDict, topmedKeys, nontopmedKeys, graphFileName)
 
-def getTopmedAlleleFreqs(vcfDF, allVariants):
+def getTopmedAlleleFreqsFromGnomad(vcfDF, allVariants):
     ethnicitiesList = ['afr', 'amr', 'eas', 'fin', 'nfe', 'sas']
     # AC-non_topmed-afr, AN-non_topmed-afr, AC-afr, AN-afr
-    keys = list()
+    keys = ['AC', 'AN', 'AF']
     for e in ethnicitiesList:
         ntmACKey = 'AC-non_topmed-' + e
         keys.append(ntmACKey)
@@ -112,7 +118,7 @@ def getTopmedAlleleFreqs(vcfDF, allVariants):
                 allVariants[v][afKey] = af
 
 
-def getNontopmedAlleleFreqs(vcfDF, keys):
+def getNontopmedAlleleFreqsFromGnomad(vcfDF, keys):
 
     variantsDict = dict()
     for i in range(len(vcfDF)):
