@@ -13,7 +13,7 @@ from multiprocessing import Process, Queue, cpu_count
 
 
 logger = logging.getLogger()
-defaultLogLevel = "ERROR"
+defaultLogLevel = "DEBUG"
 
 # you must define the PYENSEMBL_CACHE_DIR before importing the pyensembl module
 logger.info('setting pyensembl dir to /var/tmp/pyensembl-cache')
@@ -163,6 +163,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, p2, vcfFileName, nu
 
     myTout = {'benign': benignVariants, 'pathogenic': pathogenicVariants, 'vus': unknownVariants}
     logger.info('saving all variants to ' + toutFileName)
+    print(myTout)
     with open(toutFileName, 'w') as f:
         json.dump(myTout, f, cls=NpEncoder)
     f.close()
@@ -199,6 +200,8 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, p2, vcfFileName, nu
     logger.info('number of records is ' + str(len(individualsPerVariant)))
     logger.info('elapsed time in updateIndividualsPerVariant() ' + str(time.time() -t))
 
+    print(variantsPerIndividual)
+    print(individualsPerVariant)
     if saveFiles:
         logger.info('saving vpi to ' + vpiFileName)
         with open(vpiFileName, 'w') as f:
@@ -231,6 +234,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, p2, vcfFileName, nu
     numPathogenic = len(set(allVariants['pathogenic']))
     p1 =  0.5 * numPathogenic / cohortSize
 
+    print(allVariants)
     logger.info('saving all variants to ' + allVariantsFileName)
     json_dump = json.dumps(allVariants, cls=NpEncoder)
     with open(allVariantsFileName, 'w') as f:
@@ -243,6 +247,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, p2, vcfFileName, nu
     data_set = {"cooccurring vus": dataPerVus, "homozygous vus": homozygousPerVus}
     json_dump = json.dumps(data_set, cls=NpEncoder)
 
+    print(json_dump)
     logger.info('saving final VUS data  to ' + outputFileName)
     with open(outputFileName, 'w') as f:
         f.write(json_dump)
