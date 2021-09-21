@@ -33,11 +33,11 @@ def main():
 
     logger.info('finding variants from ' + gnomadVCFFile)
     gnomadVCFDF = pd.read_csv(gnomadVCFFile, delimiter='\t', header=0, dtype=str)
-    nontopmedKeys = ['AF-non_topmed-afr', 'AF-non_topmed-amr', 'AF-non_topmed-nfe',
-                     'AF-non_topmed-fin', 'AF-non_topmed-eas', 'AF-non_topmed-sas']
+    nontopmedKeys = ['AF_non_topmed_afr', 'AF_non_topmed_amr', 'AF_non_topmed_nfe',
+                     'AF_non_topmed_fin', 'AF_non_topmed_eas', 'AF_non_topmed_sas']
 
-    topmedKeys = ['AF-just_topmed-afr', 'AF-just_topmed-amr', 'AF-just_topmed-nfe',
-                     'AF-just_topmed-fin', 'AF-just_topmed-eas', 'AF-just_topmed-sas']
+    topmedKeys = ['AF_just_topmed_afr', 'AF_just_topmed_amr', 'AF_just_topmed_nfe',
+                     'AF_just_topmed_fin', 'AF_just_topmed_eas', 'AF_just_topmed_sas']
 
     logger.info('getting nontopmed allele freqs')
     allVariants = getNontopmedAlleleFreqsFromGnomad(gnomadVCFDF, nontopmedKeys)
@@ -65,13 +65,13 @@ def getTopmedAlleleFreqsFromGnomad(vcfDF, allVariants):
     # AC-non_topmed-afr, AN-non_topmed-afr, AC-afr, AN-afr
     keys = ['AC', 'AN', 'AF']
     for e in ethnicitiesList:
-        ntmACKey = 'AC-non_topmed-' + e
+        ntmACKey = 'AC_non_topmed_' + e
         keys.append(ntmACKey)
-        ntmANKey = 'AN-non_topmed-' + e
+        ntmANKey = 'AN_non_topmed_' + e
         keys.append(ntmANKey)
-        tmACKey = 'AC-' + e
+        tmACKey = 'AC_' + e
         keys.append(tmACKey)
-        tmANKey = 'AN-' + e
+        tmANKey = 'AN_' + e
         keys.append(tmANKey)
 
 
@@ -92,20 +92,19 @@ def getTopmedAlleleFreqsFromGnomad(vcfDF, allVariants):
 
     for v in allVariants:
         for e in ethnicitiesList:
-            afKey = 'AF-just_topmed-' + e
+            afKey = 'AF_just_topmed_' + e
             # get non-topmed ac and an
-            ntmACKey = 'AC-non_topmed-' + e
-            ntmANKey = 'AN-non_topmed-' + e
-            ntmAC = allVariants[v][ntmACKey]
+            ntmACKey = 'AC_non_topmed_' + e
+            ntmANKey = 'AN_non_topmed_' + e
             # odd hack that sometimes AN and/or AC not in VCF for certain variants
-            if not ntmANKey in allVariants[v]:
+            if not ntmANKey in allVariants[v] or not ntmACKey in allVariants[v]:
                 allVariants[v][afKey] = 0.0
             else:
                 ntmAN = allVariants[v][ntmANKey]
-
+                ntmAC = allVariants[v][ntmACKey]
                 # get topmed ac and an
-                tmACKey = 'AC-' + e
-                tmANKey = 'AN-' + e
+                tmACKey = 'AC_' + e
+                tmANKey = 'AN_' + e
                 tmAC = allVariants[v][tmACKey]
                 tmAN = allVariants[v][tmANKey]
 
