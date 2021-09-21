@@ -26,9 +26,19 @@ import pyensembl
 #brca2_p2 = 0.001
 
 
-classStrings = { 'Pathogenic':[ 'Pathogenic', 'Likely pathogenic'], 'Benign':[ 'Benign', 'Likely benign' ],
-                 'Unknown': [ 'Uncertain significance', '-']}
-sigColName = 'Clinical_significance_ENIGMA'
+classStrings = { 'Pathogenic':[ 'Pathogenic',
+                                'Likely pathogenic',
+                                'Likely_pathogenic',
+                                'Pathogenic/Likely_pathogenic'],
+                 'Benign':[ 'Benign',
+                            'Likely benign',
+                            'Likely_benign',
+                            'Benign/Likely_benign'],
+                 'Unknown': [ 'Uncertain significance',
+                              'Uncertain_significance',
+                              'Conflicting_interpretations_of_pathogenicity',
+                              '-']}
+sigColName = 'Clinical_significance'
 coordinateColumnBase = 'Genomic_Coordinate_hg'
 
 
