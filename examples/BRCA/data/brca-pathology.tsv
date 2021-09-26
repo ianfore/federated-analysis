@@ -1,0 +1,5 @@
+ID	Family history / breast cancer	Age at onset	ER	PgR	HER2	CarrierGene
+01	1	57	Positive	Positive	3+	BRCA2
+02	0	51	Negative	Positive	1+	BRCA2
+03	0	66	Negative	Negative	Negative	BRCA2
+04	0	0	NA	NA	NA	NonCarrier

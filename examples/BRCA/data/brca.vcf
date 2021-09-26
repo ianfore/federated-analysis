@@ -1,0 +1,9 @@
+##fileformat=VCFv4.2
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	01	02	03	04
+chr13	32355250	.	T	C	.	.	.	GT	1|0	0|0	0|0	0|0
+chr13	32316508	.	GAC	G	.	.	.	GT	0|1	0|0	0|0	0|0
+chr13	32353470	.	A	C	.	.	.	GT	0|0	1|0	0|0	0|0
+chr13	32340836	.	GACAA	G	.	.	.	GT	0|0	0|1	0|0	0|0
+chr13	32353519	.	A	G	.	.	.	GT	0|0	0|0	1|0	0|0
+chr13	32338749	.	AATTAC	A	.	.	.	GT	0|0	0|0	0|1	0|0
+chr13	32355250	.	T	C	.	.	.	GT	0|0	0|0	0|0	1|1
