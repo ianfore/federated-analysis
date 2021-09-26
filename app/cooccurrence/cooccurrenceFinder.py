@@ -126,7 +126,7 @@ def main():
         toutFileName = dataDir + "/" + str(options.g) + "-tout.json"
         vcfFileName = dataDir + "/" + options.vcf
         pathogenicityFileName = dataDir + "/" + options.vpf
-        if not options.pf is "":
+        if not options.spf is "":
             pathologyFileName = dataDir + "/" + options.spf
     else:
         outFileName = str(options.g) + "-out.json"
