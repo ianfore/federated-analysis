@@ -1,0 +1,24 @@
+{
+  "qualityReport": "data/data-quality-report.txt",
+  "pathologyReport": "data/tumor-pathology-report.txt",
+  "fileName": "data/brca-pathology.tsv",
+  "fileHeader": "True",
+  "fieldDelimiter": "\t",
+  "printConfigFileInfo": "False",
+  "printBadValues": "False",
+  "suppressAllOutput": "False",
+  "RScriptPath": "/usr/bin/Rscript",
+  "fieldFilters": [
+    {"fieldName": "ER", "fieldType": "categorical", 
+	"fieldValues": ["Positive", "Negative", "NA"], "printFieldCount": "True"},
+    {"fieldName": "PgR", "fieldType": "categorical", 
+	"fieldValues": ["Positive", "Negative", "NA"], "printFieldCount": "True"},
+    {"fieldName": "HER2", "fieldType": "categorical", 
+	"fieldValues": ["0", "1+", "2+", "3+", "NA"], "printFieldCount": "True"},
+    {"fieldName": "Age at onset", "fieldType": "numerical", 
+	"fieldValues": [], "printFieldCount": "True", "printStats": "True"},
+    {"fieldName": "Family history / breast cancer", "fieldType": "numerical", 
+	"fieldValues": [0, 1], "printFieldCount": "True", "printStats": "True"},
+    {"fieldName": "CarrierGene", "fieldType": "categorical", 
+	"fieldValues": [], "printFieldCount": "True"}]
+}

@@ -26,6 +26,7 @@ import pyensembl
 #brca2_p2 = 0.001
 
 
+# TODO: make these an external file
 classStrings = { 'Pathogenic':[ 'Pathogenic',
                                 'Likely pathogenic',
                                 'Likely_pathogenic',

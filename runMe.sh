@@ -2,8 +2,6 @@
 
 FDA_PATH=$(pwd)
 APP_PATH=${FDA_PATH}/app
-CONF_PATH=/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/config
-DATA_PATH=/Users/jcasaletto/PycharmProjects/BIOBANK/federated-analysis/data
 COOCCUR_DOCKER_IMAGE_NAME=brcachallenge/federated-analysis:cooccurrence
 PATHOLOGY_DOCKER_IMAGE_NAME=brcachallenge/federated-analysis:pathology
 
@@ -22,8 +20,6 @@ else
 			CONFIG_FILE="$2"
         		shift # Remove argument name from processing
         		shift # Remove argument value from processing
-			docker build -t ${PATHOLOGY_DOCKER_IMAGE_NAME} - < docker/pathology/Dockerfile
-			docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 -w / --user=`id -u`:`id -g` -v ${APP_PATH}/pathology:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data ${PATHOLOGY_DOCKER_IMAGE_NAME} /usr/bin/python3 /app/dataAnalyzer.py -c /config/$CONFIG_FILE 
 			;;
 			
 
@@ -82,6 +78,12 @@ else
         		shift # Remove argument value from processing
         		;;
 
+			-cd|--confDirectory)
+			CONF_PATH="$2"
+        		shift # Remove argument name from processing
+        		shift # Remove argument value from processing
+        		;;
+
 			-st|--saveTempfiles)
 			SAVE_FILES="$2"
         		shift # Remove argument name from processing
@@ -101,8 +103,30 @@ else
     		esac
 	done	
 
+	if [ -n "$CONFIG_FILE" ]
+	then
+		docker build -t ${PATHOLOGY_DOCKER_IMAGE_NAME} - < docker/pathology/Dockerfile
+		docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 -w / --user=`id -u`:`id -g` -v ${APP_PATH}/pathology:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data ${PATHOLOGY_DOCKER_IMAGE_NAME} /usr/bin/python3 /app/dataAnalyzer.py -c /config/$CONFIG_FILE 
+	fi
 
 	docker build -t ${COOCCUR_DOCKER_IMAGE_NAME} - < docker/cooccurrence/Dockerfile
+
+	if [ -z "$HG_VERSION" ]
+	then
+		HG_VERSION=38
+	fi
+	if [ -z "$ENSEMBL_RELEASE" ]
+	then
+		ENSEMBL_RELEASE=99
+	fi
+	if [ -z "$SAVE_FILES" ]
+	then
+		SAVE_FILES=False
+	fi
+	if [ -z "$P2" ]
+	then
+		P2=0.001	
+	fi
 
 	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 --user=`id -u`:`id -g` -v ${APP_PATH}/cooccurrence:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${COOCCUR_DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder.py  --vcf $VCF_FILE --h $HG_VERSION --e $ENSEMBL_RELEASE --c $CHROM --p $PHASED --p2 $P2  --g $GENE --b $PATHOGENICITY_FILE  --d /var/tmp/pyensembl-cache  --data /data --save $SAVE_FILES --pf $PATHOLOGY_FILE
 
