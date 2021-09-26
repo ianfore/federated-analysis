@@ -86,10 +86,10 @@ def parseArgs():
     parser.add_argument("--p", dest="p", help="Phased (boolean). Default=True", default='True')
     parser.add_argument("--p2", dest="p2", help="Probability VUS is pathogenic and carries pathogenic variant in trans", default=0.001)
     parser.add_argument("--n", dest="n", help="Number of processes. Default=cpu_count()", default=cpu_count())
-    parser.add_argument("--b", dest="b", help="pathogenicity  file. Default=None", default=None)
+    parser.add_argument("--vpf", dest="vpf", help="variant pathogenicity  file. Default=None", default=None)
     parser.add_argument("--d", dest="d", help="directory containing pyensembl-cache. Default=/var/tmp/pyensembl-cache",
                         default='/var/tmp/pyensembl-cache')
-    parser.add_argument("--pf", dest="pf", help="Pathology input file. Default=None", default=None)
+    parser.add_argument("--spf", dest="spf", help="sample pathology input file. Default=None", default=None)
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" % defaultLogLevel, default=defaultLogLevel)
     return parser.parse_args()
 
@@ -119,25 +119,25 @@ def main():
     dataDir = options.data
     pathologyFileName = None
     if dataDir != None:
-        outFileName = dataDir + "/" + str(options.c) + "-out.json"
-        ipvFileName = dataDir + "/" + str(options.c) + "-ipv.json"
-        vpiFileName = dataDir + "/" + str(options.c) + "-vpi.json"
-        allFileName = dataDir + "/" + str(options.c) + "-all.json"
-        toutFileName = dataDir + "/" + str(options.c) + "-tout.json"
+        outFileName = dataDir + "/" + str(options.g) + "-out.json"
+        ipvFileName = dataDir + "/" + str(options.g) + "-ipv.json"
+        vpiFileName = dataDir + "/" + str(options.g) + "-vpi.json"
+        allFileName = dataDir + "/" + str(options.g) + "-all.json"
+        toutFileName = dataDir + "/" + str(options.g) + "-tout.json"
         vcfFileName = dataDir + "/" + options.vcf
-        pathogenicityFileName = dataDir + "/" + options.b
-        if not options.pf is None:
-            pathologyFileName = dataDir + "/" + options.pf
+        pathogenicityFileName = dataDir + "/" + options.vpf
+        if not options.pf is "":
+            pathologyFileName = dataDir + "/" + options.spf
     else:
-        outFileName = str(options.c) + "-out.json"
-        ipvFileName = str(options.c) + "-ipv.json"
-        vpiFileName = str(options.c) + "-vpi.json"
-        allFileName = str(options.c) + "-all.json"
-        toutFileName = str(options.c) + "-tout.json"
+        outFileName = str(options.g) + "-out.json"
+        ipvFileName = str(options.g) + "-ipv.json"
+        vpiFileName = str(options.g) + "-vpi.json"
+        allFileName = str(options.g) + "-all.json"
+        toutFileName = str(options.g) + "-tout.json"
         vcfFileName = options.vcf
         pathogenicityFileName =  options.b
-        if not options.pf is None:
-            pathologyFileName = options.pf
+        if not options.spf is None:
+            pathologyFileName = options.spf
     saveFiles = str2bool(options.save)
     phased = str2bool(options.p)
     p2 = float(options.p2)
@@ -265,8 +265,8 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, p2, vcfFileName, nu
     f.close()
 
     if not pathologyFileName is None:
-        logger.info('intersecting variants with pathology data')
-        intersectionFile = '/data/' + str(chromosome) + '-intersection.json'
+        logger.info('intersecting variants with pathology data in file ' + str(pathologyFileName))
+        intersectionFile = '/data/' + str(gene) + '-intersection.json'
         intersectPathology(pathologyFileName, data_set, individualsPerVariant, intersectionFile )
 
 def intersectPathology(pathologyFile, data_set, ipvDF, intersectFile):

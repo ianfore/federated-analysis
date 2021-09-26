@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 FDA_PATH=$(pwd)
 APP_PATH=${FDA_PATH}/app
@@ -65,7 +65,7 @@ else
         		shift # Remove argument value from processing
         		;;
 
-			-pf|--pathogenicityFile)
+			-vpf|--variantPathogenicityFile)
 			PATHOGENICITY_FILE="$2"
         		shift # Remove argument name from processing
         		shift # Remove argument value from processing
@@ -90,7 +90,7 @@ else
         		shift # Remove argument value from processing
         		;;
 
-			-sp|--samplePathologyFile)
+			-spf|--samplePathologyFile)
 			PATHOLOGY_FILE="$2"
         		shift # Remove argument name from processing
         		shift # Remove argument value from processing
@@ -127,8 +127,13 @@ else
 	then
 		P2=0.001	
 	fi
+	if [ -z "PATHOLOGY_FILE" ]
+	then
+		PATHOLOGY_FILE=""
+	fi
 
-	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 --user=`id -u`:`id -g` -v ${APP_PATH}/cooccurrence:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${COOCCUR_DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder.py  --vcf $VCF_FILE --h $HG_VERSION --e $ENSEMBL_RELEASE --c $CHROM --p $PHASED --p2 $P2  --g $GENE --b $PATHOGENICITY_FILE  --d /var/tmp/pyensembl-cache  --data /data --save $SAVE_FILES --pf $PATHOLOGY_FILE
+
+	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 --user=`id -u`:`id -g` -v ${APP_PATH}/cooccurrence:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${COOCCUR_DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder.py  --vcf $VCF_FILE --h $HG_VERSION --e $ENSEMBL_RELEASE --c $CHROM --p $PHASED --p2 $P2  --g $GENE --vpf $PATHOGENICITY_FILE  --d /var/tmp/pyensembl-cache  --data /data --save $SAVE_FILES --spf "$PATHOLOGY_FILE" 
 
 
 fi
