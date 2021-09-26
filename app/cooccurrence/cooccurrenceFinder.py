@@ -135,7 +135,7 @@ def main():
         allFileName = str(options.g) + "-all.json"
         toutFileName = str(options.g) + "-tout.json"
         vcfFileName = options.vcf
-        pathogenicityFileName =  options.b
+        pathogenicityFileName =  options.vpf
         if not options.spf is None:
             pathologyFileName = options.spf
     saveFiles = str2bool(options.save)

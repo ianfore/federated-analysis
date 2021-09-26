@@ -4,7 +4,7 @@ workflow cooccurrence {
 	input {
 	File PYTHON_SCRIPT
 	File VCF_FILE
-	File BRCA_FILE
+	File VARIANT_PATHOGENICITY_FILE
 	File? ANNO_FILE
 	String OUTPUT_FILENAME
 	String VPI_FILENAME
@@ -25,7 +25,7 @@ workflow cooccurrence {
 	input: 
 		python_script=PYTHON_SCRIPT,
 		vcf_file=VCF_FILE,
-		brca_file=BRCA_FILE,
+		variant_pathogenicity_file=VARIANT_PATHOGENICITY_FILE,
 		anno_file=ANNO_FILE,
 		hg_version=HG_VERSION,
 		ensembl_release=ENSEMBL_RELEASE,
@@ -56,7 +56,7 @@ task run_cooccurrence {
 	input {
 		File python_script
 		File vcf_file
-		File brca_file
+		File variant_pathogenicity_file
 		File? anno_file
 		String hg_version
 		String ensembl_release
@@ -76,7 +76,7 @@ task run_cooccurrence {
 	command <<<
 		export PYTHONPATH=/ 
 		export PYTHONIOENCODING=UTF-8 
-		/usr/bin/python3  ~{python_script} --vcf ~{vcf_file} --h ~{hg_version} --e ~{ensembl_release} --c ~{chrom} --g ~{gene} --p ~{phased} --p2 ~{p2} --n ~{num_cores} --b ~{brca_file} --anno "~{anno_file}" --s ~{save_files}
+		/usr/bin/python3  ~{python_script} --vcf ~{vcf_file} --h ~{hg_version} --e ~{ensembl_release} --c ~{chrom} --g ~{gene} --p ~{phased} --p2 ~{p2} --n ~{num_cores} --vpf ~{variant_pathogenicity_file} --anno "~{anno_file}" --save ~{save_files}
 	>>>
 	
 	output {
