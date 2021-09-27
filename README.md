@@ -380,19 +380,3 @@ number of non-triple negatives = 1
 
 ````
 
-
-# Software unit testing 
-
-To run the unit tests, perform the following steps:
-
-1. change directory to the top-level directory of the repository
-
-```console
-cd federated-analysis/
-```
-
-2. run the following command:
-
-```console
-python -m unittest tests.test_dataAnalyzer
-```
