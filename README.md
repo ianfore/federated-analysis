@@ -77,29 +77,92 @@ where:
 2. This will generate a report in the federated-analysis/examples/BRCA/data directory called `BRCA2-cooccurrence.json` which contain a list of VUS, each in the following format:
 
 ```json
-"(13, 32911164, 'T', 'A')": {
+{
+    "cooccurring vus": {
+        "(13, 32353519, 'A', 'G')": {
             "likelihood data": {
-                "p1": 0.0015891032917139615,
+                "p1": 0.375,
                 "p2": 0.001,
-                "n": 25,
+                "n": 1,
                 "k": 1,
-                "likelihood": 0.6382577479687377
+                "likelihood": 0.0026666666666666666
             },
             "allele frequencies": {
                 "maxPop": null,
                 "maxPopFreq": 0.0,
                 "minPop": null,
-                "minPopFreq": 0.0,
-                "cohortFreq": 0.0008107669855683476
+                "minPopFreq": 1.0,
+                "cohortFreq": 0.25
             },
             "pathogenic variants": [
                 [
                     13,
-                    32911297,
-                    "TAAAC",
-                    "T"
+                    32338749,
+                    "AATTAC",
+                    "A"
                 ]
             ]
+        },
+        "(13, 32355250, 'T', 'C')": {
+            "likelihood data": {
+                "p1": 0.375,
+                "p2": 0.001,
+                "n": 2,
+                "k": 1,
+                "likelihood": 0.0042624
+            },
+            "allele frequencies": {
+                "maxPop": null,
+                "maxPopFreq": 0.0,
+                "minPop": null,
+                "minPopFreq": 1.0,
+                "cohortFreq": 0.5
+            },
+            "pathogenic variants": [
+                [
+                    13,
+                    32316508,
+                    "GAC",
+                    "G"
+                ]
+            ]
+        },
+        "(13, 32353470, 'A', 'C')": {
+            "likelihood data": {
+                "p1": 0.375,
+                "p2": 0.001,
+                "n": 1,
+                "k": 1,
+                "likelihood": 0.0026666666666666666
+            },
+            "allele frequencies": {
+                "maxPop": null,
+                "maxPopFreq": 0.0,
+                "minPop": null,
+                "minPopFreq": 1.0,
+                "cohortFreq": 0.25
+            },
+            "pathogenic variants": [
+                [
+                    13,
+                    32340836,
+                    "GACAA",
+                    "G"
+                ]
+            ]
+        }
+    },
+    "homozygous vus": {
+        "(13, 32355250, 'T', 'C')": {
+            "count": 1,
+            "maxPop": null,
+            "maxPopFreq": 0.0,
+            "minPop": null,
+            "minPopFreq": 1.0,
+            "cohortFreq": 0.25
+        }
+    }
+}
 
 ```
 
