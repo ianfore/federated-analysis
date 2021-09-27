@@ -1,0 +1,20 @@
+{
+  "qualityReport": "data/MYH7-data-quality-report.txt",
+  "pathologyReport": "data/MYH7-cardiac-report.txt",
+  "fileName": "data/myh7-cardiac.tsv",
+  "fileHeader": "True",
+  "fieldDelimiter": "\t",
+  "printConfigFileInfo": "False",
+  "printBadValues": "False",
+  "suppressAllOutput": "False",
+  "RScriptPath": "/usr/bin/Rscript",
+  "fieldFilters": [
+    {"fieldName": "Technique", "fieldType": "categorical", 
+	"fieldValues": ["MOLLI", "ShMOLLI", "NA"], "printFieldCount": "True"},
+    {"fieldName": "Age at onset", "fieldType": "numerical", 
+	"fieldValues": [], "printFieldCount": "True", "printStats": "True"},
+    {"fieldName": "Native T1 (msec)", "fieldType": "numerical", 
+	"fieldValues": [], "printFieldCount": "True", "printStats": "True"},
+    {"fieldName": "ECV", "fieldType": "numerical", 
+	"fieldValues": [], "printFieldCount": "True", "printStats": "True"}]
+}

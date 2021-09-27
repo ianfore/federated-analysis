@@ -119,7 +119,7 @@ def main():
     dataDir = options.data
     pathologyFileName = None
     if dataDir != None:
-        outFileName = dataDir + "/" + str(options.g) + "-out.json"
+        outFileName = dataDir + "/" + str(options.g) + "-cooccurrences.json"
         ipvFileName = dataDir + "/" + str(options.g) + "-ipv.json"
         vpiFileName = dataDir + "/" + str(options.g) + "-vpi.json"
         allFileName = dataDir + "/" + str(options.g) + "-all.json"
@@ -129,7 +129,7 @@ def main():
         if not options.spf is "":
             pathologyFileName = dataDir + "/" + options.spf
     else:
-        outFileName = str(options.g) + "-out.json"
+        outFileName = str(options.g) + "-cooccurrences.json"
         ipvFileName = str(options.g) + "-ipv.json"
         vpiFileName = str(options.g) + "-vpi.json"
         allFileName = str(options.g) + "-all.json"
@@ -172,12 +172,12 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, p2, vcfFileName, nu
     logger.info('number of benign variants is ' + str(len(benignVariants)))
     logger.info('number of vus variants is ' + str(len(unknownVariants)))
 
-    myTout = {'benign': benignVariants, 'pathogenic': pathogenicVariants, 'vus': unknownVariants}
-    logger.info('saving all variants to ' + toutFileName)
-    print(myTout)
-    with open(toutFileName, 'w') as f:
-        json.dump(myTout, f, cls=NpEncoder)
-    f.close()
+    if saveFiles:
+        myTout = {'benign': benignVariants, 'pathogenic': pathogenicVariants, 'vus': unknownVariants}
+        logger.info('saving all variants to ' + toutFileName)
+        with open(toutFileName, 'w') as f:
+            json.dump(myTout, f, cls=NpEncoder)
+        f.close()
 
 
 
@@ -245,12 +245,12 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, p2, vcfFileName, nu
     numPathogenic = len(set(allVariants['pathogenic']))
     p1 =  0.5 * numPathogenic / cohortSize
 
-    print(allVariants)
-    logger.info('saving all variants to ' + allVariantsFileName)
-    json_dump = json.dumps(allVariants, cls=NpEncoder)
-    with open(allVariantsFileName, 'w') as f:
-        f.write(json_dump)
-    f.close()
+    if saveFiles:
+        logger.info('saving all variants to ' + allVariantsFileName)
+        json_dump = json.dumps(allVariants, cls=NpEncoder)
+        with open(allVariantsFileName, 'w') as f:
+            f.write(json_dump)
+        f.close()
 
     logger.info('putting all the data together per vus')
     dataPerVus = calculateLikelihood(individualsPerPathogenicCooccurrence, p1, p2, n, k, df, hgVersion, cohortSize)
@@ -272,9 +272,10 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, p2, vcfFileName, nu
 def intersectPathology(pathologyFile, data_set, ipvDF, intersectFile):
     logger.info('reading data from ' + pathologyFile)
     pathologyDF = pandas.read_csv(pathologyFile, sep='\t', header=0)
+    fields = pathologyDF.columns
 
     # determine total number of cases and controls for cohort frequency calculations
-    numCases = 0
+    '''numCases = 0
     numSpecialCases = 0
     for i in range(len(pathologyDF)):
         if pandas.isna(pathologyDF.iloc[i]['Age at onset']):
@@ -283,7 +284,7 @@ def intersectPathology(pathologyFile, data_set, ipvDF, intersectFile):
             numCases += 1
     numTotalCases = numCases + numSpecialCases
     print('numCases = ' + str(numCases))
-    print('numSpecialCases = ' + str(numSpecialCases))
+    print('numSpecialCases = ' + str(numSpecialCases))'''
 
     numMissing = 0
 
@@ -294,8 +295,8 @@ def intersectPathology(pathologyFile, data_set, ipvDF, intersectFile):
             heterozygousIndividuals = ipvDF[pv]['heterozygous individuals']
             pathologyPerCoocIndividual[pv] = dict()
             pathologyPerCoocIndividual[pv]['pathologies'] = list()
-            pathologyPerCoocIndividual[pv]['numCases'] = 0
-            pathologyPerCoocIndividual[pv]['numSpecialCases'] = 0
+            #pathologyPerCoocIndividual[pv]['numCases'] = 0
+            #pathologyPerCoocIndividual[pv]['numSpecialCases'] = 0
             for hi in heterozygousIndividuals:
                 pathologies = dict()
                 hiInt = int(hi)
@@ -303,75 +304,25 @@ def intersectPathology(pathologyFile, data_set, ipvDF, intersectFile):
                 if len(row) == 0:
                     logger.warning('no pathology record for sample ' + hi)
                     numMissing += 1
-                aao = row['Age at onset'].tolist()
-                if len(aao) == 0 or pandas.isna(aao[0]):
-                    pathologies['Age at onset'] = 0.0
-                    pathologyPerCoocIndividual[pv]['numSpecialCases'] += 1
-                else:
-                    pathologies['Age at onset'] = aao[0]
-                    pathologyPerCoocIndividual[pv]['numCases']  += 1
-                try:
-                    pathologies['Ovarian cancer history'] = row['Ovarian cancer history'].tolist()
-                except Exception as e:
-                    pass
-                    #return False
-                try:
-                    pathologies['Bilateral breast cancer'] = row['Bilateral breast cancer'].tolist()
-                except Exception as e:
-                    pass
-                    #return False
-                try:
-                    pathologies['Tissue type (3 groups)'] = row['Tissue type (3 groups)'].tolist()
-                except Exception as e:
-                    pass
-                    #return False
-                try:
-                    pathologies['TMN classification / T'] = row['TMN classification / T'].tolist()
-                except Exception as e:
-                    pass
-                    #return False
-                try:
-                    pathologies['TNM classification / N'] = row['TNM classification / N'].tolist()
-                except Exception as e:
-                    pass
-                    #return False
-                try:
-                    pathologies['TNM classification / M'] = row['TNM classification / M'].tolist()
-                except Exception as e:
-                    pass
-                    #return False
-                try:
-                    pathologies['ER'] = row['ER'].tolist()
-                except Exception as e:
-                    pass
-                    #return False
-                try:
-                    pathologies['PgR'] = row['PgR'].tolist()
-                except Exception as e:
-                    pass
-                    #return False
-                try:
-                    pathologies['HER2'] = row['HER2'].tolist()
-                except Exception as e:
-                    pass
-                    #return False
+
+                for field in fields:
+                    try:
+                        pathologies[field] = row[field].tolist()
+                    except Exception as e:
+                        pass
+
                 try:
                     pathologyPerCoocIndividual[pv]['pathologies'].append(pathologies)
                 except Exception as e:
                     pass
-                    #return False
-
-            pathologyPerCoocIndividual[pv]['caseFreq'] = float(pathologyPerCoocIndividual[pv]['numCases'] )/float(numTotalCases)
-            pathologyPerCoocIndividual[pv]['specialCaseFreq'] = float(pathologyPerCoocIndividual[pv]['numSpecialCases'] )/float(numTotalCases)
-
 
     pathologyPerHomoIndividual = dict()
     for variant in data_set['homozygous vus']:
         homozygousIndividuals = ipvDF[variant]['homozygous individuals']
         pathologyPerHomoIndividual[variant] = dict()
         pathologyPerHomoIndividual[variant]['pathologies'] = list()
-        pathologyPerHomoIndividual[variant]['numCases'] = 0
-        pathologyPerHomoIndividual[variant]['numSpecialCases'] = 0
+        #pathologyPerHomoIndividual[variant]['numCases'] = 0
+        #pathologyPerHomoIndividual[variant]['numSpecialCases'] = 0
         for hi in homozygousIndividuals:
             pathologies = dict()
             hiInt = int(hi)
@@ -379,73 +330,23 @@ def intersectPathology(pathologyFile, data_set, ipvDF, intersectFile):
             if len(row) == 0:
                 logger.warning('no pathology record for sample ' + hi)
                 numMissing += 1
-            aao = row['Age at onset'].tolist()
-            if len(aao) == 0 or pandas.isna(aao[0]):
-                pathologies['Age at onset'] = 0.0
-                pathologyPerHomoIndividual[variant]['numSpecialCases'] += 1
-            else:
-                pathologies['Age at onset'] = aao[0]
-                pathologyPerHomoIndividual[variant]['numCases'] += 1
-            try:
-                pathologies['Ovarian cancer history'] = row['Ovarian cancer history'].tolist()
-            except Exception as e:
-                pass
-                #return False
-            try:
-                pathologies['Bilateral breast cancer'] = row['Bilateral breast cancer'].tolist()
-            except Exception as e:
-                pass
-                #return False
-            try:
-                pathologies['Tissue type (3 groups)'] = row['Tissue type (3 groups)'].tolist()
-            except Exception as e:
-                pass
-                #return False
-            try:
-                pathologies['TMN classification / T'] = row['TMN classification / T'].tolist()
-            except Exception as e:
-                pass
-                #return False
-            try:
-                pathologies['TNM classification / N'] = row['TNM classification / N'].tolist()
-            except Exception as e:
-                pass
-                #return False
-            try:
-                pathologies['TNM classification / M'] = row['TNM classification / M'].tolist()
-            except Exception as e:
-                pass
-                #return False
-            try:
-                pathologies['ER'] = row['ER'].tolist()
-            except Exception as e:
-                pass
-                #return False
-            try:
-                pathologies['PgR'] = row['PgR'].tolist()
-            except Exception as e:
-                pass
-                #return False
-            try:
-                pathologies['HER2'] = row['HER2'].tolist()
-            except Exception as e:
-                pass
-                #return False
+            for field in fields:
+                try:
+                    pathologies[field] = row[field].tolist()
+                except Exception as e:
+                    pass
+
             try:
                 pathologyPerHomoIndividual[variant]['pathologies'].append(pathologies)
             except Exception as e:
                 pass
                 #return False
 
-        pathologyPerHomoIndividual[variant]['caseFreq'] = float(pathologyPerHomoIndividual[variant]['numCases']) / float(numTotalCases)
-        pathologyPerHomoIndividual[variant]['specialCaseFreq'] = float(pathologyPerHomoIndividual[variant]['numSpecialCases']) / float(numTotalCases)
-
-
     pathologyPerAllIndividuals = dict()
     pathologyPerAllIndividuals['homozygous'] = pathologyPerHomoIndividual
     pathologyPerAllIndividuals['cooccurring'] = pathologyPerCoocIndividual
-    pathologyPerAllIndividuals['numCases'] = numCases
-    pathologyPerAllIndividuals['numSpecialCases'] = numSpecialCases
+    #pathologyPerAllIndividuals['numCases'] = numCases
+    #pathologyPerAllIndividuals['numSpecialCases'] = numSpecialCases
     pathologyPerAllIndividuals['numMissing'] = numMissing
 
     json_dump = json.dumps(pathologyPerAllIndividuals, indent=4, sort_keys=True)
