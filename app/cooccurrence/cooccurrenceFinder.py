@@ -211,8 +211,6 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, p2, vcfFileName, nu
     logger.info('number of records is ' + str(len(individualsPerVariant)))
     logger.info('elapsed time in updateIndividualsPerVariant() ' + str(time.time() -t))
 
-    print(variantsPerIndividual)
-    print(individualsPerVariant)
     if saveFiles:
         logger.info('saving vpi to ' + vpiFileName)
         with open(vpiFileName, 'w') as f:
@@ -258,7 +256,6 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, p2, vcfFileName, nu
     data_set = {"cooccurring vus": dataPerVus, "homozygous vus": homozygousPerVus}
     json_dump = json.dumps(data_set, cls=NpEncoder)
 
-    print(json_dump)
     logger.info('saving final VUS data  to ' + outputFileName)
     with open(outputFileName, 'w') as f:
         f.write(json_dump)
@@ -294,7 +291,7 @@ def intersectPathology(pathologyFile, data_set, ipvDF, intersectFile):
             pv = str(tuple(pathogenicVariant))
             heterozygousIndividuals = ipvDF[pv]['heterozygous individuals']
             pathologyPerCoocIndividual[pv] = dict()
-            pathologyPerCoocIndividual[pv]['pathologies'] = list()
+            pathologyPerCoocIndividual[pv]['phenotype'] = list()
             #pathologyPerCoocIndividual[pv]['numCases'] = 0
             #pathologyPerCoocIndividual[pv]['numSpecialCases'] = 0
             for hi in heterozygousIndividuals:
