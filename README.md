@@ -105,6 +105,53 @@ where:
 
 3. This will also create a JSON file called `BRCA2-intersection.json` in the federated-analysis/examples/BRCA/data directory which intersect the phenotype data with the genotype data. 
 
+````json
+{
+    "cooccurring": {
+        "(13, 32316508, 'GAC', 'G')": {
+            "phenotype": []
+        },
+        "(13, 32338749, 'AATTAC', 'A')": {
+            "phenotype": []
+        },
+        "(13, 32340836, 'GACAA', 'G')": {
+            "phenotype": []
+        }
+    },
+    "homozygous": {
+        "(13, 32355250, 'T', 'C')": {
+            "pathologies": [
+                {
+                    "Age at onset": [
+                        0
+                    ],
+                    "CarrierGene": [
+                        "NonCarrier"
+                    ],
+                    "ER": [
+                        NaN
+                    ],
+                    "Family history / breast cancer": [
+                        0
+                    ],
+                    "HER2": [
+                        NaN
+                    ],
+                    "ID": [
+                        4
+                    ],
+                    "PgR": [
+                        NaN
+                    ]
+                }
+            ]
+        }
+    },
+    "numMissing": 0
+}
+
+````
+
 4. Finally, this will also create a data quality report called `brca2-data-quality-report.txt` in the examples/BRCA/data directory.  Note that the default data analysis is generic -- it's completely devoid of any application or context.  If the scientist wishes to perform specific analyses on the data, then they must implement the custom data analyzer.  The custom data analyzer is provided an object that encapsulates all the default data analysis.  The custom code can then perform application-specific analyses on the data. 
 
 
