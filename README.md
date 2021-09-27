@@ -289,6 +289,97 @@ where:
 
 4. Finally, this will also create a data quality report called `brca2-data-quality-report.txt` in the examples/BRCA/data directory.  Note that the default data analysis is generic -- it's completely devoid of any application or context.  If the scientist wishes to perform specific analyses on the data, then they must implement the custom data analyzer.  The custom data analyzer is provided an object that encapsulates all the default data analysis.  The custom code can then perform application-specific analyses on the data. 
 
+````
+============================================
+total records read from data file: 4
+============================================
+column: ER / type: categorical
+{
+    "fieldCount": {
+        "NA": 1,
+        "Negative": 2,
+        "Positive": 1
+    }
+}
+============================================
+column: PgR / type: categorical
+{
+    "fieldCount": {
+        "NA": 1,
+        "Negative": 1,
+        "Positive": 2
+    }
+}
+============================================
+column: HER2 / type: categorical
+{
+    "fieldCount": {
+        "1+": 1,
+        "3+": 1,
+        "NA": 1
+    }
+}
+============================================
+column: Age at onset / type: numerical
+{
+    "fieldCount": {
+        "0": 1,
+        "51": 1,
+        "57": 1,
+        "66": 1
+    }
+}
+min = 0, max = 66, mean = 43.5 median = 54.0 stdev = 29.647934160747187
+============================================
+column: Family history / breast cancer / type: numerical
+{
+    "fieldCount": {
+        "0": 3,
+        "1": 1
+    }
+}
+min = 0, max = 1, mean = 0.25 median = 0.0 stdev = 0.5
+============================================
+column: CarrierGene / type: categorical
+{
+    "fieldCount": {
+        "BRCA2": 3,
+        "NonCarrier": 1
+    }
+}
+============================================
+missing values: {}
+============================================
+carrier gene: BRCA2
+{
+    "counts": {
+        "('ER', 'Negative')": 2,
+        "('ER', 'Negative', 'age>=50')": 2,
+        "('ER', 'Positive')": 1,
+        "('ER', 'Positive', 'age>=50')": 1,
+        "('HER2', '1+')": 1,
+        "('HER2', '1+', 'age>=50')": 1,
+        "('HER2', '3+')": 1,
+        "('HER2', '3+', 'age>=50')": 1,
+        "('HER2', 'Negative')": 1,
+        "('HER2', 'Negative', 'age>=50')": 1,
+        "('PgR', 'Negative')": 1,
+        "('PgR', 'Negative', 'age>=50')": 1,
+        "('PgR', 'Positive')": 2,
+        "('PgR', 'Positive', 'age>=50')": 2
+    }
+}
+number of triple negatives = 0
+============================================
+number of triple positives = 1
+============================================
+number of triple values = 3
+============================================
+number of non-triple negatives = 1
+============================================
+
+````
+
 
 # Software unit testing 
 
