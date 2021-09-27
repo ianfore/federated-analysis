@@ -13,6 +13,7 @@ def removeNA(myList):
 
 def run(myFDA):
 
+    print('in supp table 4')
     results = dict()
     RScriptPath = myFDA.configFile.RScriptPath
     fieldsOfInterest = dict()
@@ -125,6 +126,7 @@ def run(myFDA):
         else:
             fileObject = open(myFDA.configFile.pathologyReport, mode='w')
 
+        print('writing file to ' + myFDA.configFile.pathologyReport)
         prettyPrint(results, fileObject)
 
     except Exception as e:

@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 FDA_PATH=$(pwd)
 APP_PATH=${FDA_PATH}/app
