@@ -109,7 +109,7 @@ class FederatedDataAnalyzer:
                                 fieldDelimiter = data['fieldDelimiter'],
                                 fieldFilters = data['fieldFilters'],
                                 qualityReport = data['qualityReport'],
-                                pathologyReport = data['pathologyReport'],
+                                #pathologyReport = data['pathologyReport'],
                                 printBadValues = data['printBadValues'],
                                 printConfigFileInfo = data['printConfigFileInfo'],
                                 suppressAllOutput = data['suppressAllOutput'],
