@@ -287,37 +287,37 @@ def intersectPathology(pathologyFile, data_set, ipvDF, intersectFile):
 
     pathologyPerCoocIndividual = dict()
     for variant in data_set['cooccurring vus']:
-        for pathogenicVariant in data_set['cooccurring vus'][variant]['pathogenic variants']:
-            pv = str(tuple(pathogenicVariant))
-            heterozygousIndividuals = ipvDF[pv]['heterozygous individuals']
-            pathologyPerCoocIndividual[pv] = dict()
-            pathologyPerCoocIndividual[pv]['phenotype'] = list()
-            #pathologyPerCoocIndividual[pv]['numCases'] = 0
-            #pathologyPerCoocIndividual[pv]['numSpecialCases'] = 0
-            for hi in heterozygousIndividuals:
-                pathologies = dict()
-                hiInt = int(hi)
-                row = pathologyDF.loc[pathologyDF['ID'] == hiInt]
-                if len(row) == 0:
-                    logger.warning('no pathology record for sample ' + hi)
-                    numMissing += 1
+        #for pathogenicVariant in data_set['cooccurring vus'][variant]['pathogenic variants']:
+            #pv = str(tuple(pathogenicVariant))
+        heterozygousIndividuals = ipvDF[variant]['heterozygous individuals']
+        pathologyPerCoocIndividual[variant] = dict()
+        pathologyPerCoocIndividual[variant]['phenotype'] = list()
+        #pathologyPerCoocIndividual[pv]['numCases'] = 0
+        #pathologyPerCoocIndividual[pv]['numSpecialCases'] = 0
+        for hi in heterozygousIndividuals:
+            pathologies = dict()
+            hiInt = int(hi)
+            row = pathologyDF.loc[pathologyDF['ID'] == hiInt]
+            if len(row) == 0:
+                logger.warning('no pathology record for sample ' + hi)
+                numMissing += 1
 
-                for field in fields:
-                    try:
-                        pathologies[field] = row[field].tolist()
-                    except Exception as e:
-                        pass
-
+            for field in fields:
                 try:
-                    pathologyPerCoocIndividual[pv]['pathologies'].append(pathologies)
+                    pathologies[field] = row[field].tolist()
                 except Exception as e:
                     pass
+
+            try:
+                pathologyPerCoocIndividual[variant]['phenotype'].append(pathologies)
+            except Exception as e:
+                pass
 
     pathologyPerHomoIndividual = dict()
     for variant in data_set['homozygous vus']:
         homozygousIndividuals = ipvDF[variant]['homozygous individuals']
         pathologyPerHomoIndividual[variant] = dict()
-        pathologyPerHomoIndividual[variant]['pathologies'] = list()
+        pathologyPerHomoIndividual[variant]['phenotype'] = list()
         #pathologyPerHomoIndividual[variant]['numCases'] = 0
         #pathologyPerHomoIndividual[variant]['numSpecialCases'] = 0
         for hi in homozygousIndividuals:
@@ -334,7 +334,7 @@ def intersectPathology(pathologyFile, data_set, ipvDF, intersectFile):
                     pass
 
             try:
-                pathologyPerHomoIndividual[variant]['pathologies'].append(pathologies)
+                pathologyPerHomoIndividual[variant]['phenotype'].append(pathologies)
             except Exception as e:
                 pass
                 #return False

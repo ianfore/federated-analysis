@@ -74,7 +74,7 @@ where:
 * -spf is the sample phenotype data file in the data directory 
 
 
-2. This will generate a report in the federated-analysis/examples/BRCA/data directory called `BRCA2-cooccurrence.json` which contain a list of VUS, each in the following format:
+2. This will generate a report in the `examples/BRCA/data` directory called `BRCA2-cooccurrence.json` which contain a list of VUS, each in the following format:
 
 ```json
 {
@@ -166,7 +166,7 @@ where:
 
 ```
 
-3. This will also create a JSON file called `BRCA2-intersection.json` in the federated-analysis/examples/BRCA/data directory which intersect the phenotype data with the genotype data. 
+3. This will also create a JSON file called `BRCA2-intersection.json` in the `examples/BRCA/data` directory which intersect the phenotype data with the genotype data. 
 
 ````json
 {
@@ -287,7 +287,7 @@ where:
 
 ````
 
-4. Finally, this will also create a data quality report called `brca2-data-quality-report.txt` in the examples/BRCA/data directory.  Note that the default data analysis is generic -- it's completely devoid of any application or context.  If the scientist wishes to perform specific analyses on the data, then they must implement the custom data analyzer.  The custom data analyzer is provided an object that encapsulates all the default data analysis.  The custom code can then perform application-specific analyses on the data. 
+4. Finally, this will also create a data quality report called `brca2-data-quality-report.txt` in the `examples/BRCA/data` directory.  Note that the default data analysis is generic -- it's completely devoid of any application or context.  If the scientist wishes to perform specific analyses on the data, then they must implement the custom data analyzer.  The custom data analyzer is provided an object that encapsulates all the default data analysis.  The custom code can then perform application-specific analyses on the data. 
 
 ````
 ============================================

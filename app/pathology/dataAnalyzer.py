@@ -322,9 +322,10 @@ def main():
     myFederatedDataAnalyzer = FederatedDataAnalyzer(configFileName)
 
     # run analyzer and any custom code
-    return myFederatedDataAnalyzer.run() and customDataAnalyzer.run(myFederatedDataAnalyzer) \
-            and supplementaryTable4.run(myFederatedDataAnalyzer)
-    #return myFederatedDataAnalyzer.run()
+    '''return myFederatedDataAnalyzer.run() and customDataAnalyzer.run(myFederatedDataAnalyzer) \
+            and supplementaryTable4.run(myFederatedDataAnalyzer)'''
+
+    return myFederatedDataAnalyzer.run()
 
     #return myFederatedDataAnalyzer.run() and app.supplementaryTable4.run(myFederatedDataAnalyzer)
 
