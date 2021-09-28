@@ -350,33 +350,3 @@ column: CarrierGene / type: categorical
 ============================================
 missing values: {}
 ============================================
-carrier gene: BRCA2
-{
-    "counts": {
-        "('ER', 'Negative')": 2,
-        "('ER', 'Negative', 'age>=50')": 2,
-        "('ER', 'Positive')": 1,
-        "('ER', 'Positive', 'age>=50')": 1,
-        "('HER2', '1+')": 1,
-        "('HER2', '1+', 'age>=50')": 1,
-        "('HER2', '3+')": 1,
-        "('HER2', '3+', 'age>=50')": 1,
-        "('HER2', 'Negative')": 1,
-        "('HER2', 'Negative', 'age>=50')": 1,
-        "('PgR', 'Negative')": 1,
-        "('PgR', 'Negative', 'age>=50')": 1,
-        "('PgR', 'Positive')": 2,
-        "('PgR', 'Positive', 'age>=50')": 2
-    }
-}
-number of triple negatives = 0
-============================================
-number of triple positives = 1
-============================================
-number of triple values = 3
-============================================
-number of non-triple negatives = 1
-============================================
-
-````
-
