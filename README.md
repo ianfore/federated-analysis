@@ -51,7 +51,7 @@ $ cat examples/BRCA/config/brca2-report-config.tsv
 1. Run the runMe.sh script.
 
 ```console
-$ ./runMe.sh -c 13 -p True -g BRCA2 -dd $(pwd)/examples/BRCA/data -cd $(pwd)/examples/config -vf brca2.vcf -vpf brca2-pathogenicity.tsv -rc brca2-report-config.json -spf brca2-pathology.tsv
+$ ./runMe.sh -c 13 -p True -g BRCA2 -dd $(pwd)/examples/BRCA/data -cd $(pwd)/examples/BRCA/config -vf brca2.vcf -vpf brca2-pathogenicity.tsv -rc brca2-report-config.json -spf brca2-pathology.tsv
 ```
 
 where:

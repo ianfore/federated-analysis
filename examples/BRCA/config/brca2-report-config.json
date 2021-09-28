@@ -1,6 +1,5 @@
 {
   "qualityReport": "data/BRCA2-data-quality-report.txt",
-  "pathologyReport": "data/BRCA2-tumor-pathology-report.txt",
   "fileName": "data/brca2-pathology.tsv",
   "fileHeader": "True",
   "fieldDelimiter": "\t",
