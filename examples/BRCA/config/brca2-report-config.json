@@ -1,5 +1,6 @@
 {
   "qualityReport": "data/BRCA2-data-quality-report.txt",
+  "pathologyReport": "/dev/null",
   "fileName": "data/brca2-pathology.tsv",
   "fileHeader": "True",
   "fieldDelimiter": "\t",
