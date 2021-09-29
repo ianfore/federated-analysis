@@ -51,7 +51,7 @@ $ cat examples/BRCA/config/brca2-report-config.tsv
 1. Run the runMe.sh script.
 
 ```console
-$ ./runMe.sh -c 13 -p True -g BRCA2 -dd $(pwd)/examples/BRCA/data -cd $(pwd)/examples/BRCA/config -vf brca2.vcf -vpf brca2-pathogenicity.tsv -rc brca2-report-config.json -spf brca2-pathology.tsv
+$ ./runMe.sh -c 13 -p True -g BRCA2 -dd $(pwd)/examples/BRCA/data -cd $(pwd)/examples/BRCA/config -vf brca2.vcf -vpf brca2-pathogenicity.tsv -rc brca2-report-config.json -spf brca2-pathology.tsv -gf gnomad_chr13_brca2.vcf
 ```
 
 where:
@@ -73,96 +73,12 @@ where:
 
 * -spf is the sample phenotype data file in the data directory 
 
+* -gf is the Gnomad sites VCF file in the data directory
+
 
 2. This will generate a report in the `examples/BRCA/data` directory called `BRCA2-cooccurrence.json` which contain a list of VUS, each in the following format:
 
 ```json
-{
-    "cooccurring vus": {
-        "(13, 32353519, 'A', 'G')": {
-            "likelihood data": {
-                "p1": 0.375,
-                "p2": 0.001,
-                "n": 1,
-                "k": 1,
-                "likelihood": 0.0026666666666666666
-            },
-            "allele frequencies": {
-                "maxPop": null,
-                "maxPopFreq": 0.0,
-                "minPop": null,
-                "minPopFreq": 1.0,
-                "cohortFreq": 0.25
-            },
-            "pathogenic variants": [
-                [
-                    13,
-                    32338749,
-                    "AATTAC",
-                    "A"
-                ]
-            ]
-        },
-        "(13, 32355250, 'T', 'C')": {
-            "likelihood data": {
-                "p1": 0.375,
-                "p2": 0.001,
-                "n": 2,
-                "k": 1,
-                "likelihood": 0.0042624
-            },
-            "allele frequencies": {
-                "maxPop": null,
-                "maxPopFreq": 0.0,
-                "minPop": null,
-                "minPopFreq": 1.0,
-                "cohortFreq": 0.5
-            },
-            "pathogenic variants": [
-                [
-                    13,
-                    32316508,
-                    "GAC",
-                    "G"
-                ]
-            ]
-        },
-        "(13, 32353470, 'A', 'C')": {
-            "likelihood data": {
-                "p1": 0.375,
-                "p2": 0.001,
-                "n": 1,
-                "k": 1,
-                "likelihood": 0.0026666666666666666
-            },
-            "allele frequencies": {
-                "maxPop": null,
-                "maxPopFreq": 0.0,
-                "minPop": null,
-                "minPopFreq": 1.0,
-                "cohortFreq": 0.25
-            },
-            "pathogenic variants": [
-                [
-                    13,
-                    32340836,
-                    "GACAA",
-                    "G"
-                ]
-            ]
-        }
-    },
-    "homozygous vus": {
-        "(13, 32355250, 'T', 'C')": {
-            "count": 1,
-            "maxPop": null,
-            "maxPopFreq": 0.0,
-            "minPop": null,
-            "minPopFreq": 1.0,
-            "cohortFreq": 0.25
-        }
-    }
-}
 
 ```
 

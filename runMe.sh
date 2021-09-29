@@ -16,6 +16,12 @@ else
 	for arg in "$@"
 	do
     		case $arg in
+			-gf |--gnomadFile)
+			GNOMAD_FILE="$2"
+        		shift # Remove argument name from processing
+        		shift # Remove argument value from processing
+			;;
+
 			-rc |--reportConfig)
 			CONFIG_FILE="$2"
         		shift # Remove argument name from processing
@@ -132,7 +138,7 @@ else
 		PATHOLOGY_FILE=""
 	fi
 
-	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 --user=`id -u`:`id -g` -v ${APP_PATH}/cooccurrence:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${COOCCUR_DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder.py  --vcf $VCF_FILE --h $HG_VERSION --e $ENSEMBL_RELEASE --c $CHROM --p $PHASED --p2 $P2  --g $GENE --vpf $PATHOGENICITY_FILE  --d /var/tmp/pyensembl-cache  --data /data --save $SAVE_FILES --spf "$PATHOLOGY_FILE" 
+	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 --user=`id -u`:`id -g` -v ${APP_PATH}/cooccurrence:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${COOCCUR_DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder.py  --vcf $VCF_FILE --h $HG_VERSION --e $ENSEMBL_RELEASE --c $CHROM --p $PHASED --p2 $P2  --g $GENE --vpf $PATHOGENICITY_FILE  --d /var/tmp/pyensembl-cache  --data /data --save $SAVE_FILES --spf "$PATHOLOGY_FILE"  --gf "$GNOMAD_FILE"
 
 
 fi
