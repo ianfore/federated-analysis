@@ -34,10 +34,10 @@ $ cat examples/BRCA/data/brca2.vcf
 $ cat examples/BRCA/data/brca2-pathology.tsv
 ```
 
-5. Examine the variant pathogenicity file in the examples/data directory.
+5. Examine the ClinVar variant pathogenicity file in the examples/data directory.
 
 ```console
-$ cat examples/BRCA/data/brca2-pathogenicity.tsv
+$ cat examples/BRCA/data/clinvar_brca2.tsv
 ```
 
 6. Examine the data quality report configuration file in the examples/config directory.
@@ -51,7 +51,7 @@ $ cat examples/BRCA/config/brca2-report-config.tsv
 1. Run the runMe.sh script.
 
 ```console
-$ ./runMe.sh -c 13 -p True -g BRCA2 -dd $(pwd)/examples/BRCA/data -cd $(pwd)/examples/BRCA/config -vf brca2.vcf -vpf brca2-pathogenicity.tsv -rc brca2-report-config.json -spf brca2-pathology.tsv -gf gnomad_chr13_brca2.vcf
+$ ./runMe.sh -c 13 -p True -g BRCA2 -dd $(pwd)/examples/BRCA/data -cd $(pwd)/examples/BRCA/config -vf brca2.vcf -vpf clinvar_brca2.tsv -rc brca2-report-config.json -spf brca2-pathology.tsv -gf gnomad_chr13_brca2.vcf
 ```
 
 where:
@@ -67,7 +67,7 @@ where:
 
 * -vf is the VCF file in the data directory
 
-* -sp is the sample pathology file in the data directory 
+* -vpf is the Clinvar variant pathogenicity file in the data directory 
 
 * -rc is the data quality report configuration file in the config directory
 
@@ -79,7 +79,84 @@ where:
 2. This will generate a report in the `examples/BRCA/data` directory called `BRCA2-cooccurrence.json` which contain a list of VUS, each in the following format:
 
 ```json
-
+{
+    "cooccurring vus": {
+        "(13, 32355250, 'T', 'C')": {
+            "likelihood data": {
+                "p1": 0.375,
+                "p2": 0.001,
+                "n": 2,
+                "k": 1,
+                "likelihood": 0.0042624
+            },
+            "allele frequencies": {
+                "maxPop": "eas",
+                "maxPopFreq": "0.977087",
+                "cohortFreq": 0.5
+            },
+            "pathogenic variants": [
+                [
+                    13,
+                    32316508,
+                    "GAC",
+                    "G"
+                ]
+            ]
+        },
+        "(13, 32353470, 'A', 'C')": {
+            "likelihood data": {
+                "p1": 0.375,
+                "p2": 0.001,
+                "n": 1,
+                "k": 1,
+                "likelihood": 0.0026666666666666666
+            },
+            "allele frequencies": {
+                "maxPop": "eas",
+                "maxPopFreq": "0.383654",
+                "cohortFreq": 0.25
+            },
+            "pathogenic variants": [
+                [
+                    13,
+                    32340836,
+                    "GACAA",
+                    "G"
+                ]
+            ]
+        },
+        "(13, 32353519, 'A', 'G')": {
+            "likelihood data": {
+                "p1": 0.375,
+                "p2": 0.001,
+                "n": 1,
+                "k": 1,
+                "likelihood": 0.0026666666666666666
+            },
+            "allele frequencies": {
+                "maxPop": "afr",
+                "maxPopFreq": "0.00385267",
+                "cohortFreq": 0.25
+            },
+            "pathogenic variants": [
+                [
+                    13,
+                    32338749,
+                    "AATTAC",
+                    "A"
+                ]
+            ]
+        }
+    },
+    "homozygous vus": {
+        "(13, 32355250, 'T', 'C')": {
+            "count": 1,
+            "maxPop": "eas",
+            "maxPopFreq": "0.977087",
+            "cohortFreq": 0.25
+        }
+    }
+}
 ```
 
 3. This will also create a JSON file called `BRCA2-intersection.json` in the `examples/BRCA/data` directory which intersect the phenotype data with the genotype data. 
