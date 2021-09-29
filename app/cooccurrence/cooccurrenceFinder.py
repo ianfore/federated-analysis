@@ -479,7 +479,10 @@ def findVariants(fileName, classStrings, hgVersion):
     return df, pathVars, benignVars, vusVars
 
 def getAFFromGnomadSites(fileName, vus):
-    _chrom="chr" + str(vus[0])
+    if not str(vus[0]).startswith("chr"):
+        _chrom="chr" + str(vus[0])
+    else:
+        _chrom=vus[0]
     _pos = vus[1]
     _ref = str(vus[2])
     _alt = str(vus[3])
