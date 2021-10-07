@@ -6,6 +6,7 @@ workflow cooccurrence {
 	File VCF_FILE
 	File VARIANT_PATHOGENICITY_FILE
 	File? ANNO_FILE
+	File  GNOMAD_FILE
 	String OUTPUT_FILENAME
 	String VPI_FILENAME
 	String IPV_FILENAME
@@ -19,7 +20,6 @@ workflow cooccurrence {
 	String GENE
 	String NUM_CORES
 	String SAVE_FILES
-	String GNOMAD_FILE
 	}
 
 	call run_cooccurrence {
@@ -28,6 +28,7 @@ workflow cooccurrence {
 		vcf_file=VCF_FILE,
 		variant_pathogenicity_file=VARIANT_PATHOGENICITY_FILE,
 		anno_file=ANNO_FILE,
+		gnomad_file=GNOMAD_FILE,
 		hg_version=HG_VERSION,
 		ensembl_release=ENSEMBL_RELEASE,
 		phased=PHASED,
@@ -40,8 +41,7 @@ workflow cooccurrence {
 		all_filename=ALL_FILENAME,
 		variants_filename=IPV_FILENAME,
 		tout_filename=TOUT_FILENAME,
-		save_files=SAVE_FILES,
-		gnomad_file=GNOMAD_FILE
+		save_files=SAVE_FILES
 	}
 	output { 
 		File ipv_file = IPV_FILENAME
@@ -60,6 +60,7 @@ task run_cooccurrence {
 		File vcf_file
 		File variant_pathogenicity_file
 		File? anno_file
+		File gnomad_file
 		String hg_version
 		String ensembl_release
 		String phased
@@ -73,7 +74,6 @@ task run_cooccurrence {
 		String tout_filename
 		String all_filename
 		String save_files
-		String gnomad_file
 	}
 
 	command <<<
