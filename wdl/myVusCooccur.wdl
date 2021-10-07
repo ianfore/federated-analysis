@@ -19,6 +19,7 @@ workflow cooccurrence {
 	String GENE
 	String NUM_CORES
 	String SAVE_FILES
+	String GNOMAD_FILE
 	}
 
 	call run_cooccurrence {
@@ -39,7 +40,8 @@ workflow cooccurrence {
 		all_filename=ALL_FILENAME,
 		variants_filename=IPV_FILENAME,
 		tout_filename=TOUT_FILENAME,
-		save_files=SAVE_FILES
+		save_files=SAVE_FILES,
+		gnomad_file=GNOMAD_FILE
 	}
 	output { 
 		File ipv_file = IPV_FILENAME
@@ -71,12 +73,13 @@ task run_cooccurrence {
 		String tout_filename
 		String all_filename
 		String save_files
+		String gnomad_file
 	}
 
 	command <<<
 		export PYTHONPATH=/ 
 		export PYTHONIOENCODING=UTF-8 
-		/usr/bin/python3  ~{python_script} --vcf ~{vcf_file} --h ~{hg_version} --e ~{ensembl_release} --c ~{chrom} --g ~{gene} --p ~{phased} --p2 ~{p2} --n ~{num_cores} --vpf ~{variant_pathogenicity_file} --anno "~{anno_file}" --save ~{save_files}
+		/usr/bin/python3  ~{python_script} --vcf ~{vcf_file} --h ~{hg_version} --e ~{ensembl_release} --c ~{chrom} --g ~{gene} --p ~{phased} --p2 ~{p2} --n ~{num_cores} --vpf ~{variant_pathogenicity_file} --anno "~{anno_file}" --save ~{save_files} --gf ~{gnomad_file}
 	>>>
 	
 	output {
