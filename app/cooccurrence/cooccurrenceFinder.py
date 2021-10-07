@@ -89,7 +89,7 @@ def parseArgs():
     parser.add_argument("--d", dest="d", help="directory containing pyensembl-cache. Default=/var/tmp/pyensembl-cache",
                         default='/var/tmp/pyensembl-cache')
     parser.add_argument("--spf", dest="spf", help="sample pathology input file. Default=None", default=None)
-    parser.add_argument("--gfn", dest="gfn", help="gnomad sites file name", default=None)
+    parser.add_argument("--gf", dest="gf", help="gnomad sites file name", default=None)
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" % defaultLogLevel, default=defaultLogLevel)
     return parser.parse_args()
 
@@ -126,7 +126,7 @@ def main():
         toutFileName = dataDir + "/" + str(options.g) + "-tout.json"
         vcfFileName = dataDir + "/" + options.vcf
         pathogenicityFileName = dataDir + "/" + options.vpf
-        gnomadFileName = dataDir + "/" + options.gfn
+        gnomadFileName = dataDir + "/" + options.gf
         if not options.spf is "":
             pathologyFileName = dataDir + "/" + options.spf
     else:
@@ -137,7 +137,7 @@ def main():
         toutFileName = str(options.g) + "-tout.json"
         vcfFileName = options.vcf
         pathogenicityFileName =  options.vpf
-        gnomadFileName = options.gfn
+        gnomadFileName = options.gf
         if not options.spf is None:
             pathologyFileName = options.spf
     saveFiles = str2bool(options.save)
