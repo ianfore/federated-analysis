@@ -407,25 +407,30 @@ def isExonic(ensemblRelease, chrom, pos):
 def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, df, hgVersion, cohortSize, ensemblRelease, gnomadFileName):
     # add infoList stuff from INFO field
     for variant in range(len(vcf['calldata/GT'])):
-        if int(vcf['variants/CHROM'][variant].replace('chr', '')) != int(chromosome):
-            continue
         c = int(vcf['variants/CHROM'][variant].replace('chr', ''))
+        if c != int(chromosome):
+            continue
         p = int(vcf['variants/POS'][variant])
         r = str(vcf['variants/REF'][variant])
         a = str(vcf['variants/ALT'][variant][0])
         v = str((c,p,r,a))
-        if v in individualsPerVariant:
-            '''for info in infoList:
-                individualsPerVariant[v][info] = vcf['variants/' + info][variant]'''
-            #maxPop, maxFreq, minPop, minFreq, allPopFreq = getGnomadData(df, eval(v), hgVersion)
+        #if v in individualsPerVariant:
+        '''for info in infoList:
+            individualsPerVariant[v][info] = vcf['variants/' + info][variant]'''
+        #maxPop, maxFreq, minPop, minFreq, allPopFreq = getGnomadData(df, eval(v), hgVersion)
+        try:
+            individualsPerVariant[v]['cohortFreq'] = float(len(individualsPerVariant[v]['homozygous individuals']) + \
+                                                           len(individualsPerVariant[v][
+                                                                   'heterozygous individuals'])) / float(cohortSize)
             maxPop, maxFreq, allPopFreq = getAFFromGnomadSites(gnomadFileName, eval(v))
             individualsPerVariant[v]['maxPop'] = maxPop
             individualsPerVariant[v]['maxFreq'] = maxFreq
-            individualsPerVariant[v]['cohortFreq'] = float(len(individualsPerVariant[v]['homozygous individuals']) + \
-                len(individualsPerVariant[v]['heterozygous individuals']) ) / float(cohortSize)
+
             individualsPerVariant[v]['exonic'] = isExonic(ensemblRelease, c, p)
-        else:
+        except Exception:
             logger.warning('variant ' + str(v) + ' not in ipv dict?')
+        #else:
+            #logger.warning('variant ' + str(v) + ' not in ipv dict?')
     return individualsPerVariant
 
 def getAllVariantsPerClass(vpi):
