@@ -427,7 +427,8 @@ def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, df, hgVersi
             individualsPerVariant[v]['cohortFreq'] = float(len(individualsPerVariant[v]['homozygous individuals']) + \
                                                            len(individualsPerVariant[v][
                                                                    'heterozygous individuals'])) / float(cohortSize)
-            info = gnomad[gnomad['#CHROM'] == 'chr'+str(c)][gnomad['POS'] == p][gnomad['REF'] == r][gnomad["ALT"] == a][ 'INFO']
+            chrom = 'chr' + str(c)
+            info = gnomad[gnomad['#CHROM'] == chrom][gnomad['POS'] == p][gnomad['REF'] == r][gnomad["ALT"] == a][ 'INFO']
 
             #maxPop, maxFreq, allPopFreq = getAFFromGnomadSites(gnomadFileName, eval(v))
             if len(info) == 1:
