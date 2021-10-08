@@ -406,6 +406,11 @@ def isExonic(ensemblRelease, chrom, pos):
 
 def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, df, hgVersion, cohortSize, ensemblRelease, gnomadFileName):
     # add infoList stuff from INFO field
+    # do getAFFromGnomadSites inline
+    gnomad = pandas.read_csv(gnomadFileName, header=None, sep='\t', comment='#')
+    # CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+    columns = ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO']
+    gnomad.columns = columns
     for variant in range(len(vcf['calldata/GT'])):
         c = int(vcf['variants/CHROM'][variant].replace('chr', ''))
         if c != int(chromosome):
@@ -422,10 +427,31 @@ def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, df, hgVersi
             individualsPerVariant[v]['cohortFreq'] = float(len(individualsPerVariant[v]['homozygous individuals']) + \
                                                            len(individualsPerVariant[v][
                                                                    'heterozygous individuals'])) / float(cohortSize)
-            maxPop, maxFreq, allPopFreq = getAFFromGnomadSites(gnomadFileName, eval(v))
-            individualsPerVariant[v]['maxPop'] = maxPop
-            individualsPerVariant[v]['maxFreq'] = maxFreq
+            info = gnomad[gnomad['#CHROM'] == 'chr'+str(c)][gnomad['POS'] == p][gnomad['REF'] == r][gnomad["ALT"] == a][ 'INFO']
 
+            #maxPop, maxFreq, allPopFreq = getAFFromGnomadSites(gnomadFileName, eval(v))
+            if len(info) == 1:
+                infoArray = info.iloc[0].split(';')
+                varValDict = dict()
+                for varVal in infoArray:
+                    varValArray = varVal.split('=')
+                    if len(varValArray) == 1:
+                        continue
+                    _var = varVal.split('=')[0]
+                    _val = varVal.split('=')[1]
+                    varValDict[_var] = _val
+                popmax = None
+                faf95 = None
+                af = None
+                if 'popmax' in varValDict:
+                    popmax = varValDict['popmax']
+                if 'faf95_popmax' in varValDict:
+                    faf95 = varValDict['faf95_popmax']
+                if 'AF' in varValDict:
+                    af = varValDict['AF']
+            individualsPerVariant[v]['maxPop'] = popmax
+            individualsPerVariant[v]['maxFreq'] = af
+            individualsPerVariant[v]['faf95'] = faf95
             individualsPerVariant[v]['exonic'] = isExonic(ensemblRelease, c, p)
         except Exception:
             logger.warning('variant ' + str(v) + ' not in ipv dict?')
