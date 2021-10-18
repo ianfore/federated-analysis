@@ -118,6 +118,7 @@ def main():
 
     dataDir = options.data
     pathologyFileName = None
+    intersectionFile = None
     if dataDir != None:
         outFileName = dataDir + "/" + str(options.g) + "-cooccurrences.json"
         ipvFileName = dataDir + "/" + str(options.g) + "-ipv.json"
@@ -129,6 +130,7 @@ def main():
         gnomadFileName = dataDir + "/" + options.gf
         if not options.spf is "":
             pathologyFileName = dataDir + "/" + options.spf
+            intersectionFile = dataDir + "/" + str(options.g) + '-intersection.json'
     else:
         outFileName = str(options.g) + "-cooccurrences.json"
         ipvFileName = str(options.g) + "-ipv.json"
@@ -140,6 +142,7 @@ def main():
         gnomadFileName = options.gf
         if not options.spf is None:
             pathologyFileName = options.spf
+            intersectionFile = str(options.g) + '-intersection.json'
     saveFiles = str2bool(options.save)
     phased = str2bool(options.p)
     p2 = float(options.p2)
@@ -147,11 +150,11 @@ def main():
 
     run(int(options.h), int(options.e), options.c, options.g, phased, p2, vcfFileName,
         int(options.n), pathogenicityFileName, options.d, ipvFileName, vpiFileName, allFileName, options.anno,
-        outFileName, toutFileName, saveFiles, pathologyFileName, gnomadFileName)
+        outFileName, toutFileName, saveFiles, pathologyFileName, intersectionFile, gnomadFileName)
 
 def run(hgVersion, ensemblRelease, chromosome, gene, phased, p2, vcfFileName, numProcs,
         pathogenicityFileName, pyensemblDir, ipvFileName, vpiFileName, allVariantsFileName, annoFileName,
-        outputFileName, toutFileName, saveFiles, pathologyFileName, gnomadFileName):
+        outputFileName, toutFileName, saveFiles, pathologyFileName, intersectionFile, gnomadFileName):
 
 
     logger.info('setting pyensembl dir to ' + pyensemblDir)
@@ -265,7 +268,6 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, p2, vcfFileName, nu
 
     if not pathologyFileName is None:
         logger.info('intersecting variants with pathology data in file ' + str(pathologyFileName))
-        intersectionFile = '/data/' + str(gene) + '-intersection.json'
         intersectPathology(pathologyFileName, data_set, individualsPerVariant, intersectionFile )
 
 def intersectPathology(pathologyFile, data_set, ipvDF, intersectFile):
@@ -348,6 +350,7 @@ def intersectPathology(pathologyFile, data_set, ipvDF, intersectFile):
     #pathologyPerAllIndividuals['numSpecialCases'] = numSpecialCases
     pathologyPerAllIndividuals['numMissing'] = numMissing
 
+    logger.info('saving pathology intersection data  to ' + intersectFile)
     json_dump = json.dumps(pathologyPerAllIndividuals, indent=4, sort_keys=True)
     with open(intersectFile, 'w') as f:
         f.write(json_dump)
