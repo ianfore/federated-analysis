@@ -10,37 +10,37 @@ Run the following steps to find variants of uncertain significance (VUS) in a VC
 ## Prepare for the co-occurrence analysis
 To prepare for a co-occurrence analysis, perform the following steps:
 
-1. Clone this github repository to your local system where the VCF file resides.
+1. Clone this github repository to your local system. 
 
 ```console
 $ git clone https://github.com/BRCAChallenge/federated-analysis
 ```
 
-2. Change directory to the federated-analysis directory. 
+2. Change directory to the `federated-analysis` directory. 
 
 ```console
 $ cd federated-analysis 
 ```
 
-3. Examine the VCF file in the examples/data directory.
+3. Examine the VCF file in the `examples/data` directory.
 
 ```console
 $ cat examples/BRCA/data/brca2.vcf
 ```
 
-4. Examine the phenotype data file in the examples/data directory.
+4. Examine the phenotype data file in the `examples/data` directory.
 
 ```console
 $ cat examples/BRCA/data/brca2-pathology.tsv
 ```
 
-5. Examine the ClinVar variant pathogenicity file in the examples/data directory.
+5. Examine the ClinVar variant pathogenicity file in the `examples/data` directory.
 
 ```console
 $ cat examples/BRCA/data/clinvar_brca2.tsv
 ```
 
-6. Examine the data quality report configuration file in the examples/config directory.
+6. Examine the data quality report configuration file in the `examples/config` directory.
 
 ```console
 $ cat examples/BRCA/config/brca2-report-config.tsv
