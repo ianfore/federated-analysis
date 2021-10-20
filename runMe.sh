@@ -7,7 +7,7 @@ PATHOLOGY_DOCKER_IMAGE_NAME=brcachallenge/federated-analysis:pathology
 
 if [ $# -eq 0 ]
 then
-	echo "example: $0 -c 13 -p True -dd $(pwd)/examples/BRCA/data -cd $(pwd)/examples/BRCA/config -vf brca2.vcf -vpf clinvar_brca2.tsv -gf gnomad_chr13_brca2.vcf -rc brca2-report-config.json -g BRCA2 -spf brca2-pathology.tsv -hg 38" 
+	echo "example: $0 -c 13 -p True -dd $(pwd)/examples/BRCA2/data -cd $(pwd)/examples/BRCA2/config -vf brca2.vcf -vpf clinvar_brca2.tsv -gf gnomad_chr13_brca2.vcf -rc brca2-report-config.json -g BRCA2 -spf brca2-pathology.tsv -hg 38" 
 	exit 1
 	
 

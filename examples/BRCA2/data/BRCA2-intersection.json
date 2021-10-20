@@ -1,0 +1,115 @@
+{
+    "cooccurring": {
+        "(13, 32353470, 'A', 'C')": {
+            "phenotype": [
+                {
+                    "Age at onset": [
+                        51
+                    ],
+                    "CarrierGene": [
+                        "BRCA2"
+                    ],
+                    "ER": [
+                        "Negative"
+                    ],
+                    "Family history / breast cancer": [
+                        0
+                    ],
+                    "HER2": [
+                        "1+"
+                    ],
+                    "ID": [
+                        2
+                    ],
+                    "PgR": [
+                        "Positive"
+                    ]
+                }
+            ]
+        },
+        "(13, 32353519, 'A', 'G')": {
+            "phenotype": [
+                {
+                    "Age at onset": [
+                        66
+                    ],
+                    "CarrierGene": [
+                        "BRCA2"
+                    ],
+                    "ER": [
+                        "Negative"
+                    ],
+                    "Family history / breast cancer": [
+                        0
+                    ],
+                    "HER2": [
+                        "Negative"
+                    ],
+                    "ID": [
+                        3
+                    ],
+                    "PgR": [
+                        "Negative"
+                    ]
+                }
+            ]
+        },
+        "(13, 32355250, 'T', 'C')": {
+            "phenotype": [
+                {
+                    "Age at onset": [
+                        57
+                    ],
+                    "CarrierGene": [
+                        "BRCA2"
+                    ],
+                    "ER": [
+                        "Positive"
+                    ],
+                    "Family history / breast cancer": [
+                        1
+                    ],
+                    "HER2": [
+                        "3+"
+                    ],
+                    "ID": [
+                        1
+                    ],
+                    "PgR": [
+                        "Positive"
+                    ]
+                }
+            ]
+        }
+    },
+    "homozygous": {
+        "(13, 32355250, 'T', 'C')": {
+            "phenotype": [
+                {
+                    "Age at onset": [
+                        0
+                    ],
+                    "CarrierGene": [
+                        "NonCarrier"
+                    ],
+                    "ER": [
+                        NaN
+                    ],
+                    "Family history / breast cancer": [
+                        0
+                    ],
+                    "HER2": [
+                        NaN
+                    ],
+                    "ID": [
+                        4
+                    ],
+                    "PgR": [
+                        NaN
+                    ]
+                }
+            ]
+        }
+    },
+    "numMissing": 0
+}

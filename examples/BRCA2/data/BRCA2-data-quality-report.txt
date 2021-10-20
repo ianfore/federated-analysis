@@ -1,0 +1,61 @@
+============================================
+total records read from data file: 4
+============================================
+column: ER / type: categorical
+{
+    "fieldCount": {
+        "NA": 1,
+        "Negative": 2,
+        "Positive": 1
+    }
+}
+============================================
+column: PgR / type: categorical
+{
+    "fieldCount": {
+        "NA": 1,
+        "Negative": 1,
+        "Positive": 2
+    }
+}
+============================================
+column: HER2 / type: categorical
+{
+    "fieldCount": {
+        "1+": 1,
+        "3+": 1,
+        "NA": 1
+    }
+}
+============================================
+column: Age at onset / type: numerical
+{
+    "fieldCount": {
+        "51": 1,
+        "57": 1,
+        "66": 1
+    }
+}
+min = 51, max = 66, mean = 58 median = 57 stdev = 7.54983443527075
+============================================
+column: Family history / breast cancer / type: numerical
+{
+    "fieldCount": {
+        "0": 3,
+        "1": 1
+    }
+}
+min = 0, max = 1, mean = 0.25 median = 0.0 stdev = 0.5
+============================================
+column: CarrierGene / type: categorical
+{
+    "fieldCount": {
+        "BRCA2": 3,
+        "NonCarrier": 1
+    }
+}
+============================================
+bad values: {2: [('HER2', 'Negative')], 3: [('Age at onset', 0)]}
+============================================
+missing values: {}
+============================================
