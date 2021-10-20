@@ -7,8 +7,7 @@ PATHOLOGY_DOCKER_IMAGE_NAME=brcachallenge/federated-analysis:pathology
 
 if [ $# -eq 0 ]
 then
-	echo "usage: $0 -rc reportConfigFile -vf vcfFile -hg hgVersion -er ensemblRelease -c chromosome -p phased -g gene -pf pathogenicityFile -dd dataDirectory -st saveTempfiles -sp samplePathologyFile"
-	echo "example: $0 -dq quality-report-config.json -vf my.vcf -hg 38 -er 99 -c 13 -p True --p2 0.001 -g BRCA2 -pf brca-variants.tsv -dd data -st True -sp mypf.tsv " 
+	echo "example: $0 -c 13 -p True -dd $(pwd)/examples/BRCA/data -cd $(pwd)/examples/BRCA/config -vf brca2.vcf -vpf clinvar_brca2.tsv -gf gnomad_chr13_brca2.vcf -rc brca2-report-config.json -g BRCA2 -spf brca2-pathology.tsv -hg 38" 
 	exit 1
 	
 
@@ -96,8 +95,8 @@ else
         		shift # Remove argument value from processing
         		;;
 
-			-spf|--samplePathologyFile)
-			PATHOLOGY_FILE="$2"
+			-spf|--samplePhenotypeFile)
+			PHENOTYPE_FILE="$2"
         		shift # Remove argument name from processing
         		shift # Remove argument value from processing
         		;;
@@ -133,12 +132,12 @@ else
 	then
 		P2=0.001	
 	fi
-	if [ -z "PATHOLOGY_FILE" ]
+	if [ -z "PHENOTYPE_FILE" ]
 	then
-		PATHOLOGY_FILE=""
+		PHENOTYPE_FILE=""
 	fi
 
-	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 --user=`id -u`:`id -g` -v ${APP_PATH}/cooccurrence:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${COOCCUR_DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder.py  --vcf $VCF_FILE --h $HG_VERSION --e $ENSEMBL_RELEASE --c $CHROM --p $PHASED --p2 $P2  --g $GENE --vpf $PATHOGENICITY_FILE  --d /var/tmp/pyensembl-cache  --data /data --save $SAVE_FILES --spf "$PATHOLOGY_FILE"  --gf "$GNOMAD_FILE"
+	docker run --rm -e PYTHONPATH=/ -e PYTHONIOENCODING=UTF-8 --user=`id -u`:`id -g` -v ${APP_PATH}/cooccurrence:/app:ro -v ${CONF_PATH}:/config -v "${DATA_PATH}":/data:rw ${COOCCUR_DOCKER_IMAGE_NAME} /usr/bin/python3 /app/cooccurrenceFinder.py  --vcf $VCF_FILE --h $HG_VERSION --e $ENSEMBL_RELEASE --c $CHROM --p $PHASED --p2 $P2  --g $GENE --vpf $PATHOGENICITY_FILE  --d /var/tmp/pyensembl-cache  --data /data --save $SAVE_FILES --spf "$PHENOTYPE_FILE"  --gf "$GNOMAD_FILE"
 
 
 fi
