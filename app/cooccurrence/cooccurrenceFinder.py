@@ -74,7 +74,7 @@ def str2bool(string):
 
 def parseArgs():
     parser = argparse.ArgumentParser(usage="cooccurrenceFinder args [options]")
-    parser.add_argument("--anno", dest="anno", help="annotation file name, default=None", default=None)
+    parser.add_argument("--anno", dest="anno", help="(optional) annotation file name, default=None", default=None)
     parser.add_argument("--vcf", dest="vcf", help="vcf file name, default=None", default=None)
     parser.add_argument("--data", dest="data", help="data directory name, default=None", default=None)
     parser.add_argument("--save", dest="save", help="save intermediate files boolean, default=None", default=None)
@@ -88,8 +88,8 @@ def parseArgs():
     parser.add_argument("--vpf", dest="vpf", help="variant pathogenicity  file. Default=None", default=None)
     parser.add_argument("--d", dest="d", help="directory containing pyensembl-cache. Default=/var/tmp/pyensembl-cache",
                         default='/var/tmp/pyensembl-cache')
-    parser.add_argument("--spf", dest="spf", help="sample pathology input file. Default=None", default=None)
-    parser.add_argument("--gf", dest="gf", help="gnomad sites file name", default=None)
+    parser.add_argument("--spf", dest="spf", help="(optional) sample pathology input file. Default=None", default=None)
+    parser.add_argument("--gf", dest="gf", help="(optional) gnomad sites file name", default=None)
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" % defaultLogLevel, default=defaultLogLevel)
     return parser.parse_args()
 
@@ -117,8 +117,8 @@ def main():
     print(options)
 
     dataDir = options.data
-    pathologyFileName = None
-    intersectionFile = None
+    gnomadFileName = pathologyFileName = intersectionFile = None
+
     if dataDir != None:
         outFileName = dataDir + "/" + str(options.g) + "-cooccurrences.json"
         ipvFileName = dataDir + "/" + str(options.g) + "-ipv.json"
@@ -127,10 +127,12 @@ def main():
         toutFileName = dataDir + "/" + str(options.g) + "-tout.json"
         vcfFileName = dataDir + "/" + options.vcf
         pathogenicityFileName = dataDir + "/" + options.vpf
-        gnomadFileName = dataDir + "/" + options.gf
+        if not options.gf is "":
+            gnomadFileName = dataDir + "/" + options.gf
         if not options.spf is "":
             pathologyFileName = dataDir + "/" + options.spf
             intersectionFile = dataDir + "/" + str(options.g) + '-intersection.json'
+
     else:
         outFileName = str(options.g) + "-cooccurrences.json"
         ipvFileName = str(options.g) + "-ipv.json"
@@ -392,7 +394,8 @@ def findIndividualsPerVariant(variantsPerIndividual, vcf, chromosome, df, hgVers
                 individualsPerVariant[v]['homozygous individuals'].add(individual)
             else:
                 logger.warning('hmm - didnt add this vus ' + v)
-    individualsPerVariant = addVariantInfo(individualsPerVariant, vcf, chromosome, ['FIBC_I', 'FIBC_P'], df,
+    if not gnomadFileName is None:
+        individualsPerVariant = addVariantInfo(individualsPerVariant, vcf, chromosome, ['FIBC_I', 'FIBC_P'], df,
                                            hgVersion, cohortSize, ensemblRelease, gnomadFileName)
 
     return individualsPerVariant
@@ -625,15 +628,17 @@ def countHomozygousPerVus(variantsPerIndividual, df, hgVersion, ensemblRelease, 
                     homozygousPerVus[str(vus[0])] = dict()
                     homozygousPerVus[str(vus[0])]['count'] = 0
                     #maxPop, maxPopFreq, minPop, minPopFreq, allPopFreq = getGnomadData(df, vus[0], hgVersion)
-                    maxPop, maxPopFreq, allPopFreq = getAFFromGnomadSites(gnomadFileName, vus[0])
-                    homozygousPerVus[str(vus[0])]['maxPop'] = maxPop
-                    homozygousPerVus[str(vus[0])]['maxPopFreq'] = maxPopFreq
+                    if not gnomadFileName is None:
+                        maxPop, maxPopFreq, allPopFreq = getAFFromGnomadSites(gnomadFileName, vus[0])
+                        homozygousPerVus[str(vus[0])]['maxPop'] = maxPop
+                        homozygousPerVus[str(vus[0])]['maxPopFreq'] = maxPopFreq
                 homozygousPerVus[str(vus[0])]['count'] += 1
 
     cohortSize = len(variantsPerIndividual)
     for vus in homozygousPerVus:
         #maxPopFreq = homoZygousPerVus[vus][1][1]
-        maxPopFreq = homozygousPerVus[vus]['maxPopFreq']
+        if not gnomadFileName is None:
+            maxPopFreq = homozygousPerVus[vus]['maxPopFreq']
         cohortFreq = float(homozygousPerVus[vus]['count'])/ float(cohortSize)
         homozygousPerVus[vus]['cohortFreq'] = float(cohortFreq)
 
@@ -680,7 +685,10 @@ def calculateLikelihood(pathCoocs, p1, p2, n, k, df, hgVersion, cohortSize, gnom
     dataPerVus = dict()
     for vus in likelihoodRatios:
         #maxPop, maxPopFreq, minPop, minPopFreq, allPopFreq = getGnomadData(df, vus, hgVersion)
-        maxPop, maxPopFreq, allPopFreq = getAFFromGnomadSites(gnomadFileName, vus)
+        if not gnomadFileName is None:
+            maxPop, maxPopFreq, allPopFreq = getAFFromGnomadSites(gnomadFileName, vus)
+        else:
+            maxPop = maxPopFreq = np.nan
         cohortFreq = float(n[vus]) / float(cohortSize)
         data = {'likelihood data': {'p1':p1, 'p2':p2, 'n':n[vus], 'k':k[vus], 'likelihood':likelihoodRatios[vus]},
                     'allele frequencies':{'maxPop':maxPop, 'maxPopFreq':maxPopFreq,
