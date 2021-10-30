@@ -796,7 +796,7 @@ def findVarsPerIndividual(q, vcf, benignVariants, pathogenicVariants, chromosome
 def getGenesForVariant(variant, ensemblRelease, geneOfInterest):
     ensembl = pyensembl.EnsemblRelease(release=ensemblRelease)
     chrom = variant[0]
-    if type(chrom) is str:
+    if type(chrom) is str and 'chr' in chrom:
         chrom = chrom.split('chr')[1]
     pos = variant[1]
     try:
