@@ -394,7 +394,7 @@ def findIndividualsPerVariant(variantsPerIndividual, vcf, chromosome, df, hgVers
                 individualsPerVariant[v]['homozygous individuals'].add(individual)
             else:
                 logger.warning('hmm - didnt add this vus ' + v)
-    if not gnomadFileName is None:
+    if not gnomadFileName is None or gnomadFileName != "":
         individualsPerVariant = addVariantInfo(individualsPerVariant, vcf, chromosome, ['FIBC_I', 'FIBC_P'], df,
                                            hgVersion, cohortSize, ensemblRelease, gnomadFileName)
 
@@ -413,6 +413,8 @@ def isExonic(ensemblRelease, chrom, pos):
 def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, df, hgVersion, cohortSize, ensemblRelease, gnomadFileName):
     # add infoList stuff from INFO field
     # do getAFFromGnomadSites inline
+    if gnomadFileName is None or gnomadFileName == "":
+        return individualsPerVariant
     gnomad = pandas.read_csv(gnomadFileName, header=None, sep='\t', comment='#')
     # CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
     columns = ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO']
@@ -462,8 +464,6 @@ def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, df, hgVersi
             individualsPerVariant[v]['exonic'] = isExonic(ensemblRelease, c, p)
         except Exception:
             logger.warning('variant ' + str(v) + ' not in ipv dict?')
-        #else:
-            #logger.warning('variant ' + str(v) + ' not in ipv dict?')
     return individualsPerVariant
 
 def getAllVariantsPerClass(vpi):
