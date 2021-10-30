@@ -605,9 +605,10 @@ def countHomozygousPerBenign(variantsPerIndividual, df, hgVersion, ensemblReleas
                     homozygousPerBenign[str(ben[0])] = dict()
                     homozygousPerBenign[str(ben[0])]['count'] = 0
                     #maxPop, maxPopFreq, minPop, minPopFreq, allPopFreq = getGnomadData(df, ben[0], hgVersion)
-                    maxPop, maxPopFreq, allPopFreq = getAFFromGnomadSites(gnomadFileName, ben[0])
-                    homozygousPerBenign[str(ben[0])]['maxPop'] = maxPop
-                    homozygousPerBenign[str(ben[0])]['maxPopFreq'] = maxPopFreq
+                    if not gnomadFileName is None and gnomadFile != '':
+                        maxPop, maxPopFreq, allPopFreq = getAFFromGnomadSites(gnomadFileName, ben[0])
+                        homozygousPerBenign[str(ben[0])]['maxPop'] = maxPop
+                        homozygousPerBenign[str(ben[0])]['maxPopFreq'] = maxPopFreq
                 homozygousPerBenign[str(ben[0])]['count'] += 1
 
     cohortSize = len(variantsPerIndividual)
@@ -629,7 +630,7 @@ def countHomozygousPerVus(variantsPerIndividual, df, hgVersion, ensemblRelease, 
                     homozygousPerVus[str(vus[0])] = dict()
                     homozygousPerVus[str(vus[0])]['count'] = 0
                     #maxPop, maxPopFreq, minPop, minPopFreq, allPopFreq = getGnomadData(df, vus[0], hgVersion)
-                    if not gnomadFileName is None:
+                    if not gnomadFileName is None and gnomadFileName != '':
                         maxPop, maxPopFreq, allPopFreq = getAFFromGnomadSites(gnomadFileName, vus[0])
                         homozygousPerVus[str(vus[0])]['maxPop'] = maxPop
                         homozygousPerVus[str(vus[0])]['maxPopFreq'] = maxPopFreq
@@ -686,7 +687,7 @@ def calculateLikelihood(pathCoocs, p1, p2, n, k, df, hgVersion, cohortSize, gnom
     dataPerVus = dict()
     for vus in likelihoodRatios:
         #maxPop, maxPopFreq, minPop, minPopFreq, allPopFreq = getGnomadData(df, vus, hgVersion)
-        if not gnomadFileName is None:
+        if not gnomadFileName is None and gnomadFileName != '':
             maxPop, maxPopFreq, allPopFreq = getAFFromGnomadSites(gnomadFileName, vus)
         else:
             maxPop = maxPopFreq = np.nan
