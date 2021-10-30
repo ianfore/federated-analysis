@@ -127,7 +127,8 @@ def main():
         toutFileName = dataDir + "/" + str(options.g) + "-tout.json"
         vcfFileName = dataDir + "/" + options.vcf
         pathogenicityFileName = dataDir + "/" + options.vpf
-        if not options.gf is "":
+        logger.debug('options.gf is  ' + options.gf)
+        if not options.gf is "" or not options.gf is None:
             gnomadFileName = dataDir + "/" + options.gf
         if not options.spf is "":
             pathologyFileName = dataDir + "/" + options.spf
