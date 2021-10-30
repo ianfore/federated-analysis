@@ -127,10 +127,11 @@ def main():
         toutFileName = dataDir + "/" + str(options.g) + "-tout.json"
         vcfFileName = dataDir + "/" + options.vcf
         pathogenicityFileName = dataDir + "/" + options.vpf
-        logger.debug('options.gf is  ' + options.gf)
-        if not options.gf is "" and not options.gf is None:
+        if options.anno != "" and not options.anno is None:
+            annoFileName = dataDir + "/" + options.anno
+        if options.gf != "" and not options.gf is None:
             gnomadFileName = dataDir + "/" + options.gf
-        if not options.spf is "":
+        if options.spf != "" and not options.spf is None:
             pathologyFileName = dataDir + "/" + options.spf
             intersectionFile = dataDir + "/" + str(options.g) + '-intersection.json'
 
@@ -142,19 +143,21 @@ def main():
         toutFileName = str(options.g) + "-tout.json"
         vcfFileName = options.vcf
         pathogenicityFileName =  options.vpf
-        if not options.gf is "" and not options.gf is None:
+        if options.anno != "" and not options.anno is None:
+            annoFileName = options.anno
+        if options.gf != "" and not options.gf is None:
             gnomadFileName =  options.gf
-        if not options.spf is None:
+        if options.spf != "" and not options.spf is None:
             pathologyFileName = options.spf
             intersectionFile = str(options.g) + '-intersection.json'
-            
+
     saveFiles = str2bool(options.save)
     phased = str2bool(options.p)
     p2 = float(options.p2)
 
 
     run(int(options.h), int(options.e), options.c, options.g, phased, p2, vcfFileName,
-        int(options.n), pathogenicityFileName, options.d, ipvFileName, vpiFileName, allFileName, options.anno,
+        int(options.n), pathogenicityFileName, options.d, ipvFileName, vpiFileName, allFileName, annoFileName,
         outFileName, toutFileName, saveFiles, pathologyFileName, intersectionFile, gnomadFileName)
 
 def run(hgVersion, ensemblRelease, chromosome, gene, phased, p2, vcfFileName, numProcs,
@@ -168,7 +171,8 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, p2, vcfFileName, nu
     if not annoFileName is None and annoFileName != '':
         logger.info('reading annotation data from ' + annoFileName)
         with open(annoFileName, 'r') as f:
-            annoDF = pandas.read_csv(annoFileName, header=0, sep='\t')
+            dtypeDict = {'sample.id':str}
+            annoDF = pandas.read_csv(annoFileName, header=0, sep='\t',dtype=dtypeDict )
         f.close()
     else:
         annoDF = None
@@ -271,7 +275,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, p2, vcfFileName, nu
         f.write(json_dump)
     f.close()
 
-    if not pathologyFileName is None:
+    if pathologyFileName != "" and not pathologyFileName is None:
         logger.info('intersecting variants with pathology data in file ' + str(pathologyFileName))
         intersectPathology(pathologyFileName, data_set, individualsPerVariant, intersectionFile )
 
@@ -767,14 +771,15 @@ def findVarsPerIndividual(q, vcf, benignVariants, pathogenicVariants, chromosome
                 study = "NA"
                 if not annoDF is None:
                     try:
-                        if 'CENTER' in individuals[i]:
+                        if 'CENTER' in annoDF.columns:
                             seqCenter = annoDF[annoDF['sample.id'] == individuals[i]]['CENTER'].iloc[0]
-                        elif 'seq_center' in individuals[i]:
+                        elif 'seq_center' in annoDF.columns:
                             seqCenter = annoDF[annoDF['sample.id'] == individuals[i]]['seq_center'].iloc[0]
                     except Exception as e:
                         seqCenter = "NA"
                     try:
-                        study = annoDF[annoDF['sample.id'] == individuals[i]]['study'].iloc[0]
+                        if 'study' in annoDF.columns:
+                            study = annoDF[annoDF['sample.id'] == individuals[i]]['study'].iloc[0]
                     except Exception as e:
                         study = "NA"
                 if (c, p, r, a) in benignVariants:
