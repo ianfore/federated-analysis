@@ -282,7 +282,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, p2, vcfFileName, nu
 def intersectPathology(pathologyFile, data_set, ipvDF, intersectFile):
     logger.info('reading data from ' + pathologyFile)
     dataDict = {'ID':str}
-    pathologyDF = pandas.read_csv(pathologyFile, sep='\t', header=0)
+    pathologyDF = pandas.read_csv(pathologyFile, sep='\t', header=0, dtype=dataDict)
     fields = pathologyDF.columns
 
     # determine total number of cases and controls for cohort frequency calculations
@@ -439,12 +439,12 @@ def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, df, hgVersi
         '''for info in infoList:
             individualsPerVariant[v][info] = vcf['variants/' + info][variant]'''
         #maxPop, maxFreq, minPop, minFreq, allPopFreq = getGnomadData(df, eval(v), hgVersion)
-        try:
+        if v in individualsPerVariant:
             individualsPerVariant[v]['cohortFreq'] = float(len(individualsPerVariant[v]['homozygous individuals']) + \
                                                            len(individualsPerVariant[v][
                                                                    'heterozygous individuals'])) / float(cohortSize)
             chrom = 'chr' + str(c)
-            info = gnomad[gnomad['#CHROM'] == chrom][gnomad['POS'] == p][gnomad['REF'] == r][gnomad["ALT"] == a][ 'INFO']
+            info = gnomad[gnomad['#CHROM'] == chrom][gnomad['POS'] == p][gnomad['REF'] == r][gnomad["ALT"] == a]['INFO']
 
             #maxPop, maxFreq, allPopFreq = getAFFromGnomadSites(gnomadFileName, eval(v))
             if len(info) == 1:
@@ -470,7 +470,7 @@ def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, df, hgVersi
             individualsPerVariant[v]['maxFreq'] = af
             individualsPerVariant[v]['faf95'] = faf95
             individualsPerVariant[v]['exonic'] = isExonic(ensemblRelease, c, p)
-        except Exception:
+        else:
             logger.warning('variant ' + str(v) + ' not in ipv dict?')
     return individualsPerVariant
 
@@ -801,7 +801,7 @@ def getGenesForVariant(variant, ensemblRelease, geneOfInterest):
     pos = variant[1]
     try:
         #exons = ensembl.exons_at_locus(contig=int(chrom), position=int(pos))
-        genes = ensembl.gene_names_at_locus(contig=int(chrom), position=int(pos))
+        genes = ensembl.gene_names_at_locus(contig=chrom, position=int(pos))
         g_of_i = set()
         g_of_i.add(geneOfInterest)
         g = set(genes)
