@@ -128,7 +128,7 @@ def main():
         vcfFileName = dataDir + "/" + options.vcf
         pathogenicityFileName = dataDir + "/" + options.vpf
         logger.debug('options.gf is  ' + options.gf)
-        if not options.gf is "" or not options.gf is None:
+        if not options.gf is "" and not options.gf is None:
             gnomadFileName = dataDir + "/" + options.gf
         if not options.spf is "":
             pathologyFileName = dataDir + "/" + options.spf
@@ -142,11 +142,12 @@ def main():
         toutFileName = str(options.g) + "-tout.json"
         vcfFileName = options.vcf
         pathogenicityFileName =  options.vpf
-        if not options.gf is "" or not options.gf is None:
-            gnomadFileName = dataDir + "/" + options.gf
+        if not options.gf is "" and not options.gf is None:
+            gnomadFileName =  options.gf
         if not options.spf is None:
             pathologyFileName = options.spf
             intersectionFile = str(options.g) + '-intersection.json'
+            
     saveFiles = str2bool(options.save)
     phased = str2bool(options.p)
     p2 = float(options.p2)
