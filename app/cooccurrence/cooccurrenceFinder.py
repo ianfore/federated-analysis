@@ -457,9 +457,9 @@ def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, df, hgVersi
                     _var = varVal.split('=')[0]
                     _val = varVal.split('=')[1]
                     varValDict[_var] = _val
-                popmax = None
-                faf95 = None
-                af = None
+                popmax = np.nan
+                faf95 = np.nan
+                af = np.nan
                 if 'popmax' in varValDict:
                     popmax = varValDict['popmax']
                 if 'faf95_popmax' in varValDict:
