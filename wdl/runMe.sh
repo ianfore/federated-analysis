@@ -30,6 +30,5 @@ CHROM=$CHROM \
 GENE=$GENE \
 NUM_CORES=$(grep -c processor /proc/cpuinfo) \
 SAVE_FILES=$SAVE_FILES \
-#GNOMAD_FILE=${TOP_DIR}/data/$GNOMAD_FILE \
 GNOMAD_FILE=$GNOMAD_FILE \
 -c /private/groups/patenlab/jcasalet/WDL/cromwell.local.conf 
