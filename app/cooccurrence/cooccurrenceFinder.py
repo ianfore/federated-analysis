@@ -142,7 +142,8 @@ def main():
         toutFileName = str(options.g) + "-tout.json"
         vcfFileName = options.vcf
         pathogenicityFileName =  options.vpf
-        gnomadFileName = options.gf
+        if not options.gf is "" or not options.gf is None:
+            gnomadFileName = dataDir + "/" + options.gf
         if not options.spf is None:
             pathologyFileName = options.spf
             intersectionFile = str(options.g) + '-intersection.json'
@@ -395,7 +396,7 @@ def findIndividualsPerVariant(variantsPerIndividual, vcf, chromosome, df, hgVers
                 individualsPerVariant[v]['homozygous individuals'].add(individual)
             else:
                 logger.warning('hmm - didnt add this vus ' + v)
-    if not gnomadFileName is None or gnomadFileName != "":
+    if not gnomadFileName is None and gnomadFileName != "":
         individualsPerVariant = addVariantInfo(individualsPerVariant, vcf, chromosome, ['FIBC_I', 'FIBC_P'], df,
                                            hgVersion, cohortSize, ensemblRelease, gnomadFileName)
 
@@ -605,7 +606,7 @@ def countHomozygousPerBenign(variantsPerIndividual, df, hgVersion, ensemblReleas
                     homozygousPerBenign[str(ben[0])] = dict()
                     homozygousPerBenign[str(ben[0])]['count'] = 0
                     #maxPop, maxPopFreq, minPop, minPopFreq, allPopFreq = getGnomadData(df, ben[0], hgVersion)
-                    if not gnomadFileName is None and gnomadFile != '':
+                    if not gnomadFileName is None and gnomadFileName != '':
                         maxPop, maxPopFreq, allPopFreq = getAFFromGnomadSites(gnomadFileName, ben[0])
                         homozygousPerBenign[str(ben[0])]['maxPop'] = maxPop
                         homozygousPerBenign[str(ben[0])]['maxPopFreq'] = maxPopFreq
@@ -639,7 +640,7 @@ def countHomozygousPerVus(variantsPerIndividual, df, hgVersion, ensemblRelease, 
     cohortSize = len(variantsPerIndividual)
     for vus in homozygousPerVus:
         #maxPopFreq = homoZygousPerVus[vus][1][1]
-        if not gnomadFileName is None:
+        if not gnomadFileName is None and gnomadFileName != '':
             maxPopFreq = homozygousPerVus[vus]['maxPopFreq']
         cohortFreq = float(homozygousPerVus[vus]['count'])/ float(cohortSize)
         homozygousPerVus[vus]['cohortFreq'] = float(cohortFreq)
