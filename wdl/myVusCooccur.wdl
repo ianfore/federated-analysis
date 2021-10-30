@@ -7,6 +7,7 @@ workflow cooccurrence {
 	File VARIANT_PATHOGENICITY_FILE
 	File? ANNO_FILE
 	File?  GNOMAD_FILE
+	File? PATHOLOGY_FILE
 	String OUTPUT_FILENAME
 	String VPI_FILENAME
 	String IPV_FILENAME
@@ -29,6 +30,7 @@ workflow cooccurrence {
 		variant_pathogenicity_file=VARIANT_PATHOGENICITY_FILE,
 		anno_file=ANNO_FILE,
 		gnomad_file=GNOMAD_FILE,
+		pathology_file=PATHOLOGY_FILE,
 		hg_version=HG_VERSION,
 		ensembl_release=ENSEMBL_RELEASE,
 		phased=PHASED,
@@ -61,6 +63,7 @@ task run_cooccurrence {
 		File variant_pathogenicity_file
 		File? anno_file
 		File? gnomad_file
+		File? pathology_file
 		String hg_version
 		String ensembl_release
 		String phased
@@ -79,7 +82,7 @@ task run_cooccurrence {
 	command <<<
 		export PYTHONPATH=/ 
 		export PYTHONIOENCODING=UTF-8 
-		/usr/bin/python3  ~{python_script} --vcf ~{vcf_file} --h ~{hg_version} --e ~{ensembl_release} --c ~{chrom} --g ~{gene} --p ~{phased} --p2 ~{p2} --n ~{num_cores} --vpf ~{variant_pathogenicity_file} --anno "~{anno_file}" --save ~{save_files} --gf "~{gnomad_file}"
+		/usr/bin/python3  ~{python_script} --vcf ~{vcf_file} --h ~{hg_version} --e ~{ensembl_release} --c ~{chrom} --g ~{gene} --p ~{phased} --p2 ~{p2} --n ~{num_cores} --vpf ~{variant_pathogenicity_file} --anno "~{anno_file}" --save ~{save_files} --gf "~{gnomad_file}" --spf "~{pathology_file}"
 	>>>
 	
 	output {
