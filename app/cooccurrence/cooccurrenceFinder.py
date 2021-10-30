@@ -89,7 +89,7 @@ def parseArgs():
     parser.add_argument("--d", dest="d", help="directory containing pyensembl-cache. Default=/var/tmp/pyensembl-cache",
                         default='/var/tmp/pyensembl-cache')
     parser.add_argument("--spf", dest="spf", help="(optional) sample pathology input file. Default=None", default=None)
-    parser.add_argument("--gf", dest="gf", help="(optional) gnomad sites file name", default=None)
+    parser.add_argument("--gf", dest="gf", help="(optional) gnomad sites vcf file name. Default=None", default=None)
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" % defaultLogLevel, default=defaultLogLevel)
     return parser.parse_args()
 
