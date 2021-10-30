@@ -281,6 +281,7 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, p2, vcfFileName, nu
 
 def intersectPathology(pathologyFile, data_set, ipvDF, intersectFile):
     logger.info('reading data from ' + pathologyFile)
+    dataDict = {'ID':str}
     pathologyDF = pandas.read_csv(pathologyFile, sep='\t', header=0)
     fields = pathologyDF.columns
 
@@ -309,8 +310,8 @@ def intersectPathology(pathologyFile, data_set, ipvDF, intersectFile):
         #pathologyPerCoocIndividual[pv]['numSpecialCases'] = 0
         for hi in heterozygousIndividuals:
             pathologies = dict()
-            hiInt = int(hi)
-            row = pathologyDF.loc[pathologyDF['ID'] == hiInt]
+            hetInd = str(hi)
+            row = pathologyDF.loc[pathologyDF['ID'] == hetInd]
             if len(row) == 0:
                 logger.warning('no pathology record for sample ' + hi)
                 numMissing += 1
@@ -335,8 +336,8 @@ def intersectPathology(pathologyFile, data_set, ipvDF, intersectFile):
         #pathologyPerHomoIndividual[variant]['numSpecialCases'] = 0
         for hi in homozygousIndividuals:
             pathologies = dict()
-            hiInt = int(hi)
-            row = pathologyDF.loc[pathologyDF['ID'] == hiInt]
+            homoInd = str(hi)
+            row = pathologyDF.loc[pathologyDF['ID'] == homoInd]
             if len(row) == 0:
                 logger.warning('no pathology record for sample ' + hi)
                 numMissing += 1
@@ -427,8 +428,8 @@ def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, df, hgVersi
     columns = ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO']
     gnomad.columns = columns
     for variant in range(len(vcf['calldata/GT'])):
-        c = int(vcf['variants/CHROM'][variant].replace('chr', ''))
-        if c != int(chromosome):
+        c = str(vcf['variants/CHROM'][variant].replace('chr', ''))
+        if c != str(chromosome):
             continue
         p = int(vcf['variants/POS'][variant])
         r = str(vcf['variants/REF'][variant])
@@ -503,9 +504,9 @@ def findVariants(fileName, classStrings, hgVersion):
         logger.debug(df.loc[i, coordinateColumnBase + str(hgVersion)])
         coord = df.loc[i, coordinateColumnBase + str(hgVersion)].split(':')
         if 'chr' in coord[0]:
-            chrom = int(coord[0].split('chr')[1])
+            chrom = str(coord[0].split('chr')[1])
         else:
-            chrom = int(coord[0])
+            chrom = str(coord[0])
         if 'g.' in coord[1]:
             pos = int(coord[1].split('g.')[1])
         else:
@@ -754,11 +755,11 @@ def findVarsPerIndividual(q, vcf, benignVariants, pathogenicVariants, chromosome
         variantsPerIndividual[individuals[i]]['vus'] = list()
 
         for variant in range(len(vcf['calldata/GT'])):
-            if int(vcf['variants/CHROM'][variant].replace('chr', '')) != int(chromosome):
+            if str(vcf['variants/CHROM'][variant].replace('chr', '')) != str(chromosome):
                 logger.warning('wrong chromosome?')
                 continue
             if 1 in vcf['calldata/GT'][variant][i]:
-                c = int(vcf['variants/CHROM'][variant].replace('chr', ''))
+                c = str(vcf['variants/CHROM'][variant].replace('chr', ''))
                 p = int(vcf['variants/POS'][variant])
                 r = str(vcf['variants/REF'][variant])
                 a = str(vcf['variants/ALT'][variant][0])
