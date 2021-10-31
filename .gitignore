@@ -1,0 +1,6 @@
+# Eclipse project files
+.project
+.pydevproject
+
+# Mac OS X
+.DS_Store
