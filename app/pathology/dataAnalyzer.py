@@ -161,10 +161,16 @@ class FederatedDataAnalyzer:
         # else if field is numerical and data is int or float, then test if values match.
         elif fieldFilter['fieldType'] == 'numerical':
             if isinstance(fieldValue, (int)) or isinstance(fieldValue, (float)):
-                if len(fieldFilter['fieldValues']) == 0 or fieldValue in fieldFilter['fieldValues']:
+                if len(fieldFilter['fieldValues']) == 0:
                     return True
+                elif isinstance(fieldFilter['fieldValues'], (list)) and fieldValue in fieldFilter['fieldValues']:
+                    return True
+                elif isinstance(fieldFilter['fieldValues'], (dict)):
+                    if fieldValue >= fieldFilter['fieldValues']['low'] and fieldValue <= fieldFilter['fieldValues']['high']:
+                        return True
+                    else:
+                        return False
                 else:
-                    print(fieldFilter['fieldType'] + ' is bad first')
                     return False
             elif isinstance(fieldValue, (str)):
                 # try to cast it to float (floats and ints will cast to float)
@@ -239,7 +245,7 @@ class FederatedDataAnalyzer:
         if self.configFile.qualityReport == "":
             fileObject = sys.stdout
         else:
-            fileObject = open(self.configFile.qualityReport, mode='a')
+            fileObject = open(self.configFile.qualityReport, mode='w')
 
 
         print("============================================", file=fileObject)

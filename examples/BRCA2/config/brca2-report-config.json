@@ -5,7 +5,7 @@
   "fileHeader": "True",
   "fieldDelimiter": "\t",
   "printConfigFileInfo": "False",
-  "printBadValues": "False",
+  "printBadValues": "True",
   "suppressAllOutput": "False",
   "RScriptPath": "/usr/bin/Rscript",
   "fieldFilters": [
@@ -16,7 +16,7 @@
     {"fieldName": "HER2", "fieldType": "categorical", 
 	"fieldValues": ["0", "1+", "2+", "3+", "NA"], "printFieldCount": "True"},
     {"fieldName": "Age at onset", "fieldType": "numerical", 
-	"fieldValues": [], "printFieldCount": "True", "printStats": "True"},
+	"fieldValues": {"low": 10, "high": 150}, "printFieldCount": "True", "printStats": "True"},
     {"fieldName": "Family history / breast cancer", "fieldType": "numerical", 
 	"fieldValues": [0, 1], "printFieldCount": "True", "printStats": "True"},
     {"fieldName": "CarrierGene", "fieldType": "categorical", 

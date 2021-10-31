@@ -74,7 +74,7 @@ def str2bool(string):
 
 def parseArgs():
     parser = argparse.ArgumentParser(usage="cooccurrenceFinder args [options]")
-    parser.add_argument("--anno", dest="anno", help="annotation file name, default=None", default=None)
+    parser.add_argument("--anno", dest="anno", help="(optional) annotation file name, default=None", default=None)
     parser.add_argument("--vcf", dest="vcf", help="vcf file name, default=None", default=None)
     parser.add_argument("--data", dest="data", help="data directory name, default=None", default=None)
     parser.add_argument("--save", dest="save", help="save intermediate files boolean, default=None", default=None)
@@ -88,8 +88,8 @@ def parseArgs():
     parser.add_argument("--vpf", dest="vpf", help="variant pathogenicity  file. Default=None", default=None)
     parser.add_argument("--d", dest="d", help="directory containing pyensembl-cache. Default=/var/tmp/pyensembl-cache",
                         default='/var/tmp/pyensembl-cache')
-    parser.add_argument("--spf", dest="spf", help="sample pathology input file. Default=None", default=None)
-    parser.add_argument("--gf", dest="gf", help="gnomad sites file name", default=None)
+    parser.add_argument("--spf", dest="spf", help="(optional) sample pathology input file. Default=None", default=None)
+    parser.add_argument("--gf", dest="gf", help="(optional) gnomad sites vcf file name. Default=None", default=None)
     parser.add_argument("--log", dest="logLevel", help="Logging level. Default=%s" % defaultLogLevel, default=defaultLogLevel)
     return parser.parse_args()
 
@@ -117,8 +117,8 @@ def main():
     print(options)
 
     dataDir = options.data
-    pathologyFileName = None
-    intersectionFile = None
+    gnomadFileName = pathologyFileName = intersectionFile = None
+
     if dataDir != None:
         outFileName = dataDir + "/" + str(options.g) + "-cooccurrences.json"
         ipvFileName = dataDir + "/" + str(options.g) + "-ipv.json"
@@ -127,10 +127,14 @@ def main():
         toutFileName = dataDir + "/" + str(options.g) + "-tout.json"
         vcfFileName = dataDir + "/" + options.vcf
         pathogenicityFileName = dataDir + "/" + options.vpf
-        gnomadFileName = dataDir + "/" + options.gf
-        if not options.spf is "":
+        if options.anno != "" and not options.anno is None:
+            annoFileName = dataDir + "/" + options.anno
+        if options.gf != "" and not options.gf is None:
+            gnomadFileName = dataDir + "/" + options.gf
+        if options.spf != "" and not options.spf is None:
             pathologyFileName = dataDir + "/" + options.spf
             intersectionFile = dataDir + "/" + str(options.g) + '-intersection.json'
+
     else:
         outFileName = str(options.g) + "-cooccurrences.json"
         ipvFileName = str(options.g) + "-ipv.json"
@@ -139,17 +143,21 @@ def main():
         toutFileName = str(options.g) + "-tout.json"
         vcfFileName = options.vcf
         pathogenicityFileName =  options.vpf
-        gnomadFileName = options.gf
-        if not options.spf is None:
+        if options.anno != "" and not options.anno is None:
+            annoFileName = options.anno
+        if options.gf != "" and not options.gf is None:
+            gnomadFileName =  options.gf
+        if options.spf != "" and not options.spf is None:
             pathologyFileName = options.spf
             intersectionFile = str(options.g) + '-intersection.json'
+
     saveFiles = str2bool(options.save)
     phased = str2bool(options.p)
     p2 = float(options.p2)
 
 
     run(int(options.h), int(options.e), options.c, options.g, phased, p2, vcfFileName,
-        int(options.n), pathogenicityFileName, options.d, ipvFileName, vpiFileName, allFileName, options.anno,
+        int(options.n), pathogenicityFileName, options.d, ipvFileName, vpiFileName, allFileName, annoFileName,
         outFileName, toutFileName, saveFiles, pathologyFileName, intersectionFile, gnomadFileName)
 
 def run(hgVersion, ensemblRelease, chromosome, gene, phased, p2, vcfFileName, numProcs,
@@ -163,7 +171,8 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, p2, vcfFileName, nu
     if not annoFileName is None and annoFileName != '':
         logger.info('reading annotation data from ' + annoFileName)
         with open(annoFileName, 'r') as f:
-            annoDF = pandas.read_csv(annoFileName, header=0, sep='\t')
+            dtypeDict = {'sample.id':str}
+            annoDF = pandas.read_csv(annoFileName, header=0, sep='\t',dtype=dtypeDict )
         f.close()
     else:
         annoDF = None
@@ -266,13 +275,14 @@ def run(hgVersion, ensemblRelease, chromosome, gene, phased, p2, vcfFileName, nu
         f.write(json_dump)
     f.close()
 
-    if not pathologyFileName is None:
+    if pathologyFileName != "" and not pathologyFileName is None:
         logger.info('intersecting variants with pathology data in file ' + str(pathologyFileName))
         intersectPathology(pathologyFileName, data_set, individualsPerVariant, intersectionFile )
 
 def intersectPathology(pathologyFile, data_set, ipvDF, intersectFile):
     logger.info('reading data from ' + pathologyFile)
-    pathologyDF = pandas.read_csv(pathologyFile, sep='\t', header=0)
+    dataDict = {'ID':str}
+    pathologyDF = pandas.read_csv(pathologyFile, sep='\t', header=0, dtype=dataDict)
     fields = pathologyDF.columns
 
     # determine total number of cases and controls for cohort frequency calculations
@@ -300,8 +310,8 @@ def intersectPathology(pathologyFile, data_set, ipvDF, intersectFile):
         #pathologyPerCoocIndividual[pv]['numSpecialCases'] = 0
         for hi in heterozygousIndividuals:
             pathologies = dict()
-            hiInt = int(hi)
-            row = pathologyDF.loc[pathologyDF['ID'] == hiInt]
+            hetInd = str(hi)
+            row = pathologyDF.loc[pathologyDF['ID'] == hetInd]
             if len(row) == 0:
                 logger.warning('no pathology record for sample ' + hi)
                 numMissing += 1
@@ -326,8 +336,8 @@ def intersectPathology(pathologyFile, data_set, ipvDF, intersectFile):
         #pathologyPerHomoIndividual[variant]['numSpecialCases'] = 0
         for hi in homozygousIndividuals:
             pathologies = dict()
-            hiInt = int(hi)
-            row = pathologyDF.loc[pathologyDF['ID'] == hiInt]
+            homoInd = str(hi)
+            row = pathologyDF.loc[pathologyDF['ID'] == homoInd]
             if len(row) == 0:
                 logger.warning('no pathology record for sample ' + hi)
                 numMissing += 1
@@ -392,7 +402,8 @@ def findIndividualsPerVariant(variantsPerIndividual, vcf, chromosome, df, hgVers
                 individualsPerVariant[v]['homozygous individuals'].add(individual)
             else:
                 logger.warning('hmm - didnt add this vus ' + v)
-    individualsPerVariant = addVariantInfo(individualsPerVariant, vcf, chromosome, ['FIBC_I', 'FIBC_P'], df,
+    if not gnomadFileName is None and gnomadFileName != "":
+        individualsPerVariant = addVariantInfo(individualsPerVariant, vcf, chromosome, ['FIBC_I', 'FIBC_P'], df,
                                            hgVersion, cohortSize, ensemblRelease, gnomadFileName)
 
     return individualsPerVariant
@@ -410,13 +421,15 @@ def isExonic(ensemblRelease, chrom, pos):
 def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, df, hgVersion, cohortSize, ensemblRelease, gnomadFileName):
     # add infoList stuff from INFO field
     # do getAFFromGnomadSites inline
+    if gnomadFileName is None or gnomadFileName == "":
+        return individualsPerVariant
     gnomad = pandas.read_csv(gnomadFileName, header=None, sep='\t', comment='#')
     # CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
     columns = ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO']
     gnomad.columns = columns
     for variant in range(len(vcf['calldata/GT'])):
-        c = int(vcf['variants/CHROM'][variant].replace('chr', ''))
-        if c != int(chromosome):
+        c = str(vcf['variants/CHROM'][variant].replace('chr', ''))
+        if c != str(chromosome):
             continue
         p = int(vcf['variants/POS'][variant])
         r = str(vcf['variants/REF'][variant])
@@ -426,12 +439,12 @@ def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, df, hgVersi
         '''for info in infoList:
             individualsPerVariant[v][info] = vcf['variants/' + info][variant]'''
         #maxPop, maxFreq, minPop, minFreq, allPopFreq = getGnomadData(df, eval(v), hgVersion)
-        try:
+        if v in individualsPerVariant:
             individualsPerVariant[v]['cohortFreq'] = float(len(individualsPerVariant[v]['homozygous individuals']) + \
                                                            len(individualsPerVariant[v][
                                                                    'heterozygous individuals'])) / float(cohortSize)
             chrom = 'chr' + str(c)
-            info = gnomad[gnomad['#CHROM'] == chrom][gnomad['POS'] == p][gnomad['REF'] == r][gnomad["ALT"] == a][ 'INFO']
+            info = gnomad[gnomad['#CHROM'] == chrom][gnomad['POS'] == p][gnomad['REF'] == r][gnomad["ALT"] == a]['INFO']
 
             #maxPop, maxFreq, allPopFreq = getAFFromGnomadSites(gnomadFileName, eval(v))
             if len(info) == 1:
@@ -444,9 +457,9 @@ def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, df, hgVersi
                     _var = varVal.split('=')[0]
                     _val = varVal.split('=')[1]
                     varValDict[_var] = _val
-                popmax = None
-                faf95 = None
-                af = None
+                popmax = np.nan
+                faf95 = np.nan
+                af = np.nan
                 if 'popmax' in varValDict:
                     popmax = varValDict['popmax']
                 if 'faf95_popmax' in varValDict:
@@ -457,10 +470,8 @@ def addVariantInfo(individualsPerVariant, vcf, chromosome, infoList, df, hgVersi
             individualsPerVariant[v]['maxFreq'] = af
             individualsPerVariant[v]['faf95'] = faf95
             individualsPerVariant[v]['exonic'] = isExonic(ensemblRelease, c, p)
-        except Exception:
+        else:
             logger.warning('variant ' + str(v) + ' not in ipv dict?')
-        #else:
-            #logger.warning('variant ' + str(v) + ' not in ipv dict?')
     return individualsPerVariant
 
 def getAllVariantsPerClass(vpi):
@@ -493,9 +504,9 @@ def findVariants(fileName, classStrings, hgVersion):
         logger.debug(df.loc[i, coordinateColumnBase + str(hgVersion)])
         coord = df.loc[i, coordinateColumnBase + str(hgVersion)].split(':')
         if 'chr' in coord[0]:
-            chrom = int(coord[0].split('chr')[1])
+            chrom = str(coord[0].split('chr')[1])
         else:
-            chrom = int(coord[0])
+            chrom = str(coord[0])
         if 'g.' in coord[1]:
             pos = int(coord[1].split('g.')[1])
         else:
@@ -601,9 +612,10 @@ def countHomozygousPerBenign(variantsPerIndividual, df, hgVersion, ensemblReleas
                     homozygousPerBenign[str(ben[0])] = dict()
                     homozygousPerBenign[str(ben[0])]['count'] = 0
                     #maxPop, maxPopFreq, minPop, minPopFreq, allPopFreq = getGnomadData(df, ben[0], hgVersion)
-                    maxPop, maxPopFreq, allPopFreq = getAFFromGnomadSites(gnomadFileName, ben[0])
-                    homozygousPerBenign[str(ben[0])]['maxPop'] = maxPop
-                    homozygousPerBenign[str(ben[0])]['maxPopFreq'] = maxPopFreq
+                    if not gnomadFileName is None and gnomadFileName != '':
+                        maxPop, maxPopFreq, allPopFreq = getAFFromGnomadSites(gnomadFileName, ben[0])
+                        homozygousPerBenign[str(ben[0])]['maxPop'] = maxPop
+                        homozygousPerBenign[str(ben[0])]['maxPopFreq'] = maxPopFreq
                 homozygousPerBenign[str(ben[0])]['count'] += 1
 
     cohortSize = len(variantsPerIndividual)
@@ -625,15 +637,17 @@ def countHomozygousPerVus(variantsPerIndividual, df, hgVersion, ensemblRelease, 
                     homozygousPerVus[str(vus[0])] = dict()
                     homozygousPerVus[str(vus[0])]['count'] = 0
                     #maxPop, maxPopFreq, minPop, minPopFreq, allPopFreq = getGnomadData(df, vus[0], hgVersion)
-                    maxPop, maxPopFreq, allPopFreq = getAFFromGnomadSites(gnomadFileName, vus[0])
-                    homozygousPerVus[str(vus[0])]['maxPop'] = maxPop
-                    homozygousPerVus[str(vus[0])]['maxPopFreq'] = maxPopFreq
+                    if not gnomadFileName is None and gnomadFileName != '':
+                        maxPop, maxPopFreq, allPopFreq = getAFFromGnomadSites(gnomadFileName, vus[0])
+                        homozygousPerVus[str(vus[0])]['maxPop'] = maxPop
+                        homozygousPerVus[str(vus[0])]['maxPopFreq'] = maxPopFreq
                 homozygousPerVus[str(vus[0])]['count'] += 1
 
     cohortSize = len(variantsPerIndividual)
     for vus in homozygousPerVus:
         #maxPopFreq = homoZygousPerVus[vus][1][1]
-        maxPopFreq = homozygousPerVus[vus]['maxPopFreq']
+        if not gnomadFileName is None and gnomadFileName != '':
+            maxPopFreq = homozygousPerVus[vus]['maxPopFreq']
         cohortFreq = float(homozygousPerVus[vus]['count'])/ float(cohortSize)
         homozygousPerVus[vus]['cohortFreq'] = float(cohortFreq)
 
@@ -680,7 +694,10 @@ def calculateLikelihood(pathCoocs, p1, p2, n, k, df, hgVersion, cohortSize, gnom
     dataPerVus = dict()
     for vus in likelihoodRatios:
         #maxPop, maxPopFreq, minPop, minPopFreq, allPopFreq = getGnomadData(df, vus, hgVersion)
-        maxPop, maxPopFreq, allPopFreq = getAFFromGnomadSites(gnomadFileName, vus)
+        if not gnomadFileName is None and gnomadFileName != '':
+            maxPop, maxPopFreq, allPopFreq = getAFFromGnomadSites(gnomadFileName, vus)
+        else:
+            maxPop = maxPopFreq = np.nan
         cohortFreq = float(n[vus]) / float(cohortSize)
         data = {'likelihood data': {'p1':p1, 'p2':p2, 'n':n[vus], 'k':k[vus], 'likelihood':likelihoodRatios[vus]},
                     'allele frequencies':{'maxPop':maxPop, 'maxPopFreq':maxPopFreq,
@@ -738,11 +755,11 @@ def findVarsPerIndividual(q, vcf, benignVariants, pathogenicVariants, chromosome
         variantsPerIndividual[individuals[i]]['vus'] = list()
 
         for variant in range(len(vcf['calldata/GT'])):
-            if int(vcf['variants/CHROM'][variant].replace('chr', '')) != int(chromosome):
+            if str(vcf['variants/CHROM'][variant].replace('chr', '')) != str(chromosome):
                 logger.warning('wrong chromosome?')
                 continue
             if 1 in vcf['calldata/GT'][variant][i]:
-                c = int(vcf['variants/CHROM'][variant].replace('chr', ''))
+                c = str(vcf['variants/CHROM'][variant].replace('chr', ''))
                 p = int(vcf['variants/POS'][variant])
                 r = str(vcf['variants/REF'][variant])
                 a = str(vcf['variants/ALT'][variant][0])
@@ -755,14 +772,15 @@ def findVarsPerIndividual(q, vcf, benignVariants, pathogenicVariants, chromosome
                 study = "NA"
                 if not annoDF is None:
                     try:
-                        if 'CENTER' in individuals[i]:
+                        if 'CENTER' in annoDF.columns:
                             seqCenter = annoDF[annoDF['sample.id'] == individuals[i]]['CENTER'].iloc[0]
-                        elif 'seq_center' in individuals[i]:
+                        elif 'seq_center' in annoDF.columns:
                             seqCenter = annoDF[annoDF['sample.id'] == individuals[i]]['seq_center'].iloc[0]
                     except Exception as e:
                         seqCenter = "NA"
                     try:
-                        study = annoDF[annoDF['sample.id'] == individuals[i]]['study'].iloc[0]
+                        if 'study' in annoDF.columns:
+                            study = annoDF[annoDF['sample.id'] == individuals[i]]['study'].iloc[0]
                     except Exception as e:
                         study = "NA"
                 if (c, p, r, a) in benignVariants:
@@ -778,12 +796,12 @@ def findVarsPerIndividual(q, vcf, benignVariants, pathogenicVariants, chromosome
 def getGenesForVariant(variant, ensemblRelease, geneOfInterest):
     ensembl = pyensembl.EnsemblRelease(release=ensemblRelease)
     chrom = variant[0]
-    if type(chrom) is str:
+    if type(chrom) is str and 'chr' in chrom:
         chrom = chrom.split('chr')[1]
     pos = variant[1]
     try:
         #exons = ensembl.exons_at_locus(contig=int(chrom), position=int(pos))
-        genes = ensembl.gene_names_at_locus(contig=int(chrom), position=int(pos))
+        genes = ensembl.gene_names_at_locus(contig=chrom, position=int(pos))
         g_of_i = set()
         g_of_i.add(geneOfInterest)
         g = set(genes)

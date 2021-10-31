@@ -7,7 +7,7 @@ GENE=BRCA2
 P2=0.001
 VCF_FILENAME=f8_chr13_brca2_gruhmb_age.vcf
 SAVE_FILES=True
-GNOMAD_FILE=gnomad_genome_31_sites_chr13_brca2.vcf
+GNOMAD_FILE=/private/groups/patenlab/jcasalet/federated-analysis/data/gnomad_genome_31_sites_chr13_brca2.vcf
 
 TOP_DIR=/private/groups/patenlab/jcasalet/federated-analysis
 PYTHON_SCRIPT=${TOP_DIR}/app/cooccurrence/cooccurrenceFinder.py
@@ -30,5 +30,5 @@ CHROM=$CHROM \
 GENE=$GENE \
 NUM_CORES=$(grep -c processor /proc/cpuinfo) \
 SAVE_FILES=$SAVE_FILES \
-GNOMAD_FILE=${TOP_DIR}/data/$GNOMAD_FILE \
+GNOMAD_FILE=$GNOMAD_FILE \
 -c /private/groups/patenlab/jcasalet/WDL/cromwell.local.conf 
