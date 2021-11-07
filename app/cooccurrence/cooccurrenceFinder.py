@@ -763,11 +763,17 @@ def findVarsPerIndividual(q, vcf, benignVariants, pathogenicVariants, chromosome
                 p = int(vcf['variants/POS'][variant])
                 r = str(vcf['variants/REF'][variant])
                 a = str(vcf['variants/ALT'][variant][0])
+                #logger.debug('Individual {}, Variant {}: {}:{}:{}:{}'.format(i, variant,c,p,r,a))
                 if getGenesForVariant([c,p,r,a], ensemblRelease, gene) is None:
                     logger.warning('no gene for variant? ' + str([c,p,r,a]))
                     continue
 
-                genotype = str(int(str(vcf['calldata/GT'][variant][i][0]) + str(vcf['calldata/GT'][variant][i][1]), 2))
+                try:
+                    #genotype = str(int(str(vcf['calldata/GT'][variant][i][0]) + str(vcf['calldata/GT'][variant][i][1]), 2))
+                    calls = vcf['calldata/GT'][variant][i]
+                    genotype = str(int(str(int(calls[0]>0)) + str(int(calls[1]>0)), 2))
+                except:
+                	logger.warning('Genotype error {} c{} p{} r{} a{} i{}'.format(vcf['calldata/GT'][variant][i],c,p,r,a,i))
                 seqCenter = "NA"
                 study = "NA"
                 if not annoDF is None:
